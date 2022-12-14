@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # else:
     #     loglevel = logging.INFO
 
-    simfilepath = 'DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
 
     if isinstance(simfilepath, str) and simfilepath.endswith('.ipes') and pathlib.Path(simfilepath).exists():
         print("geht")
@@ -41,20 +41,21 @@ if __name__ == '__main__':
     else:
         print("error")
 
-    sys.exit(0)
+    #sys.exit(0)
 
 
 
-    dab_converter = lpt.GeckoSimulation('DAB_MOSFET_Modulation_Lm_nlC.ipes', timestep=50e-9, simtime=15e-6)
+    dab_converter = lpt.GeckoSimulation(simfilepath)
 
-    params = dab_converter.get_global_parameters(['phi', 'tau1_inv', 'tau2_inv'])
+    params = dab_converter.get_global_parameters(['phi', 'tau1_inv', 'tau2_inv', 'v_dc1', 'v_dc2', 'f_s'])
     print(params)
     params = {'phi': 80.0, 'tau1_inv': 40.0, 'tau2_inv': 66.0}
     dab_converter.set_global_parameters(params)
 
-    dab_converter.run_simulation()
+    dab_converter.run_simulation(timestep=50e-9, simtime=15e-6)
 
     dab_converter.get_scope_data(node_names=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], file_name='test')
 
     values = dab_converter.get_values(nodes=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], operations=['mean', 'rms'], range_start_stop=[10e-6, 15e-6])
     print(values)
+

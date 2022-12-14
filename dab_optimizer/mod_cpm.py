@@ -13,13 +13,14 @@ import debug_tools as db
 
 @db.timeit
 def CalcModulation(DAB: ds.DAB_Specification):
-	step = 10
+	#step = 10
 	d3d_phi = defaultdict(lambda: defaultdict(dict))
 	d3d_tau1 = defaultdict(lambda: defaultdict(dict))
 	d3d_tau2 = defaultdict(lambda: defaultdict(dict))
-	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max, step),
-									   range(DAB.V2_min, DAB.V2_max, step),
-									   range(DAB.P_min, DAB.P_max, step)):
+	# ugly but for testing until np.array is implemented
+	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
+									   range(DAB.V2_min, DAB.V2_max+1, 60),
+									   range(DAB.P_min, DAB.P_max+1, 200)):
 		d3d_phi[V1][V2][P] = calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
 		d3d_tau1[V1][V2][P] = math.pi
 		d3d_tau2[V1][V2][P] = math.pi
@@ -76,3 +77,4 @@ if __name__ == '__main__':
 									)
 
 	d3d_phi, d3d_tau1, d3d_tau2 = CalcModulation(dab_test)
+	print(d3d_phi)
