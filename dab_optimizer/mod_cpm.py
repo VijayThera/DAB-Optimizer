@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 ### python >= 3.10 ###
-import itertools
 
+import itertools
 import numpy as np
 from collections import defaultdict
 import math
+
 import classes_datasets as ds
 import debug_tools as db
 

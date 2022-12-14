@@ -5,9 +5,11 @@
 import numpy as np
 from collections import defaultdict
 import math
+
 import classes_datasets as ds
 import debug_tools as db
 import mod_cpm
+import sim_gecko
 
 
 
@@ -31,4 +33,6 @@ if __name__ == '__main__':
 									fs=200000,
 									)
 
-	d3d_phi, d3d_tau1, d3d_tau2 = CalcModulation(dab_test)
+	d3d_phi, d3d_tau1, d3d_tau2 = mod_cpm.CalcModulation(dab_test)
+	sim_gecko.StartSim(dab_test, d3d_phi, d3d_tau1, d3d_tau2)
+
