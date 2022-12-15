@@ -14,10 +14,10 @@ import debug_tools as db
 @db.timeit
 def calc_modulation(DAB: ds.DAB_Specification):
 	# init 3d arrays
-	mvvp_phi = np.zeros_like(DAB.mesh_V1, dtype=float)
+	mvvp_phi = np.zeros_like(DAB.mesh_V1)
 	# init these with pi because they are constant for CPM
-	mvvp_tau1 = np.full_like(DAB.mesh_V1, np.pi, dtype=float)
-	mvvp_tau2 = np.full_like(DAB.mesh_V1, np.pi, dtype=float)
+	mvvp_tau1 = np.full_like(DAB.mesh_V1, np.pi)
+	mvvp_tau2 = np.full_like(DAB.mesh_V1, np.pi)
 
 	# Calculate phase shift difference from input to output bridge
 	#TODO maybe have to consider the case sqrt(<0). When does this happen?
@@ -34,7 +34,7 @@ def calc_modulation_dict(DAB: ds.DAB_Specification):
 	# ugly but for testing until np.array is implemented
 	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
 									   range(DAB.V2_min, DAB.V2_max+1, 60),
-									   range(DAB.P_min, DAB.P_max+1, 200)):
+									   range(DAB.P_min, DAB.P_max+1, 1100)):
 		d3d_phi[V1][V2][P] = _calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
 		d3d_tau1[V1][V2][P] = math.pi
 		d3d_tau2[V1][V2][P] = math.pi
@@ -78,15 +78,15 @@ if __name__ == '__main__':
 	dab_test = ds.DAB_Specification(V1=700,
 									V1_min=600,
 									V1_max=800,
-									V1_step=30,
+									V1_step=3,
 									V2=235,
 									V2_min=175,
 									V2_max=295,
-									V2_step=30,
+									V2_step=3,
 									P_min=0,
 									P_max=2200,
 									P_nom=2000,
-									P_step=30,
+									P_step=3,
 									n=2.99,
 									L_s=84e-6,
 									L_m=599e-6,
@@ -102,3 +102,7 @@ if __name__ == '__main__':
 	print(mvvp_phi)
 
 	print(dab_test.mesh_V1, dab_test.mesh_V2, dab_test.mesh_P, sep='\n')
+	print("dab_test.mesh_V1[0,0,0]", type(dab_test.mesh_V1[0,0,0]))
+
+	print("mvvp_phi[0,0,0]", type(mvvp_phi[0,0,0]))
+	print("mvvp_tau1[0,0,0]", type(mvvp_tau1[0,0,0]))

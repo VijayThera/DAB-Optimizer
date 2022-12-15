@@ -46,5 +46,5 @@ if __name__ == '__main__':
 
 	# using np ndarray
 	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
-	sim_gecko.StartSim(dab_test, d3d_phi, d3d_tau1, d3d_tau2)
+	sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
 
