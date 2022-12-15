@@ -106,3 +106,14 @@ if __name__ == '__main__':
 
 	print("mvvp_phi[0,0,0]", type(mvvp_phi[0,0,0]))
 	print("mvvp_tau1[0,0,0]", type(mvvp_tau1[0,0,0]))
+
+	print(dab_test.mesh_V1.shape)
+	print(dab_test.mesh_V2.shape)
+	print(dab_test.mesh_P.shape)
+	#print(dab_test.mesh_V1[1,0,0])
+	print(dab_test.mesh_V1[0,1,0])
+	#print(dab_test.mesh_V1[0,0,1])
+
+	#TODO find a way to do this with sparse arrays
+	vec = (1, 0, 0)
+	print(dab_test.mesh_V1[vec])

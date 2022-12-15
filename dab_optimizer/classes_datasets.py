@@ -42,7 +42,7 @@ class DAB_Specification:
 		# sparse=False seems to be at least 2 times slower in following calculations!
 		self.mesh_V1, self.mesh_V2, self.mesh_P = np.meshgrid(np.linspace(V1_min, V1_max, V1_step),
 															  np.linspace(V2_min, V2_max, V2_step),
-															  np.linspace(P_min, P_max, P_step), sparse=True)
+															  np.linspace(P_min, P_max, P_step), sparse=False)
 
 
 class MLN:
