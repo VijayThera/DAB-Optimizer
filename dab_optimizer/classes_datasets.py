@@ -36,14 +36,13 @@ class DAB_Specification:
 		self.L_m = L_m
 		self.L_c = L_c
 
-		# meshgrid for usage in e.g. contour plot.
+		# meshgrid for usage in e.g. matrix calculations or contour plot.
 		# Link between array indices and x,y,z axes ranges.
-		# self.mesh_V1 = np.linspace(V1_min, V1_max, V1_step)
-		# self.mesh_V2 = np.linspace(V2_min, V2_max, V2_step)
-		# self.mesh_P = np.linspace(P_min, P_max, P_step)
+		# sparse seems to be fine so far, if it troubles, then change it
+		# sparse=False seems to be at least 2 times slower in following calculations!
 		self.mesh_V1, self.mesh_V2, self.mesh_P = np.meshgrid(np.linspace(V1_min, V1_max, V1_step),
 															  np.linspace(V2_min, V2_max, V2_step),
-															  np.linspace(P_min, P_max, P_step))
+															  np.linspace(P_min, P_max, P_step), sparse=True)
 
 
 class MLN:

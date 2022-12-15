@@ -41,6 +41,10 @@ if __name__ == '__main__':
 	# print(dab_test.mesh_P)
 	# sys.exit(0)
 
-	d3d_phi, d3d_tau1, d3d_tau2 = mod_cpm.CalcModulation(dab_test)
+	# using 3d dicts... ugly
+	#d3d_phi, d3d_tau1, d3d_tau2 = mod_cpm.calc_modulation_dict(dab_test)
+
+	# using np ndarray
+	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
 	sim_gecko.StartSim(dab_test, d3d_phi, d3d_tau1, d3d_tau2)
 

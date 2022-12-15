@@ -12,23 +12,21 @@ import debug_tools as db
 
 
 @db.timeit
-def CalcModulation(DAB: ds.DAB_Specification):
-	#step = 10
+def calc_modulation(DAB: ds.DAB_Specification):
+	# init 3d arrays
 	mvvp_phi = np.zeros_like(DAB.mesh_V1, dtype=float)
-	mvvp_tau1 = np.zeros_like(DAB.mesh_V1, dtype=float)
-	mvvp_tau2 = np.zeros_like(DAB.mesh_V1, dtype=float)
-	# ugly but for testing until np.array is implemented
-	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
-									   range(DAB.V2_min, DAB.V2_max+1, 60),
-									   range(DAB.P_min, DAB.P_max+1, 200)):
-		d3d_phi[V1][V2][P] = calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
-		d3d_tau1[V1][V2][P] = math.pi
-		d3d_tau2[V1][V2][P] = math.pi
+	# init these with pi because they are constant for CPM
+	mvvp_tau1 = np.full_like(DAB.mesh_V1, np.pi, dtype=float)
+	mvvp_tau2 = np.full_like(DAB.mesh_V1, np.pi, dtype=float)
 
-	return d3d_phi, d3d_tau1, d3d_tau2
+	# Calculate phase shift difference from input to output bridge
+	#TODO maybe have to consider the case sqrt(<0). When does this happen?
+	mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * DAB.fs * DAB.L_s * DAB.mesh_P) / (DAB.n * DAB.mesh_V1 * DAB.mesh_V2)))
+
+	return mvvp_phi, mvvp_tau1, mvvp_tau2
 
 @db.timeit
-def CalcModulationMesh(DAB: ds.DAB_Specification):
+def calc_modulation_dict(DAB: ds.DAB_Specification):
 	#step = 10
 	d3d_phi = defaultdict(lambda: defaultdict(dict))
 	d3d_tau1 = defaultdict(lambda: defaultdict(dict))
@@ -37,14 +35,14 @@ def CalcModulationMesh(DAB: ds.DAB_Specification):
 	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
 									   range(DAB.V2_min, DAB.V2_max+1, 60),
 									   range(DAB.P_min, DAB.P_max+1, 200)):
-		d3d_phi[V1][V2][P] = calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
+		d3d_phi[V1][V2][P] = _calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
 		d3d_tau1[V1][V2][P] = math.pi
 		d3d_tau2[V1][V2][P] = math.pi
 
 	return d3d_phi, d3d_tau1, d3d_tau2
 
 
-def calc_phi(V1, V2, P, fs, L, n):
+def _calc_phi(V1, V2, P, fs, L, n):
 	phi = math.pi / 2 * (1 - math.sqrt(1 - (8 * fs * L * P) / (n * V1 * V2)))
 	return phi
 
@@ -80,17 +78,27 @@ if __name__ == '__main__':
 	dab_test = ds.DAB_Specification(V1=700,
 									V1_min=600,
 									V1_max=800,
+									V1_step=30,
 									V2=235,
 									V2_min=175,
 									V2_max=295,
+									V2_step=30,
 									P_min=0,
 									P_max=2200,
 									P_nom=2000,
+									P_step=30,
 									n=2.99,
 									L_s=84e-6,
 									L_m=599e-6,
 									fs=200000,
 									)
 
-	d3d_phi, d3d_tau1, d3d_tau2 = CalcModulation(dab_test)
+	# using 3d dicts... ugly
+	d3d_phi, d3d_tau1, d3d_tau2 = calc_modulation_dict(dab_test)
 	print(d3d_phi)
+
+	# using np ndarray
+	mvvp_phi, mvvp_tau1, mvvp_tau2 = calc_modulation(dab_test)
+	print(mvvp_phi)
+
+	print(dab_test.mesh_V1, dab_test.mesh_V2, dab_test.mesh_P, sep='\n')
