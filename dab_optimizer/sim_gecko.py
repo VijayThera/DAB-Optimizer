@@ -23,7 +23,11 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	sim_filepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
 	dab_converter = lpt.GeckoSimulation(sim_filepath)
 
+	# init array to store RMS currents
 	mvvp_iLs = np.full_like(DAB.mesh_V1, np.nan)
+	print(mvvp_iLs.shape)
+	mvvp_S11_p_sw = np.full_like(DAB.mesh_V1, np.nan)
+
 	# for idx in np.ndindex(array.shape):
 	# ...     print(idx, end=' ')
 	# (0, 0, 0) (0, 0, 1)
@@ -32,17 +36,23 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	# for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max + 1, 100),
 	# 								   range(DAB.V2_min, DAB.V2_max + 1, 60),
 	# 								   range(DAB.P_min, DAB.P_max + 1, 200)):
+
 	for vec_vvp in np.ndindex(mvvp_iLs.shape):
 		#print(vec_vvp, mvvp_phi[vec_vvp], mvvp_tau1[vec_vvp], mvvp_tau2[vec_vvp], sep='\n')
+
+		# set simulation parameters and convert tau to inverse-tau for Gecko
 		sim_params = {
 			#TODO find a way to do this with sparse arrays
 			'v_dc1': DAB.mesh_V1[vec_vvp],
 			'v_dc2': DAB.mesh_V2[vec_vvp],
-			'phi': mvvp_phi[vec_vvp],
+			'phi': mvvp_phi[vec_vvp] / np.pi * 180,
 			'tau1_inv': (np.pi - mvvp_tau1[vec_vvp]) / np.pi * 180,
 			'tau2_inv': (np.pi - mvvp_tau2[vec_vvp]) / np.pi * 180
 		}
 		print(sim_params)
+
+		# start simulation for this operation point
+		#TODO optimize for multithreading, maybe multiple Gecko instances needed
 		dab_converter.set_global_parameters(sim_params)
 		#TODO time settings should be variable
 		dab_converter.run_simulation(timestep=100e-12, simtime=15e-6, timestep_pre=50e-9, simtime_pre=10e-3)
@@ -54,7 +64,14 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 			nodes=['i_Ls'],
 			operations=['rms']
 		)
-		power_deviation = values_mean['mean']['p_dc1'] / P
+		power_deviation = DAB.mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / DAB.mesh_P[vec_vvp].item()
+		print(power_deviation)
+
+		# save simulation results in array
+		mvvp_iLs[vec_vvp] = values_rms['rms']['i_Ls']
+		mvvp_S11_p_sw[vec_vvp] = values_mean['mean']['S11_p_sw']
+
+	return mvvp_iLs, mvvp_S11_p_sw
 
 
 @db.timeit

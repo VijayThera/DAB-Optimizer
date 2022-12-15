@@ -36,9 +36,9 @@ if __name__ == '__main__':
 									L_m=599e-6,
 									fs=200000,
 									)
-	# print(dab_test.mesh_V1)
-	# print(dab_test.mesh_V2)
-	# print(dab_test.mesh_P)
+	print(dab_test.mesh_V1)
+	print(dab_test.mesh_V2)
+	print(dab_test.mesh_P)
 	# sys.exit(0)
 
 	# using 3d dicts... ugly
@@ -46,5 +46,8 @@ if __name__ == '__main__':
 
 	# using np ndarray
 	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
-	sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+	mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+
+	print("mvvp_iLs: \n", mvvp_iLs)
+	print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
 
