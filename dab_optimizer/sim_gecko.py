@@ -21,7 +21,9 @@ def StartSim(DAB: ds.DAB_Specification, phi, tau1, tau2):
 	sim_filepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
 	dab_converter = lpt.GeckoSimulation(sim_filepath)
 
-	# ugly but for testing until np.array is implemented
+	mvvp_iLs = np.zeros(shape=(1,2,3))
+
+	#TODO ugly but for testing until np.array is implemented
 	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max + 1, 100),
 									   range(DAB.V2_min, DAB.V2_max + 1, 60),
 									   range(DAB.P_min, DAB.P_max + 1, 200)):
@@ -34,16 +36,18 @@ def StartSim(DAB: ds.DAB_Specification, phi, tau1, tau2):
 			'tau2_inv': (math.pi - tau2[V1][V2][P]) / math.pi * 180
 		}
 		dab_converter.set_global_parameters(sim_params)
+		#TODO time settings should be variable
 		dab_converter.run_simulation(timestep=100e-12, simtime=15e-6, timestep_pre=50e-9, simtime_pre=10e-3)
 		values_mean = dab_converter.get_values(
 			nodes=['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond'],
 			operations=['mean']
 		)
-
 		values_rms = dab_converter.get_values(
 			nodes=['i_Ls'],
 			operations=['rms']
 		)
+		power_deviation = values_mean['mean']['p_dc1'] / P
+
 
 
 

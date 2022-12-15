@@ -54,8 +54,10 @@ if __name__ == '__main__':
 
     dab_converter.run_simulation(timestep=50e-9, simtime=15e-6)
 
-    dab_converter.get_scope_data(node_names=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], file_name='test')
+    #dab_converter.get_scope_data(node_names=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], file_name='test')
 
     values = dab_converter.get_values(nodes=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], operations=['mean', 'rms'], range_start_stop=[10e-6, 15e-6])
     print(values)
+    print(type(values))
+    print(type(values['mean']['i_HF1']))
 

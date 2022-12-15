@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ### python >= 3.10 ###
 
-
+import numpy as np
 
 
 
@@ -10,18 +10,22 @@ class DAB_Specification:
 	"""
 	Class to store the DAB specification
 	"""
-	def __init__(self, V1, V1_min, V1_max, V2, V2_min, V2_max, P_min, P_max, P_nom, n, L_s, L_m,
-				 fs, fs_min: float = None, fs_max: float = None, L_c: float = None):
+	def __init__(self, V1, V1_min, V1_max, V1_step, V2, V2_min, V2_max, V2_step, P_min, P_max, P_nom, P_step,
+				 n, L_s, L_m, fs,
+				 fs_min: float = None, fs_max: float = None, L_c: float = None):
 		self.V1 = V1
 		self.V1_min = V1_min
 		self.V1_max = V1_max
+		self.V1_step = V1_step
 		self.V2 = V2
 		self.V2_min = V2_min
 		self.V2_max = V2_max
+		self.V2_step = V2_step
 
 		self.P_min = P_min
 		self.P_max = P_max
 		self.P_nom = P_nom
+		self.P_step = P_step
 
 		self.n = n
 		self.fs = fs
@@ -31,6 +35,15 @@ class DAB_Specification:
 		self.L_s = L_s
 		self.L_m = L_m
 		self.L_c = L_c
+
+		# meshgrid for usage in e.g. contour plot.
+		# Link between array indices and x,y,z axes ranges.
+		# self.mesh_V1 = np.linspace(V1_min, V1_max, V1_step)
+		# self.mesh_V2 = np.linspace(V2_min, V2_max, V2_step)
+		# self.mesh_P = np.linspace(P_min, P_max, P_step)
+		self.mesh_V1, self.mesh_V2, self.mesh_P = np.meshgrid(np.linspace(V1_min, V1_max, V1_step),
+															  np.linspace(V2_min, V2_max, V2_step),
+															  np.linspace(P_min, P_max, P_step))
 
 
 class MLN:
