@@ -11,6 +11,7 @@ import classes_datasets as ds
 import debug_tools as db
 import mod_cpm
 import sim_gecko
+import plot_dab
 
 
 
@@ -45,9 +46,19 @@ if __name__ == '__main__':
 	#d3d_phi, d3d_tau1, d3d_tau2 = mod_cpm.calc_modulation_dict(dab_test)
 
 	# using np ndarray
-	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
-	mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
 
-	print("mvvp_iLs: \n", mvvp_iLs)
-	print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
+	# Modulation Calculation
+	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
+
+	# Simulation
+	# mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+	# print("mvvp_iLs: \n", mvvp_iLs)
+	# print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
+
+	# Plotting
+	plot_dab.plot_modulation(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+
+
+
+
 

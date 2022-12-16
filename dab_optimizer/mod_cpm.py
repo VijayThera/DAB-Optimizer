@@ -117,3 +117,4 @@ if __name__ == '__main__':
 	#TODO find a way to do this with sparse arrays
 	vec = (1, 0, 0)
 	print(dab_test.mesh_V1[vec])
+	print(dab_test.mesh_V1[:,1,:].shape)
