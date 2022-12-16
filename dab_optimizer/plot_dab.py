@@ -27,6 +27,29 @@ def plot_modulation(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	#fig.colorbar(cf, ax=axs.ravel().tolist())
 	fig.colorbar(cf, ax=axs)
 
+	#plt.show()
+
+
+@db.timeit
+def plot_rms_current(DAB: ds.DAB_Specification, mvvp_iLs):
+	# plot
+	fig, axs = plt.subplots(1, 3, sharey=True)
+	fig.suptitle("DAB RMS Currents")
+	cf = axs[0].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	axs[1].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	axs[2].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	axs[0].set_title("i_Ls")
+	axs[1].set_title("i_Ls")
+	axs[2].set_title("i_Ls")
+	for ax in axs.flat:
+		ax.set(xlabel='P / W', ylabel='U2 / V')
+		ax.label_outer()
+	#fig.colorbar(cf, ax=axs.ravel().tolist())
+	fig.colorbar(cf, ax=axs)
+
+	#plt.show()
+
+
+def show_plot():
+	# just to show the plots all at once
 	plt.show()
-
-

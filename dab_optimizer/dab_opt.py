@@ -58,7 +58,10 @@ if __name__ == '__main__':
 	# Plotting
 	plot_dab.plot_modulation(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
 
+	# fake data
+	U = np.exp(-(dab_test.mesh_V1/2) ** 2 - (dab_test.mesh_V2/3) ** 2 - dab_test.mesh_P ** 2)
+	print(U)
+	plot_dab.plot_rms_current(dab_test, U)
 
-
-
+	plot_dab.show_plot()
 
