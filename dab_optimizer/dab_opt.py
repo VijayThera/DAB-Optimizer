@@ -51,17 +51,18 @@ if __name__ == '__main__':
 	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
 
 	# Simulation
-	# mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
-	# print("mvvp_iLs: \n", mvvp_iLs)
-	# print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
+	mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+	print("mvvp_iLs: \n", mvvp_iLs)
+	print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
 
 	# Plotting
 	plot_dab.plot_modulation(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
 
 	# fake data
-	U = np.exp(-(dab_test.mesh_V1/2) ** 2 - (dab_test.mesh_V2/3) ** 2 - dab_test.mesh_P ** 2)
-	print(U)
-	plot_dab.plot_rms_current(dab_test, U)
+	# U = np.exp(-(dab_test.mesh_V1/2) ** 2 - (dab_test.mesh_V2/3) ** 2 - dab_test.mesh_P ** 2)
+	# print(U)
+	plot_dab.plot_rms_current(dab_test, mvvp_iLs)
+	plot_dab.plot_rms_current(dab_test, mvvp_S11_p_sw)
 
 	plot_dab.show_plot()
 

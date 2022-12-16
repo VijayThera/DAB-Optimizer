@@ -47,8 +47,10 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 		#TODO optimize for multithreading, maybe multiple Gecko instances needed
 		dab_converter.set_global_parameters(sim_params)
 		#TODO time settings should be variable
-		dab_converter.run_simulation(timestep=100e-12, simtime=15e-6, timestep_pre=50e-9, simtime_pre=10e-3)
-		#dab_converter.run_simulation(timestep=100e-12, simtime=15e-6)
+		#dab_converter.run_simulation(timestep=100e-12, simtime=15e-6, timestep_pre=50e-9, simtime_pre=10e-3)
+		#TODO Bug in LPT with _pre settings
+		# does this still run a pre-simulation like in the model?
+		dab_converter.run_simulation(timestep=100e-12, simtime=15e-6)
 		values_mean = dab_converter.get_values(
 			nodes=['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond'],
 			operations=['mean']
