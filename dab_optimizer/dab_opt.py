@@ -13,6 +13,8 @@ import mod_cpm
 import sim_gecko
 import plot_dab
 
+from plotWindow import plotWindow
+
 
 
 
@@ -28,7 +30,7 @@ if __name__ == '__main__':
 									V2_min=175,
 									V2_max=295,
 									V2_step=3,
-									P_min=0,
+									P_min=400,
 									P_max=2200,
 									P_nom=2000,
 									P_step=3,
@@ -56,13 +58,19 @@ if __name__ == '__main__':
 	print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
 
 	# Plotting
-	plot_dab.plot_modulation(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+	pw = plotWindow()
+
+	fig = plot_dab.plot_modulation(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
+	pw.addPlot("DAB Modulation Angles", fig)
 
 	# fake data
 	# U = np.exp(-(dab_test.mesh_V1/2) ** 2 - (dab_test.mesh_V2/3) ** 2 - dab_test.mesh_P ** 2)
 	# print(U)
-	plot_dab.plot_rms_current(dab_test, mvvp_iLs)
-	plot_dab.plot_rms_current(dab_test, mvvp_S11_p_sw)
+	fig = plot_dab.plot_rms_current(dab_test, mvvp_iLs)
+	pw.addPlot("iLs", fig)
+	fig = plot_dab.plot_rms_current(dab_test, mvvp_S11_p_sw)
+	pw.addPlot("S11 p_sw", fig)
 
-	plot_dab.show_plot()
+	#plot_dab.show_plot()
+	pw.show()
 

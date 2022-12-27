@@ -15,6 +15,7 @@ def plot_modulation(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	# plot
 	fig, axs = plt.subplots(1, 3, sharey=True)
 	fig.suptitle("DAB Modulation Angles")
+	fig.tight_layout()
 	cf = axs[0].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_phi[:,1,:])
 	axs[1].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_tau1[:,1,:])
 	axs[2].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_tau2[:,1,:])
@@ -28,6 +29,7 @@ def plot_modulation(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	fig.colorbar(cf, ax=axs)
 
 	#plt.show()
+	return fig
 
 
 @db.timeit
@@ -48,6 +50,7 @@ def plot_rms_current(DAB: ds.DAB_Specification, mvvp_iLs):
 	fig.colorbar(cf, ax=axs)
 
 	#plt.show()
+	return fig
 
 
 def show_plot():
