@@ -3,6 +3,14 @@
 ### python >= 3.10 ###
 
 import numpy as np
+from dotmap import DotMap
+
+
+class DAB_Specification_DM(DotMap):
+	"""
+	Class to store the DAB specification
+	"""
+
 
 
 
@@ -10,21 +18,21 @@ class DAB_Specification:
 	"""
 	Class to store the DAB specification
 	"""
-	def __init__(self, V1, V1_min, V1_max, V1_step, V2, V2_min, V2_max, V2_step, P_min, P_max, P_nom, P_step,
+	def __init__(self, V1_nom, V1_min, V1_max, V1_step, V2_nom, V2_min, V2_max, V2_step, P_min, P_max, P_nom, P_step,
 				 n, L_s, L_m, fs,
 				 fs_min: float = None, fs_max: float = None, L_c: float = None):
-		self.V1 = V1
+		self.V1_nom = V1_nom
 		self.V1_min = V1_min
 		self.V1_max = V1_max
 		self.V1_step = V1_step
-		self.V2 = V2
+		self.V2_nom = V2_nom
 		self.V2_min = V2_min
 		self.V2_max = V2_max
 		self.V2_step = V2_step
 
+		self.P_nom = P_nom
 		self.P_min = P_min
 		self.P_max = P_max
-		self.P_nom = P_nom
 		self.P_step = P_step
 
 		self.n = n
@@ -45,70 +53,15 @@ class DAB_Specification:
 															  np.linspace(P_min, P_max, P_step), sparse=False)
 
 
-class MLN:
+class DAB_Results:
 	"""
-	class to store data of one operating point
+	Class to store simulation results
 	"""
 
 	def __init__(self):
-		self.mln_phi = None
-		self.mln_ib_il0 = None
-		self.mln_ib_il1 = None
-		self.mln_ib_il2 = None
-		self.mln_ib_il3 = None
-		self.mln_ob_il0 = None
-		self.mln_ob_il1 = None
-		self.mln_ob_il2 = None
-		self.mln_ob_il3 = None
-		self.mln_ib_l_i_rms = None
-		self.mln_ob_l_i_rms = None
-		self.mln_ib_te_i_rms = None
-		self.mln_ob_te_i_rms = None
-		self.mln_phi_zero = None
-		self.mln_ib_te_s_i_mean = None
-		self.mln_ib_te_d_i_mean = None
-		self.mln_ob_te_s_i_mean = None
-		self.mln_ob_te_d_i_mean = None
-		self.mln_ib_te_s_i_rms = None
-		self.mln_ib_te_d_i_rms = None
-		self.mln_ob_te_s_i_rms = None
-		self.mln_ob_te_d_i_rms = None
-		self.mln_ib_ts_s_i_off = None
-		self.mln_ob_ts_s_i_off = None
-		self.mln_ib_ts_s_e_off = None
-		self.mln_ob_ts_s_e_off = None
-		self.mln_ib_ts_v_on = None
-		self.mln_ib_ts_e_on = None
-		self.mln_ob_ts_v_on = None
-		self.mln_ob_ts_e_on = None
-		self.mln_ib_ts_s_p_cond = None
-		self.mln_ib_ts_d_p_cond = None
-		self.mln_ob_ts_s_p_cond = None
-		self.mln_ob_ts_d_p_cond = None
-		self.mln_ib_ts_d_i_off = None
-		self.mln_ob_ts_d_i_off = None
-		self.mln_ib_ts_d_e_rr = None
-		self.mln_ob_ts_d_e_rr = None
-		# main inductance
-		self.mln_ib_lm_i_peak = None
-		self.mln_ib_lm_i_rms = None
-		# power
-		self.mln_ib_ts_s_p_total = None
-		self.mln_ib_ts_d_p_total = None
-		self.mln_ob_ts_s_p_total = None
-		self.mln_ob_ts_d_p_total = None
-		self.mln_p_total = None
-		# temperatures
-		self.ib_t_int = None
-		self.ob_t_int = None
-		self.mln_ib_ts_s_tj = None
-		self.mln_ib_ts_d_tj = None
-		self.mln_ob_ts_s_tj = None
-		self.mln_ob_ts_d_tj = None
-		self.mfn_ib_ts_sd_tj_cond_max = None
-		self.mfn_ob_ts_sd_tj_cond_max = None
-		self.mfn_ibob_ts_sd_tj_max_nan_matrix = None
-		# basics
-		self.v1 = None
-		self.v2 = None
-		self.power_max = None
+		self.specs= None
+		self.mvvp_phi = None
+		self.mvvp_tau1 = None
+		self.mvvp_tau2 = None
+		self.mvvp_iLs = None
+		self.mvvp_S11_p_sw = None

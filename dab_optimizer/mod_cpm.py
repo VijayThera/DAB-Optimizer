@@ -75,11 +75,11 @@ def f_mln_phi(mln_lambda: np.array, mln_n: np.array, v1: float, v2: float, power
 if __name__ == '__main__':
 	print("Start of Module CPM ...")
 
-	dab_test = ds.DAB_Specification(V1=700,
+	dab_test = ds.DAB_Specification(V1_nom=700,
 									V1_min=600,
 									V1_max=800,
 									V1_step=3,
-									V2=235,
+									V2_nom=235,
 									V2_min=175,
 									V2_max=295,
 									V2_step=3,
