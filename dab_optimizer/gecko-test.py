@@ -1,16 +1,15 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-### python >= 3.10 ###
+# coding: utf-8
+# python >= 3.10
 
 
 import os
-#import sys
-import argparse
 import pathlib
-import sys
+# import sys
+# import argparse
+# import sys
 
 import leapythontoolbox as lpt
-
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
@@ -41,7 +40,7 @@ if __name__ == '__main__':
     else:
         print("error")
 
-    #sys.exit(0)
+    # sys.exit(0)
 
     print("lpt.GeckoSimulation(simfilepath)")
     # this opens the GUI
@@ -57,8 +56,8 @@ if __name__ == '__main__':
 
     dab_converter.get_scope_data(node_names=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], file_name='test')
 
-    values = dab_converter.get_values(nodes=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], operations=['mean', 'rms'], range_start_stop=[10e-6, 15e-6])
+    values = dab_converter.get_values(nodes=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], operations=['mean', 'rms'],
+                                      range_start_stop=[10e-6, 15e-6])
     print(values)
     print(type(values))
     print(type(values['mean']['i_HF1']))
-

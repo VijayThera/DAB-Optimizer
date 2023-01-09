@@ -1,11 +1,8 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-### python >= 3.10 ###
+# coding: utf-8
+# python >= 3.10
 
-import itertools
 import numpy as np
-from collections import defaultdict
-import math
 
 import classes_datasets as ds
 import debug_tools as db
@@ -13,108 +10,59 @@ import debug_tools as db
 
 @db.timeit
 def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
-	# init 3d arrays
-	mvvp_phi = np.zeros_like(mesh_V1)
-	# init these with pi because they are constant for CPM
-	mvvp_tau1 = np.full_like(mesh_V1, np.pi)
-	mvvp_tau2 = np.full_like(mesh_V1, np.pi)
+    # init 3d arrays
+    # mvvp_phi = np.zeros_like(mesh_V1)
+    # init these with pi because they are constant for CPM
+    mvvp_tau1 = np.full_like(mesh_V1, np.pi)
+    mvvp_tau2 = np.full_like(mesh_V1, np.pi)
 
-	# Calculate phase shift difference from input to output bridge
-	#TODO maybe have to consider the case sqrt(<0). When does this happen?
-	mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * fs_nom * L_s * mesh_P) / (n * mesh_V1 * mesh_V2)))
+    # Calculate phase shift difference from input to output bridge
+    # TODO maybe have to consider the case sqrt(<0). When does this happen?
+    # maybe like this: mln_phi[mln_phi < 0] = np.nan
+    mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * fs_nom * L_s * mesh_P) / (n * mesh_V1 * mesh_V2)))
 
-	return mvvp_phi, mvvp_tau1, mvvp_tau2
-
-@db.timeit
-def calc_modulation_dict(DAB: ds.DAB_Specification):
-	#step = 10
-	d3d_phi = defaultdict(lambda: defaultdict(dict))
-	d3d_tau1 = defaultdict(lambda: defaultdict(dict))
-	d3d_tau2 = defaultdict(lambda: defaultdict(dict))
-	# ugly but for testing until np.array is implemented
-	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
-									   range(DAB.V2_min, DAB.V2_max+1, 60),
-									   range(DAB.P_min, DAB.P_max+1, 1100)):
-		d3d_phi[V1][V2][P] = _calc_phi(V1, V2, P, DAB.fs_nom, DAB.L_s, DAB.n)
-		d3d_tau1[V1][V2][P] = math.pi
-		d3d_tau2[V1][V2][P] = math.pi
-
-	return d3d_phi, d3d_tau1, d3d_tau2
-
-
-def _calc_phi(V1, V2, P, fs, L, n):
-	phi = math.pi / 2 * (1 - math.sqrt(1 - (8 * fs * L * P) / (n * V1 * V2)))
-	return phi
-
-
-def f_mln_phi(mln_lambda: np.array, mln_n: np.array, v1: float, v2: float, power_max: float) -> np.array:
-	"""
-	Calculate phase shift difference from input to output bridge
-	:param mln_lambda: lambda in ln-mesh
-	:type mln_lambda: np.array
-	:param mln_n: n in ln-mesh
-	:type mln_n: np.array
-	:param v1: input voltage
-	:type v1: float
-	:param v2: output voltage   git dif
-	:type v2: float
-	:param power_max: power
-	:type power_max: float
-	:return: phi (phase shift difference from input to output bridge)
-	:rtype: np.array
-	"""
-	mln_phi = 1 - (8 * mln_lambda * power_max) / (mln_n * v1 * v2)
-
-	mln_phi[mln_phi < 0] = np.nan
-	mln_phi[~np.isnan(mln_phi)] = np.pi / 2 * (1 - np.sqrt(mln_phi[~np.isnan(mln_phi)]))
-
-	return mln_phi
+    return mvvp_phi, mvvp_tau1, mvvp_tau2
 
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
-	print("Start of Module CPM ...")
+    print("Start of Module CPM ...")
 
-	dab_test = ds.DAB_Specification(V1_nom=700,
-									V1_min=600,
-									V1_max=800,
-									V1_step=3,
-									V2_nom=235,
-									V2_min=175,
-									V2_max=295,
-									V2_step=3,
-									P_min=0,
-									P_max=2200,
-									P_nom=2000,
-									P_step=3,
-									n=2.99,
-									L_s=84e-6,
-									L_m=599e-6,
-									fs_nom=200000,
-									)
+    dab_specs = ds.DAB_Specification()
+    dab_specs.V1_nom = 700
+    dab_specs.V1_min = 600
+    dab_specs.V1_max = 800
+    dab_specs.V1_step = 3
+    dab_specs.V2_nom = 235
+    dab_specs.V2_min = 175
+    dab_specs.V2_max = 295
+    dab_specs.V2_step = 3
+    dab_specs.P_min = 400
+    dab_specs.P_max = 2200
+    dab_specs.P_nom = 2000
+    dab_specs.P_step = 3
+    dab_specs.n = 2.99
+    dab_specs.L_s = 84e-6
+    dab_specs.L_m = 599e-6
+    dab_specs.fs_nom = 200000
 
-	# using 3d dicts... ugly
-	d3d_phi, d3d_tau1, d3d_tau2 = calc_modulation_dict(dab_test)
-	print(d3d_phi)
+    # Object to store all generated data
+    dab_results = ds.DAB_Results()
+    # gen mesh manually
+    dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
+        np.linspace(dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step),
+        np.linspace(dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step),
+        np.linspace(dab_specs.P_min, dab_specs.P_max, dab_specs.P_step), sparse=False)
 
-	# using np ndarray
-	mvvp_phi, mvvp_tau1, mvvp_tau2 = calc_modulation(dab_test)
-	print(mvvp_phi)
+    # Modulation Calculation
+    dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = calc_modulation(dab_specs.n,
+                                                                                         dab_specs.L_s,
+                                                                                         dab_specs.fs_nom,
+                                                                                         dab_results.mesh_V1,
+                                                                                         dab_results.mesh_V2,
+                                                                                         dab_results.mesh_P)
 
-	print(dab_test.mesh_V1, dab_test.mesh_V2, dab_test.mesh_P, sep='\n')
-	print("dab_test.mesh_V1[0,0,0]", type(dab_test.mesh_V1[0,0,0]))
-
-	print("mvvp_phi[0,0,0]", type(mvvp_phi[0,0,0]))
-	print("mvvp_tau1[0,0,0]", type(mvvp_tau1[0,0,0]))
-
-	print(dab_test.mesh_V1.shape)
-	print(dab_test.mesh_V2.shape)
-	print(dab_test.mesh_P.shape)
-	#print(dab_test.mesh_V1[1,0,0])
-	print(dab_test.mesh_V1[0,1,0])
-	#print(dab_test.mesh_V1[0,0,1])
-
-	#TODO find a way to do this with sparse arrays
-	vec = (1, 0, 0)
-	print(dab_test.mesh_V1[vec])
-	print(dab_test.mesh_V1[:,1,:].shape)
+    print(dab_results.mvvp_phi)
+    print("mvvp_phi[0,0,0]", type(dab_results.mvvp_phi[0, 0, 0]))
+    print("mvvp_tau1[0,0,0]", type(dab_results.mvvp_tau1[0, 0, 0]))
+    

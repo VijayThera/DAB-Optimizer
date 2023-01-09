@@ -1,20 +1,24 @@
+#!/usr/bin/python3
+# coding: utf-8
+# python >= 3.10
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import matplotlib.pyplot as plt
+import numpy as np
+from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget, QVBoxLayout
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot
+import sys
+
 import matplotlib
 # prevent NoneType error for versions of matplotlib 3.1.0rc1+ by calling matplotlib.use()
 # For more on why it's nececessary, see
 # https://stackoverflow.com/questions/59656632/using-qt5agg-backend-with-matplotlib-3-1-2-get-backend-changes-behavior
 matplotlib.use('qt5agg')
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
-import numpy as np
-from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget,QVBoxLayout
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
-import sys
 
-
-class plotWindow():
+class plotWindow:
     def __init__(self, parent=None):
         self.app = QApplication(sys.argv)
         self.MainWindow = QMainWindow()
@@ -51,9 +55,9 @@ class plotWindow():
     def show(self):
         self.app.exec_()
 
+
 if __name__ == '__main__':
     import numpy as np
-
 
     pw = plotWindow()
 
@@ -71,9 +75,3 @@ if __name__ == '__main__':
     pw.show()
 
     # sys.exit(app.exec_())
-
-
-
-
-
-

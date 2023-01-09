@@ -1,39 +1,38 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-### python >= 3.10 ###
+# coding: utf-8
+# python >= 3.10
 
 import numpy as np
 from dotmap import DotMap
 
 
 class DAB_Specification(DotMap):
-	"""
-	Class to store the DAB specification.
-	It contains only simple values of the same kind, e.g. float
-	It inherits from DotMap to provide dot-notation usage instead of regular dict access.
-	TODO limit input to e.g. float
-	TODO define minimum dataset (keys and values that must exist)
-	"""
+    """
+    Class to store the DAB specification.
+    It contains only simple values of the same kind, e.g. float
+    It inherits from DotMap to provide dot-notation usage instead of regular dict access.
+    TODO limit input to e.g. float
+    TODO define minimum dataset (keys and values that must exist)
+    """
 
-	def save_to_array(self):
-		return
-		#todo
-		#return spec_keys, spec_values
+    def save_to_array(self):
+        return
+    #todo
+    #return spec_keys, spec_values
 
-	def load_from_array(self, spec_keys, spec_values):
-		return
-		#todo
+    def load_from_array(self, spec_keys, spec_values):
+        return
+    #todo
 
 
 class DAB_Results(DotMap):
-	"""
-	Class to store simulation results.
-	It contains only numpy arrays.
-	It inherits from DotMap to provide dot-notation usage instead of regular dict access.
-	TODO limit to np.ndarray
-	TODO define minimum dataset (keys and values that must exist)
-	"""
-
+    """
+    Class to store simulation results.
+    It contains only numpy arrays.
+    It inherits from DotMap to provide dot-notation usage instead of regular dict access.
+    TODO limit to np.ndarray
+    TODO define minimum dataset (keys and values that must exist)
+    """
 
 
 # class DAB_Specification:
@@ -90,78 +89,77 @@ class DAB_Results(DotMap):
 # 		self.mvvp_S11_p_sw = None
 
 
-
 # ---------- MAIN ----------
 if __name__ == '__main__':
-	print("Start of Module Datasets ...")
+    print("Start of Module Datasets ...")
 
-	# Set the basic DAB Specification
-	# Setting it this way disables tab completion!
-	dab_test_dict = {'V1_nom':700,
-					 'V1_min': 600,
-					 'V1_max': 800,
-					 'V1_step': 3,
-					 'V2_nom': 235,
-					 'V2_min': 175,
-					 'V2_max': 295,
-					 'V2_step': 3,
-					 'P_min': 400,
-					 'P_max': 2200,
-					 'P_nom': 2000,
-					 'P_step': 3,
-					 'n': 2.99,
-					 'L_s': 84e-6,
-					 'L_m': 599e-6,
-					 'fs_nom': 200000
-					 }
-	dab_test_dm = DAB_Specification_DM(dab_test_dict)
+    # Set the basic DAB Specification
+    # Setting it this way disables tab completion!
+    dab_test_dict = {'V1_nom': 700,
+                     'V1_min': 600,
+                     'V1_max': 800,
+                     'V1_step': 3,
+                     'V2_nom': 235,
+                     'V2_min': 175,
+                     'V2_max': 295,
+                     'V2_step': 3,
+                     'P_min': 400,
+                     'P_max': 2200,
+                     'P_nom': 2000,
+                     'P_step': 3,
+                     'n': 2.99,
+                     'L_s': 84e-6,
+                     'L_m': 599e-6,
+                     'fs_nom': 200000
+                     }
+    dab_test_dm_no_completion = DAB_Specification(dab_test_dict)
 
-	# Set the basic DAB Specification
-	# Setting it this way enables tab completion!
-	dab_test_dm = DAB_Specification_DM()
-	dab_test_dm.V1_nom = 700
-	dab_test_dm.V1_min = 600
-	dab_test_dm.V1_max = 800
-	dab_test_dm.V1_step = 3
-	dab_test_dm.V2_nom = 235
-	dab_test_dm.V2_min = 175
-	dab_test_dm.V2_max = 295
-	dab_test_dm.V2_step = 3
-	dab_test_dm.P_min = 400
-	dab_test_dm.P_max = 2200
-	dab_test_dm.P_nom = 2000
-	dab_test_dm.P_step = 3
-	dab_test_dm.n = 2.99
-	dab_test_dm.L_s = 84e-6
-	dab_test_dm.L_m = 599e-6
-	dab_test_dm.fs_nom = 200000
+    # Set the basic DAB Specification
+    # Setting it this way enables tab completion!
+    dab_test_dm = DAB_Specification()
+    dab_test_dm.V1_nom = 700
+    dab_test_dm.V1_min = 600
+    dab_test_dm.V1_max = 800
+    dab_test_dm.V1_step = 3
+    dab_test_dm.V2_nom = 235
+    dab_test_dm.V2_min = 175
+    dab_test_dm.V2_max = 295
+    dab_test_dm.V2_step = 3
+    dab_test_dm.P_min = 400
+    dab_test_dm.P_max = 2200
+    dab_test_dm.P_nom = 2000
+    dab_test_dm.P_step = 3
+    dab_test_dm.n = 2.99
+    dab_test_dm.L_s = 84e-6
+    dab_test_dm.L_m = 599e-6
+    dab_test_dm.fs_nom = 200000
 
-	# Some DotMap access examples
-	print(dab_test_dm.V1_nom)
-	print(dab_test_dm.V2_nom)
-	print(dab_test_dm)
-	print(dab_test_dm.toDict())
-	dab_test_dm.pprint()
-	dab_test_dm.pprint(pformat='json')
+    # Some DotMap access examples
+    print(dab_test_dm.V1_nom)
+    print(dab_test_dm.V2_nom)
+    print(dab_test_dm)
+    print(dab_test_dm.toDict())
+    dab_test_dm.pprint()
+    dab_test_dm.pprint(pformat='json')
 
-	# # OLD notation
-	# dab_test = ds.DAB_Specification(V1_nom=700,
-	# 								V1_min=600,
-	# 								V1_max=800,
-	# 								V1_step=3,
-	# 								V2_nom=235,
-	# 								V2_min=175,
-	# 								V2_max=295,
-	# 								V2_step=3,
-	# 								P_min=400,
-	# 								P_max=2200,
-	# 								P_nom=2000,
-	# 								P_step=3,
-	# 								n=2.99,
-	# 								L_s=84e-6,
-	# 								L_m=599e-6,
-	# 								fs_nom=200000,
-	# 								)
-	# print(dab_test.mesh_V1)
-	# print(dab_test.mesh_V2)
-	# print(dab_test.mesh_P)
+# # OLD notation
+# dab_test = ds.DAB_Specification(V1_nom=700,
+# 								V1_min=600,
+# 								V1_max=800,
+# 								V1_step=3,
+# 								V2_nom=235,
+# 								V2_min=175,
+# 								V2_max=295,
+# 								V2_step=3,
+# 								P_min=400,
+# 								P_max=2200,
+# 								P_nom=2000,
+# 								P_step=3,
+# 								n=2.99,
+# 								L_s=84e-6,
+# 								L_m=599e-6,
+# 								fs_nom=200000,
+# 								)
+# print(dab_test.mesh_V1)
+# print(dab_test.mesh_V2)
+# print(dab_test.mesh_P)
