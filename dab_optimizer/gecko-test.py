@@ -43,8 +43,8 @@ if __name__ == '__main__':
 
     #sys.exit(0)
 
-
-
+    print("lpt.GeckoSimulation(simfilepath)")
+    # this opens the GUI
     dab_converter = lpt.GeckoSimulation(simfilepath)
 
     params = dab_converter.get_global_parameters(['phi', 'tau1_inv', 'tau2_inv', 'v_dc1', 'v_dc2', 'f_s'])
@@ -52,6 +52,7 @@ if __name__ == '__main__':
     params = {'phi': 80.0, 'tau1_inv': 40.0, 'tau2_inv': 66.0}
     dab_converter.set_global_parameters(params)
 
+    print("dab_converter.run_simulation")
     dab_converter.run_simulation(timestep=50e-9, simtime=15e-6)
 
     dab_converter.get_scope_data(node_names=['v1', 'v2_1', 'i_HF1', 'S11_p_sw'], file_name='test')
