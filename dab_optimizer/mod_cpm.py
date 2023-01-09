@@ -12,16 +12,16 @@ import debug_tools as db
 
 
 @db.timeit
-def calc_modulation(DAB: ds.DAB_Specification):
+def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
 	# init 3d arrays
-	mvvp_phi = np.zeros_like(DAB.mesh_V1)
+	mvvp_phi = np.zeros_like(mesh_V1)
 	# init these with pi because they are constant for CPM
-	mvvp_tau1 = np.full_like(DAB.mesh_V1, np.pi)
-	mvvp_tau2 = np.full_like(DAB.mesh_V1, np.pi)
+	mvvp_tau1 = np.full_like(mesh_V1, np.pi)
+	mvvp_tau2 = np.full_like(mesh_V1, np.pi)
 
 	# Calculate phase shift difference from input to output bridge
 	#TODO maybe have to consider the case sqrt(<0). When does this happen?
-	mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * DAB.fs * DAB.L_s * DAB.mesh_P) / (DAB.n * DAB.mesh_V1 * DAB.mesh_V2)))
+	mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * fs_nom * L_s * mesh_P) / (n * mesh_V1 * mesh_V2)))
 
 	return mvvp_phi, mvvp_tau1, mvvp_tau2
 
@@ -35,7 +35,7 @@ def calc_modulation_dict(DAB: ds.DAB_Specification):
 	for V1, V2, P in itertools.product(range(DAB.V1_min, DAB.V1_max+1, 100),
 									   range(DAB.V2_min, DAB.V2_max+1, 60),
 									   range(DAB.P_min, DAB.P_max+1, 1100)):
-		d3d_phi[V1][V2][P] = _calc_phi(V1, V2, P, DAB.fs, DAB.L_s, DAB.n)
+		d3d_phi[V1][V2][P] = _calc_phi(V1, V2, P, DAB.fs_nom, DAB.L_s, DAB.n)
 		d3d_tau1[V1][V2][P] = math.pi
 		d3d_tau2[V1][V2][P] = math.pi
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 									n=2.99,
 									L_s=84e-6,
 									L_m=599e-6,
-									fs=200000,
+									fs_nom=200000,
 									)
 
 	# using 3d dicts... ugly

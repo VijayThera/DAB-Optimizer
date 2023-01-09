@@ -11,14 +11,14 @@ import debug_tools as db
 
 
 @db.timeit
-def plot_modulation(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
+def plot_modulation(mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	# plot
 	fig, axs = plt.subplots(1, 3, sharey=True)
 	fig.suptitle("DAB Modulation Angles")
 	fig.tight_layout()
-	cf = axs[0].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_phi[:,1,:])
-	axs[1].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_tau1[:,1,:])
-	axs[2].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_tau2[:,1,:])
+	cf = axs[0].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_phi[:,1,:])
+	axs[1].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_tau1[:,1,:])
+	axs[2].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_tau2[:,1,:])
 	axs[0].set_title("phi")
 	axs[1].set_title("tau1")
 	axs[2].set_title("tau2")
@@ -33,13 +33,13 @@ def plot_modulation(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 
 
 @db.timeit
-def plot_rms_current(DAB: ds.DAB_Specification, mvvp_iLs):
+def plot_rms_current(mesh_V2, mesh_P, mvvp_iLs):
 	# plot
 	fig, axs = plt.subplots(1, 3, sharey=True)
 	fig.suptitle("DAB RMS Currents")
-	cf = axs[0].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
-	axs[1].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
-	axs[2].contourf(DAB.mesh_P[:,1,:], DAB.mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	cf = axs[0].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	axs[1].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_iLs[:,1,:])
+	axs[2].contourf(mesh_P[:,1,:], mesh_V2[:,1,:], mvvp_iLs[:,1,:])
 	axs[0].set_title("i_Ls")
 	axs[1].set_title("i_Ls")
 	axs[2].set_title("i_Ls")

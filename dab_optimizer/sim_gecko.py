@@ -17,7 +17,7 @@ import debug_tools as db
 
 
 @db.timeit
-def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
+def start_sim(mesh_V1, mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
 	# Gecko Basics
 	#TODO make this variable
 	sim_filepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -25,9 +25,9 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 		dab_converter = lpt.GeckoSimulation(sim_filepath)
 
 	# init array to store RMS currents
-	mvvp_iLs = np.full_like(DAB.mesh_V1, np.nan)
+	mvvp_iLs = np.full_like(mesh_V1, np.nan)
 	print(mvvp_iLs.shape)
-	mvvp_S11_p_sw = np.full_like(DAB.mesh_V1, np.nan)
+	mvvp_S11_p_sw = np.full_like(mesh_V1, np.nan)
 
 	for vec_vvp in np.ndindex(mvvp_iLs.shape):
 		#print(vec_vvp, mvvp_phi[vec_vvp], mvvp_tau1[vec_vvp], mvvp_tau2[vec_vvp], sep='\n')
@@ -35,8 +35,8 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 		# set simulation parameters and convert tau to inverse-tau for Gecko
 		sim_params = {
 			#TODO find a way to do this with sparse arrays
-			'v_dc1': DAB.mesh_V1[vec_vvp].item(),
-			'v_dc2': DAB.mesh_V2[vec_vvp].item(),
+			'v_dc1': mesh_V1[vec_vvp].item(),
+			'v_dc2': mesh_V2[vec_vvp].item(),
 			'phi': mvvp_phi[vec_vvp].item() / np.pi * 180,
 			'tau1_inv': (np.pi - mvvp_tau1[vec_vvp].item()) / np.pi * 180,
 			'tau2_inv': (np.pi - mvvp_tau2[vec_vvp].item()) / np.pi * 180
@@ -71,8 +71,8 @@ def start_sim(DAB: ds.DAB_Specification, mvvp_phi, mvvp_tau1, mvvp_tau2):
 									'S12_p_cond': np.random.uniform(0.0, 100)}}
 			values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
 
-		power_deviation = DAB.mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / DAB.mesh_P[vec_vvp].item()
-		print("power_target", DAB.mesh_P[vec_vvp].item())
+		power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
+		print("power_target", mesh_P[vec_vvp].item())
 		print("power_deviation", power_deviation)
 
 		# save simulation results in array

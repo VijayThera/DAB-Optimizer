@@ -17,76 +17,80 @@ import plot_dab
 from plotWindow import plotWindow
 
 
+def main():
+	"""
+	Run the complete optimization procedure
+	"""
+	# Set the basic DAB Specification
+	# Setting it this way enables tab completion.
+	dab_specs = ds.DAB_Specification()
+	dab_specs.V1_nom = 700
+	dab_specs.V1_min = 600
+	dab_specs.V1_max = 800
+	dab_specs.V1_step = 3
+	dab_specs.V2_nom = 235
+	dab_specs.V2_min = 175
+	dab_specs.V2_max = 295
+	dab_specs.V2_step = 3
+	dab_specs.P_min = 400
+	dab_specs.P_max = 2200
+	dab_specs.P_nom = 2000
+	dab_specs.P_step = 3
+	dab_specs.n = 2.99
+	dab_specs.L_s = 84e-6
+	dab_specs.L_m = 599e-6
+	dab_specs.fs_nom = 200000
+
+	# Object to store all generated data
+	dab_results = ds.DAB_Results()
+	# gen mesh manually
+	dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
+		np.linspace(dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step),
+		np.linspace(dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step),
+		np.linspace(dab_specs.P_min, dab_specs.P_max, dab_specs.P_step), sparse=False)
+
+	# Modulation Calculation
+	dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = mod_cpm.calc_modulation(dab_specs.n,
+																								 dab_specs.L_s,
+																								 dab_specs.fs_nom,
+																								 dab_results.mesh_V1,
+																								 dab_results.mesh_V2,
+																								 dab_results.mesh_P)
+
+	# Simulation
+	dab_results.mvvp_iLs, dab_results.mvvp_S11_p_sw = sim_gecko.start_sim(dab_results.mesh_V1,
+																		  dab_results.mesh_V2,
+																		  dab_results.mesh_P,
+																		  dab_results.mvvp_phi,
+																		  dab_results.mvvp_tau1,
+																		  dab_results.mvvp_tau2)
+	print("mvvp_iLs: \n", dab_results.mvvp_iLs)
+	print("mvvp_S11_p_sw: \n", dab_results.mvvp_S11_p_sw)
+
+	# Plotting
+	pw = plotWindow()
+	fig = plot_dab.plot_modulation(dab_results.mesh_V2,
+								   dab_results.mesh_P,
+								   dab_results.mvvp_phi,
+								   dab_results.mvvp_tau1,
+								   dab_results.mvvp_tau2)
+	pw.addPlot("DAB Modulation Angles", fig)
+	fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
+									dab_results.mesh_P,
+									dab_results.mvvp_iLs)
+	pw.addPlot("iLs", fig)
+	fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
+									dab_results.mesh_P,
+									dab_results.mvvp_S11_p_sw)
+	pw.addPlot("S11 p_sw", fig)
+	# plot_dab.show_plot()
+	pw.show()
 
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
 	print("Start of DAB Optimizer ...")
 
-	dab_test = ds.DAB_Specification(V1_nom=700,
-									V1_min=600,
-									V1_max=800,
-									V1_step=3,
-									V2_nom=235,
-									V2_min=175,
-									V2_max=295,
-									V2_step=3,
-									P_min=400,
-									P_max=2200,
-									P_nom=2000,
-									P_step=3,
-									n=2.99,
-									L_s=84e-6,
-									L_m=599e-6,
-									fs=200000,
-									)
-	print(dab_test.mesh_V1)
-	print(dab_test.mesh_V2)
-	print(dab_test.mesh_P)
-	# sys.exit(0)
+	main()
 
-	# Object to store data
-	dab_results = ds.DAB_Results
-	dab_results.specs = dab_test
-
-	# using 3d dicts... ugly
-	#d3d_phi, d3d_tau1, d3d_tau2 = mod_cpm.calc_modulation_dict(dab_test)
-
-	# using np ndarray
-
-	# Modulation Calculation
-	mvvp_phi, mvvp_tau1, mvvp_tau2 = mod_cpm.calc_modulation(dab_test)
-	dab_results.mvvp_phi = mvvp_phi
-	dab_results.mvvp_tau1 = mvvp_tau1
-	dab_results.mvvp_tau2 = mvvp_tau2
-
-	# Simulation
-	mvvp_iLs, mvvp_S11_p_sw = sim_gecko.start_sim(dab_test, mvvp_phi, mvvp_tau1, mvvp_tau2)
-	print("mvvp_iLs: \n", mvvp_iLs)
-	print("mvvp_S11_p_sw: \n", mvvp_S11_p_sw)
-	dab_results.mvvp_iLs = mvvp_iLs
-	dab_results.mvvp_S11_p_sw = mvvp_S11_p_sw
-
-	# Save results to file
-	with open('dab_results.pickle', 'wb') as f:
-		pickle.dump(dab_results, f)
-
-	# Load results from file
-	with open('dab_results.pickle') as f:
-		dab_results = pickle.load(f)
-
-	# Plotting
-	pw = plotWindow()
-
-	fig = plot_dab.plot_modulation(dab_results.specs, dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2)
-	pw.addPlot("DAB Modulation Angles", fig)
-
-	fig = plot_dab.plot_rms_current(dab_results.specs, dab_results.mvvp_iLs)
-	pw.addPlot("iLs", fig)
-
-	fig = plot_dab.plot_rms_current(dab_results.specs, dab_results.mvvp_S11_p_sw)
-	pw.addPlot("S11 p_sw", fig)
-
-	#plot_dab.show_plot()
-	pw.show()
-
+# sys.exit(0)
