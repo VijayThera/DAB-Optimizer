@@ -41,11 +41,18 @@ class DAB_Specification(DotMap):
         return spec_keys, spec_values
 
     def load_from_array(self, spec_keys, spec_values):
-        for i in range(len(spec_keys)):
-            print(i, spec_keys.item(i), spec_values[i])
-            #self.__setitem__(spec_keys.item(i), spec_values.item(i))
-            self[spec_keys.item(i)] = spec_values.item(i)
-
+        """
+        Import a set of array from a previous export.
+        Both numpy arrays must be 1D, of the same length and in order.
+        :param spec_keys: np.array containing the keys (strings) for the dict.
+        :param spec_values: np.array containing the (float) values for the dict.
+        """
+        if (len(spec_keys) == len(spec_values)) and (spec_keys.dtype.type is np.str_) and (
+                spec_values.dtype.type is np.float_):
+            for i in range(len(spec_keys)):
+                self[spec_keys.item(i)] = spec_values.item(i)
+        else:
+            print("Arrays are not valid for import!")
 
 class DAB_Results(DotMap):
     """
@@ -178,9 +185,7 @@ if __name__ == '__main__':
     # import
     print("import")
     dab_loaded = DAB_Specification()
-    dab_loaded.test = 123
-    print(dab_loaded)
-    dab_loaded = dab_loaded.load_from_array(spec_keys, spec_values)
+    dab_loaded.load_from_array(spec_keys, spec_values)
     print(dab_loaded)
 
 
