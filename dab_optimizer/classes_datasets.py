@@ -11,18 +11,40 @@ class DAB_Specification(DotMap):
     Class to store the DAB specification.
     It contains only simple values of the same kind, e.g. float
     It inherits from DotMap to provide dot-notation usage instead of regular dict access.
-    TODO limit input to e.g. float
     TODO define minimum dataset (keys and values that must exist)
     """
 
+    def __init__(self, *args, **kwargs):
+        """
+        Initialisation with an other Dict is not handled and type converted yet!
+        :param args:
+        :param kwargs:
+        """
+        if args or kwargs:
+            print("Don't use this type of initialisation!")
+        # if kwargs:
+        #     d.update((k, float(v)) for k,v in self.__call_items(kwargs)
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, k, v):
+        # Convert all values to float
+        super().__setitem__(k, float(v))
+
+    # def __setattr__(self, k, v):
+    #     print(f'Setting {k} to {v}')
+    #     print(f'Type {type(k)} to {type(v)}')
+    #     super().__setattr__(k, v)
+
     def save_to_array(self):
-        return
-    #todo
-    #return spec_keys, spec_values
+        spec_keys = np.array(list(self.keys()))
+        spec_values = np.array(list(self.values()))
+        return spec_keys, spec_values
 
     def load_from_array(self, spec_keys, spec_values):
-        return
-    #todo
+        for i in range(len(spec_keys)):
+            print(i, spec_keys.item(i), spec_values[i])
+            #self.__setitem__(spec_keys.item(i), spec_values.item(i))
+            self[spec_keys.item(i)] = spec_values.item(i)
 
 
 class DAB_Results(DotMap):
@@ -95,6 +117,7 @@ if __name__ == '__main__':
 
     # Set the basic DAB Specification
     # Setting it this way disables tab completion!
+    # Don't use this!
     dab_test_dict = {'V1_nom': 700,
                      'V1_min': 600,
                      'V1_max': 800,
@@ -113,6 +136,9 @@ if __name__ == '__main__':
                      'fs_nom': 200000
                      }
     dab_test_dm_no_completion = DAB_Specification(dab_test_dict)
+    # Check Value types
+    for value in dab_test_dm_no_completion.values():
+        print(type(value))
 
     # Set the basic DAB Specification
     # Setting it this way enables tab completion!
@@ -136,11 +162,29 @@ if __name__ == '__main__':
 
     # Some DotMap access examples
     print(dab_test_dm.V1_nom)
-    print(dab_test_dm.V2_nom)
+    print(dab_test_dm['V2_nom'])
     print(dab_test_dm)
     print(dab_test_dm.toDict())
     dab_test_dm.pprint()
     dab_test_dm.pprint(pformat='json')
+    # Check Value types
+    for value in dab_test_dm.values():
+        print(type(value))
+
+    # export
+    print("export")
+    spec_keys, spec_values = dab_test_dm.save_to_array()
+    print(spec_keys, spec_values)
+    # import
+    print("import")
+    dab_loaded = DAB_Specification()
+    dab_loaded.test = 123
+    print(dab_loaded)
+    dab_loaded = dab_loaded.load_from_array(spec_keys, spec_values)
+    print(dab_loaded)
+
+
+    #a = np.fromiter(dab_test_dm.items(), dtype=dtype, count=len(dab_test_dm))
 
 # # OLD notation
 # dab_test = ds.DAB_Specification(V1_nom=700,
