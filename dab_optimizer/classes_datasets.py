@@ -35,12 +35,19 @@ class DAB_Specification(DotMap):
     #     print(f'Type {type(k)} to {type(v)}')
     #     super().__setattr__(k, v)
 
-    def save_to_array(self):
+    def export_to_array(self):
+        """
+        Exports the items of the dict to separate np.arrays.
+        spec_keys containing the dict keys as strings.
+        spec_values containing the dict values as float.
+        The order of the elements in the array must be kept!
+        :return: spec_keys, spec_values
+        """
         spec_keys = np.array(list(self.keys()))
         spec_values = np.array(list(self.values()))
         return spec_keys, spec_values
 
-    def load_from_array(self, spec_keys, spec_values):
+    def import_from_array(self, spec_keys, spec_values):
         """
         Import a set of array from a previous export.
         Both numpy arrays must be 1D, of the same length and in order.
@@ -180,12 +187,12 @@ if __name__ == '__main__':
 
     # export
     print("export")
-    spec_keys, spec_values = dab_test_dm.save_to_array()
+    spec_keys, spec_values = dab_test_dm.export_to_array()
     print(spec_keys, spec_values)
     # import
     print("import")
     dab_loaded = DAB_Specification()
-    dab_loaded.load_from_array(spec_keys, spec_values)
+    dab_loaded.import_from_array(spec_keys, spec_values)
     print(dab_loaded)
 
 
