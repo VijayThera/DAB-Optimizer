@@ -14,6 +14,41 @@ import plot_dab
 from plotWindow import plotWindow
 
 
+def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, filepath: str, filename: str = None, datetime = True):
+    """
+    Save everything (except plots) in one file.
+    File is ZIP compressed and contains several named np.ndarray objects:
+        # Starting with "dab_specs_" are for the DAB_Specification
+        dab_specs_keys: containing the dict keys as strings
+        dab_specs_values: containing the dict values as float
+        # Starting with "dab_results_" are for the DAB_Results
+        # TODO shoud I store generated meshes?
+        dab_results_mesh_V1: generated mesh
+        dab_results_mesh_V2: generated mesh
+        dab_results_mesh_P: generated mesh
+        dab_results_mod_cpm_phi: mod_cpm calculated values for phi
+        dab_results_mod_cpm_tau1: mod_cpm calculated values for tau1
+        dab_results_mod_cpm_tau2: mod_cpm calculated values for tau1
+        dab_results_sim_cpm_iLs: simulation results with mod_cpm for iLs
+        dab_results_sim_cpm_S11_p_sw:
+
+    :param dab_specs:
+    :param dab_results:
+    :param filepath:
+    :param filename:
+    :param datetime:
+    """
+    print(dab_specs, dab_results, filepath, filename, datetime)
+    # Temporary Dict to hold the name/array (key/value) pairs to be stored by np.savez
+    # Arrays to save to the file. Each array will be saved to the output file with its corresponding keyword name.
+    kwds = dict()
+    kwds['dab_specs_keys'], kwds['dab_specs_values'] = dab_specs.export_to_array()
+
+    np.savez(file=filepath+filename, **kwds)
+
+
+
+
 @db.timeit
 def main():
     """
@@ -43,9 +78,9 @@ def main():
     dab_results = ds.DAB_Results()
     # gen mesh manually
     dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
-        np.linspace(dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step),
-        np.linspace(dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step),
-        np.linspace(dab_specs.P_min, dab_specs.P_max, dab_specs.P_step), sparse=False)
+        np.linspace(dab_specs.V1_min, dab_specs.V1_max, int(dab_specs.V1_step)),
+        np.linspace(dab_specs.V2_min, dab_specs.V2_max, int(dab_specs.V2_step)),
+        np.linspace(dab_specs.P_min, dab_specs.P_max, int(dab_specs.P_step)), sparse=False)
 
     # Modulation Calculation
     dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = mod_cpm.calc_modulation(dab_specs.n,
@@ -83,6 +118,9 @@ def main():
     pw.addPlot("S11 p_sw", fig)
     # plot_dab.show_plot()
     pw.show()
+
+    # Saving
+    save_to_file(dab_specs, dab_results, './', 'test-save')
 
 
 # ---------- MAIN ----------
