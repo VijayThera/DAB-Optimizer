@@ -4,6 +4,7 @@
 
 # import sys
 import numpy as np
+from datetime import datetime
 
 import classes_datasets as ds
 import debug_tools as db
@@ -14,7 +15,7 @@ import plot_dab
 from plotWindow import plotWindow
 
 
-def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, filepath: str, filename: str = None, datetime = True):
+def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, filepath: str = None, filename: str = None, timestamp = True):
     """
     Save everything (except plots) in one file.
     File is ZIP compressed and contains several named np.ndarray objects:
@@ -34,17 +35,25 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, f
 
     :param dab_specs:
     :param dab_results:
-    :param filepath:
-    :param filename:
-    :param datetime:
+    :param filepath: Folder where to save the files
+    :param filename: String added to the filename. Without file extension. Datetime may prepend the final name.
+    :param timestamp: If the datetime should prepend the final name. default True
     """
-    print(dab_specs, dab_results, filepath, filename, datetime)
+    print(dab_specs, dab_results, filepath, filename, timestamp)
     # Temporary Dict to hold the name/array (key/value) pairs to be stored by np.savez
     # Arrays to save to the file. Each array will be saved to the output file with its corresponding keyword name.
     kwds = dict()
     kwds['dab_specs_keys'], kwds['dab_specs_values'] = dab_specs.export_to_array()
 
-    np.savez(file=filepath+filename, **kwds)
+    for k, v in dab_results.items():
+        kwds['dab_results_' + k] = v
+
+    if timestamp:
+        timestr = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_"
+    else:
+        timestr = ""
+
+    np.savez(file=filepath+timestr+filename, **kwds)
 
 
 
