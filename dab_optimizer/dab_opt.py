@@ -2,9 +2,9 @@
 # coding: utf-8
 # python >= 3.10
 
-# import sys
+import os
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 
 import classes_datasets as ds
 import debug_tools as db
@@ -15,18 +15,23 @@ import plot_dab
 from plotWindow import plotWindow
 
 
-def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, filepath: str = None, filename: str = None, timestamp = True):
+def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
+                 directory = str(), name = str(), timestamp = True, comment = str()):
     """
     Save everything (except plots) in one file.
+    WARNING: Existing files will be overwritten!
+
     File is ZIP compressed and contains several named np.ndarray objects:
         # Starting with "dab_specs_" are for the DAB_Specification
         dab_specs_keys: containing the dict keys as strings
         dab_specs_values: containing the dict values as float
         # Starting with "dab_results_" are for the DAB_Results
-        # TODO shoud I store generated meshes?
+        # TODO shoud I store generated meshes? Maybe not but regenerate them after loading a file.
         dab_results_mesh_V1: generated mesh
         dab_results_mesh_V2: generated mesh
         dab_results_mesh_P: generated mesh
+        # String is constructed as follows:
+        # "dab_results_" + used module (e.g. "mod_cpm_") + value name (e.g. "phi")
         dab_results_mod_cpm_phi: mod_cpm calculated values for phi
         dab_results_mod_cpm_tau1: mod_cpm calculated values for tau1
         dab_results_mod_cpm_tau2: mod_cpm calculated values for tau1
@@ -35,11 +40,10 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, f
 
     :param dab_specs:
     :param dab_results:
-    :param filepath: Folder where to save the files
-    :param filename: String added to the filename. Without file extension. Datetime may prepend the final name.
+    :param directory: Folder where to save the files
+    :param name: String added to the filename. Without file extension. Datetime may prepend the final name.
     :param timestamp: If the datetime should prepend the final name. default True
     """
-    print(dab_specs, dab_results, filepath, filename, timestamp)
     # Temporary Dict to hold the name/array (key/value) pairs to be stored by np.savez
     # Arrays to save to the file. Each array will be saved to the output file with its corresponding keyword name.
     kwds = dict()
@@ -48,15 +52,33 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, f
     for k, v in dab_results.items():
         kwds['dab_results_' + k] = v
 
+    # Add some descriptive data to the file
+    kwds['_timestamp'] = np.asarray(datetime.now().isoformat())
+
+    if comment:
+        kwds['_comment'] = np.asarray(comment)
+
     if timestamp:
-        timestr = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_"
+        if name:
+            filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+        else:
+            filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     else:
-        timestr = ""
+        if name:
+            filename = name
+        else:
+            # set some default non-empty filename
+            filename = "dab_opt_dataset"
 
-    np.savez(file=filepath+timestr+filename, **kwds)
+    if (not directory) or os.path.isdir(directory):
+        file = os.path.join(directory, filename)
+    else:
+        print("Directory does not exist!")
+        return
 
-
-
+    # numpy saves everything for us in a handy zip file
+    #np.savez(file=file, **kwds)
+    np.savez_compressed(file=file, **kwds)
 
 @db.timeit
 def main():
@@ -86,12 +108,14 @@ def main():
     # Object to store all generated data
     dab_results = ds.DAB_Results()
     # gen mesh manually
+    # TODO provide a generator function for this in the DAB_Results class
     dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
         np.linspace(dab_specs.V1_min, dab_specs.V1_max, int(dab_specs.V1_step)),
         np.linspace(dab_specs.V2_min, dab_specs.V2_max, int(dab_specs.V2_step)),
         np.linspace(dab_specs.P_min, dab_specs.P_max, int(dab_specs.P_step)), sparse=False)
 
     # Modulation Calculation
+    # TODO how to name the arrays according to some kind of given pattern?
     dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = mod_cpm.calc_modulation(dab_specs.n,
                                                                                                  dab_specs.L_s,
                                                                                                  dab_specs.fs_nom,
@@ -129,7 +153,7 @@ def main():
     pw.show()
 
     # Saving
-    save_to_file(dab_specs, dab_results, './', 'test-save')
+    save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
 
 
 # ---------- MAIN ----------
