@@ -70,6 +70,31 @@ class DAB_Results(DotMap):
     TODO define minimum dataset (keys and values that must exist)
     """
 
+    _allowed_keys = ['_timestamp', '_comment', 'mesh_', 'mod_cpm_', 'mod_rms_', 'mod_opt_', 'sim_']
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialisation with an other Dict is not handled and type converted yet!
+        :param args:
+        :param kwargs:
+        """
+        if args or kwargs:
+            print("Don't use this type of initialisation!")
+        # if kwargs:
+        #     d.update((k, float(v)) for k,v in self.__call_items(kwargs)
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, k, v):
+        # Only np.ndarray is allowed
+        if isinstance(v, np.ndarray):
+            # Check for allowed key names
+            if any(k.startswith(allowed_key) for allowed_key in self._allowed_keys):
+                print('there is a banned substring inside')
+                # TODO only allow setitem here...
+            else:
+                print('no banned substrings inside')
+        super().__setitem__(k, v)
+
 
 # class DAB_Specification:
 # 	"""
