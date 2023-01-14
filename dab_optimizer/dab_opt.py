@@ -50,14 +50,17 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
     kwds['dab_specs_keys'], kwds['dab_specs_values'] = dab_specs.export_to_array()
 
     for k, v in dab_results.items():
+        # TODO filter for mesh here
         kwds['dab_results_' + k] = v
 
     # Add some descriptive data to the file
+    # Adding a timestamp, it may be useful
     kwds['_timestamp'] = np.asarray(datetime.now().isoformat())
-
+    # Adding a comment to the file, hopefully a descriptive one
     if comment:
         kwds['_comment'] = np.asarray(comment)
 
+    # Adding a timestamp to the filename if requested
     if timestamp:
         if name:
             filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
@@ -79,6 +82,36 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
     # numpy saves everything for us in a handy zip file
     #np.savez(file=file, **kwds)
     np.savez_compressed(file=file, **kwds)
+
+def load_from_file(file: str) -> tuple[ds.DAB_Specification, ds.DAB_Results]:
+    """
+    Load everything from the given .npz file.
+    :param file: a .nps filename or file-like object, string, or pathlib.Path
+    :return: two objects with type DAB_Specification and DAB_Results
+    """
+    dab_specs = ds.DAB_Specification()
+    dab_results = ds.DAB_Results()
+    # Open the file and parse the data
+    with np.load(file) as data:
+        spec_keys = None
+        spec_values = None
+        for k, v in data.items():
+            if k.startswith('dab_results_'):
+                dab_results[k.removeprefix('dab_results_')] = v
+            if str(k) == 'dab_specs_keys':
+                spec_keys = v
+            if str(k) == 'dab_specs_values':
+                spec_values = v
+            if str(k) == '_timestamp':
+                dab_results[k] = v
+            if str(k) == '_comment':
+                dab_results[k] = v
+        # We can not be sure if specs where in the file but hopefully there was
+        if not (spec_keys is None and spec_values is None):
+            dab_specs.import_from_array(spec_keys, spec_values)
+        # TODO regenerate meshes here
+    return dab_specs, dab_results
+
 
 @db.timeit
 def main():
@@ -150,10 +183,16 @@ def main():
                                     dab_results.mvvp_S11_p_sw)
     pw.addPlot("S11 p_sw", fig)
     # plot_dab.show_plot()
-    pw.show()
+    #pw.show()
 
     # Saving
-    save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
+    #save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
+    save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
+
+    # Loading
+    dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
+    dab_specs_loaded.pprint()
+    dab_results_loaded.pprint()
 
 
 # ---------- MAIN ----------
