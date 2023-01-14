@@ -142,57 +142,65 @@ def main():
     dab_results = ds.DAB_Results()
     # gen mesh manually
     # TODO provide a generator function for this in the DAB_Results class
-    dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
-        np.linspace(dab_specs.V1_min, dab_specs.V1_max, int(dab_specs.V1_step)),
-        np.linspace(dab_specs.V2_min, dab_specs.V2_max, int(dab_specs.V2_step)),
-        np.linspace(dab_specs.P_min, dab_specs.P_max, int(dab_specs.P_step)), sparse=False)
+    # dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
+    #     np.linspace(dab_specs.V1_min, dab_specs.V1_max, int(dab_specs.V1_step)),
+    #     np.linspace(dab_specs.V2_min, dab_specs.V2_max, int(dab_specs.V2_step)),
+    #     np.linspace(dab_specs.P_min, dab_specs.P_max, int(dab_specs.P_step)), sparse=False)
+    dab_results.gen_meshes(
+        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
+        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
+        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
 
     # Modulation Calculation
     # TODO how to name the arrays according to some kind of given pattern?
-    dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = mod_cpm.calc_modulation(dab_specs.n,
-                                                                                                 dab_specs.L_s,
-                                                                                                 dab_specs.fs_nom,
-                                                                                                 dab_results.mesh_V1,
-                                                                                                 dab_results.mesh_V2,
-                                                                                                 dab_results.mesh_P)
+    dab_results.mod_phi, dab_results.mod_tau1, dab_results.mod_tau2 = mod_cpm.calc_modulation(dab_specs.n,
+                                                                                              dab_specs.L_s,
+                                                                                              dab_specs.fs_nom,
+                                                                                              dab_results.mesh_V1,
+                                                                                              dab_results.mesh_V2,
+                                                                                              dab_results.mesh_P)
 
     # Simulation
-    dab_results.mvvp_iLs, dab_results.mvvp_S11_p_sw = sim_gecko.start_sim(dab_results.mesh_V1,
-                                                                          dab_results.mesh_V2,
-                                                                          dab_results.mesh_P,
-                                                                          dab_results.mvvp_phi,
-                                                                          dab_results.mvvp_tau1,
-                                                                          dab_results.mvvp_tau2)
-    print("mvvp_iLs: \n", dab_results.mvvp_iLs)
-    print("mvvp_S11_p_sw: \n", dab_results.mvvp_S11_p_sw)
+    dab_results.sim_iLs, dab_results.sim_S11_p_sw = sim_gecko.start_sim(dab_results.mesh_V1,
+                                                                        dab_results.mesh_V2,
+                                                                        dab_results.mesh_P,
+                                                                        dab_results.mod_phi,
+                                                                        dab_results.mod_tau1,
+                                                                        dab_results.mod_tau2)
+    print("mvvp_iLs: \n", dab_results.sim_iLs)
+    print("mvvp_S11_p_sw: \n", dab_results.sim_S11_p_sw)
 
     # Plotting
     pw = plotWindow()
     fig = plot_dab.plot_modulation(dab_results.mesh_V2,
                                    dab_results.mesh_P,
-                                   dab_results.mvvp_phi,
-                                   dab_results.mvvp_tau1,
-                                   dab_results.mvvp_tau2)
+                                   dab_results.mod_phi,
+                                   dab_results.mod_tau1,
+                                   dab_results.mod_tau2)
     pw.addPlot("DAB Modulation Angles", fig)
     fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
                                     dab_results.mesh_P,
-                                    dab_results.mvvp_iLs)
+                                    dab_results.sim_iLs)
     pw.addPlot("iLs", fig)
     fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
                                     dab_results.mesh_P,
-                                    dab_results.mvvp_S11_p_sw)
+                                    dab_results.sim_S11_p_sw)
     pw.addPlot("S11 p_sw", fig)
     # plot_dab.show_plot()
     #pw.show()
 
     # Saving
-    #save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
-    save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
+    # save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
+    # save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading
-    dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
-    dab_specs_loaded.pprint()
-    dab_results_loaded.pprint()
+    # dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
+    # dab_specs_loaded.pprint()
+    # dab_results_loaded.pprint()
+
+    # add some false data, should output an error log or warning
+    # dab_results_loaded.foo = np.array([1, 2, 3])
+    # dab_results_loaded.bar = "test"
 
 
 # ---------- MAIN ----------

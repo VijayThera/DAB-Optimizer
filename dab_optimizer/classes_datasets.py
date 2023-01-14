@@ -61,16 +61,19 @@ class DAB_Specification(DotMap):
         else:
             print("Arrays are not valid for import!")
 
+
 class DAB_Results(DotMap):
     """
     Class to store simulation results.
-    It contains only numpy arrays.
+    It contains only numpy arrays, you can only add those.
     It inherits from DotMap to provide dot-notation usage instead of regular dict access.
     TODO limit to np.ndarray
     TODO define minimum dataset (keys and values that must exist)
+    Make sure your key names start with one of the "_allowed_keys", if not you can not add the key.
+    Add a useful name string after the prefix from "_allowed_keys" to identify your results later.
     """
 
-    _allowed_keys = ['_timestamp', '_comment', 'mesh_', 'mod_cpm_', 'mod_rms_', 'mod_opt_', 'sim_']
+    _allowed_keys = ['_timestamp', '_comment', 'mesh_', 'mod_', 'sim_']
 
     def __init__(self, *args, **kwargs):
         """
@@ -89,11 +92,31 @@ class DAB_Results(DotMap):
         if isinstance(v, np.ndarray):
             # Check for allowed key names
             if any(k.startswith(allowed_key) for allowed_key in self._allowed_keys):
-                print('there is a banned substring inside')
-                # TODO only allow setitem here...
+                super().__setitem__(k, v)
             else:
-                print('no banned substrings inside')
-        super().__setitem__(k, v)
+                print('None of the _allowed_keys are used! Nothing added! Used key: ' + str(k))
+        else:
+            print('Value is not an numpy ndarray! Nothing added! Used type: ' + str(type(v)))
+
+    def gen_meshes(self, V1_min: float, V1_max: float, V1_step,
+                        V2_min: float, V2_max: float, V2_step,
+                        P_min: float, P_max: float, P_step):
+        """
+        Generates the default meshgrids for V1, V2 and P.
+        Set the min and max values for your meshgrid with a step size (linspace) of step value.
+        :param V1_min:
+        :param V1_max:
+        :param V1_step: int or float (converted to int) are accepted
+        :param V2_min:
+        :param V2_max:
+        :param V2_step: int or float (converted to int) are accepted
+        :param P_min:
+        :param P_max:
+        :param P_step: int or float (converted to int) are accepted
+        """
+        self.mesh_V1, self.mesh_V2, self.mesh_P = np.meshgrid(np.linspace(V1_min, V1_max, int(V1_step)),
+                                                              np.linspace(V2_min, V2_max, int(V2_step)),
+                                                              np.linspace(P_min, P_max, int(P_step)), sparse=False)
 
 
 # class DAB_Specification:
@@ -157,22 +180,22 @@ if __name__ == '__main__':
     # Set the basic DAB Specification
     # Setting it this way disables tab completion!
     # Don't use this!
-    dab_test_dict = {'V1_nom': 700,
-                     'V1_min': 600,
-                     'V1_max': 800,
+    dab_test_dict = {'V1_nom':  700,
+                     'V1_min':  600,
+                     'V1_max':  800,
                      'V1_step': 3,
-                     'V2_nom': 235,
-                     'V2_min': 175,
-                     'V2_max': 295,
+                     'V2_nom':  235,
+                     'V2_min':  175,
+                     'V2_max':  295,
                      'V2_step': 3,
-                     'P_min': 400,
-                     'P_max': 2200,
-                     'P_nom': 2000,
-                     'P_step': 3,
-                     'n': 2.99,
-                     'L_s': 84e-6,
-                     'L_m': 599e-6,
-                     'fs_nom': 200000
+                     'P_min':   400,
+                     'P_max':   2200,
+                     'P_nom':   2000,
+                     'P_step':  3,
+                     'n':       2.99,
+                     'L_s':     84e-6,
+                     'L_m':     599e-6,
+                     'fs_nom':  200000
                      }
     dab_test_dm_no_completion = DAB_Specification(dab_test_dict)
     # Check Value types
@@ -220,8 +243,7 @@ if __name__ == '__main__':
     dab_loaded.import_from_array(spec_keys, spec_values)
     print(dab_loaded)
 
-
-    #a = np.fromiter(dab_test_dm.items(), dtype=dtype, count=len(dab_test_dm))
+    # a = np.fromiter(dab_test_dm.items(), dtype=dtype, count=len(dab_test_dm))
 
 # # OLD notation
 # dab_test = ds.DAB_Specification(V1_nom=700,
