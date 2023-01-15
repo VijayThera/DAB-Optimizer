@@ -3,6 +3,7 @@
 # python >= 3.10
 
 
+from datetime import datetime
 # Decorator to print function args
 import inspect
 # Decorator to measure execution time of a function
@@ -12,6 +13,7 @@ import time
 # Set a global DEBUG variable to switch some debugging code.
 # This is evaluated a runtime, not like the Python __debug__ that is evaluated in preprocess.
 DEBUG = True
+
 
 def dump_args(func):
     """
@@ -27,7 +29,8 @@ def dump_args(func):
 
     return wrapper
 
-# das hier vor funktion kopieren
+
+# Use this in front of a function to print args
 # @dump_args
 
 
@@ -35,6 +38,7 @@ def timeit(func):
     """
     Decorator to measure execution time of a function
     """
+
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
@@ -45,10 +49,63 @@ def timeit(func):
         # print(f'{total_time:.4f} seconds for Function {func.__name__}{args} {kwargs}')
         print(f'{total_time:.4f} seconds for Function {func.__name__}')
         return result
+
     return timeit_wrapper
+
 
 # Use this in front of a function to measure execution time
 # @timeit
+
+
+def error(*args, sep=' ', **kwargs):
+    """
+    Log error output like print does.
+    :param args:
+    :param sep:
+    :param kwargs:
+    """
+    # print(*args, **kwargs)
+    print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(inspect.stack()[1][0]).__name__ +
+          ' ' + sep.join(map(str, args)), **kwargs)
+
+
+def warning(*args, sep=' ', **kwargs):
+    """
+    Log warning output like print does.
+    :param args:
+    :param sep:
+    :param kwargs:
+    """
+    # print(*args, **kwargs)
+    print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(inspect.stack()[1][0]).__name__ +
+          ' ' + sep.join(map(str, args)), **kwargs)
+
+
+def info(*args, sep=' ', **kwargs):
+    """
+    Log normal info output like print does.
+    :param args:
+    :param sep:
+    :param kwargs:
+    """
+    print(*args, **kwargs)
+    # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + sep.join(map(str, args)), **kwargs)
+    # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(inspect.stack()[1][0]).__name__ +
+    #       ' ' + sep.join(map(str, args)), **kwargs)
+
+
+def debug(*args, sep=' ', **kwargs):
+    """
+    Log debug output like print does.
+    :param args:
+    :param sep:
+    :param kwargs:
+    """
+    if DEBUG or __debug__:
+        print(*args, **kwargs)
+        # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + sep.join(map(str, args)), **kwargs)
+        # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(inspect.stack()[1][0]).__name__ +
+        #       ' ' + sep.join(map(str, args)), **kwargs)
 
 
 # ---------- MAIN ----------

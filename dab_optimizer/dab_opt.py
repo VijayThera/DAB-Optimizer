@@ -11,7 +11,7 @@ import logging
 import argparse
 
 import classes_datasets as ds
-import debug_tools as db
+from debug_tools import *
 import mod_cpm
 import sim_gecko
 import plot_dab
@@ -81,7 +81,7 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
     if (not directory) or os.path.isdir(directory):
         file = os.path.join(directory, filename)
     else:
-        print("Directory does not exist!")
+        warning("Directory does not exist!")
         return
 
     # numpy saves everything for us in a handy zip file
@@ -179,7 +179,7 @@ def main_init():
     # sys.exit(0)
 
 
-@db.timeit
+@timeit
 def test_dab():
     """
     Run the complete optimization procedure
@@ -233,8 +233,8 @@ def test_dab():
                                                                         dab_results.mod_phi,
                                                                         dab_results.mod_tau1,
                                                                         dab_results.mod_tau2)
-    print("sim_iLs: \n", dab_results.sim_iLs)
-    print("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
+    debug("sim_iLs: \n", dab_results.sim_iLs)
+    debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
 
     # Plotting
     pw = plotWindow()
@@ -253,7 +253,7 @@ def test_dab():
                                     dab_results.sim_S11_p_sw)
     pw.addPlot("S11 p_sw", fig)
     # plot_dab.show_plot()
-    # pw.show()
+    pw.show()
 
     # Saving
     # save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
@@ -268,10 +268,16 @@ def test_dab():
     # dab_results_loaded.foo = np.array([1, 2, 3])
     # dab_results_loaded.bar = "test"
 
+    # Test the logging
+    # info("test")
+    # debug("test")
+    # warning("test")
+    # error("test")
+
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
-    logging.info("Start of DAB Optimizer ...")
+    info("Start of DAB Optimizer ...")
     # Do some basic init like logging, args, etc.
     main_init()
     # Test the DAB functions

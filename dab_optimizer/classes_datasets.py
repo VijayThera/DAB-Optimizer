@@ -5,6 +5,8 @@
 import numpy as np
 from dotmap import DotMap
 
+from debug_tools import *
+
 
 class DAB_Specification(DotMap):
     """
@@ -21,7 +23,7 @@ class DAB_Specification(DotMap):
         :param kwargs:
         """
         if args or kwargs:
-            print("Don't use this type of initialisation!")
+            warning("Don't use this type of initialisation!")
         # if kwargs:
         #     d.update((k, float(v)) for k,v in self.__call_items(kwargs)
         super().__init__(*args, **kwargs)
@@ -59,7 +61,7 @@ class DAB_Specification(DotMap):
             for i in range(len(spec_keys)):
                 self[spec_keys.item(i)] = spec_values.item(i)
         else:
-            print("Arrays are not valid for import!")
+            warning("Arrays are not valid for import!")
 
 
 class DAB_Results(DotMap):
@@ -67,8 +69,6 @@ class DAB_Results(DotMap):
     Class to store simulation results.
     It contains only numpy arrays, you can only add those.
     It inherits from DotMap to provide dot-notation usage instead of regular dict access.
-    TODO limit to np.ndarray
-    TODO define minimum dataset (keys and values that must exist)
     Make sure your key names start with one of the "_allowed_keys", if not you can not add the key.
     Add a useful name string after the prefix from "_allowed_keys" to identify your results later.
     """
@@ -82,7 +82,7 @@ class DAB_Results(DotMap):
         :param kwargs:
         """
         if args or kwargs:
-            print("Don't use this type of initialisation!")
+            warning("Don't use this type of initialisation!")
         # if kwargs:
         #     d.update((k, float(v)) for k,v in self.__call_items(kwargs)
         super().__init__(*args, **kwargs)
@@ -94,9 +94,9 @@ class DAB_Results(DotMap):
             if any(k.startswith(allowed_key) for allowed_key in self._allowed_keys):
                 super().__setitem__(k, v)
             else:
-                print('None of the _allowed_keys are used! Nothing added! Used key: ' + str(k))
+                warning('None of the _allowed_keys are used! Nothing added! Used key: ' + str(k))
         else:
-            print('Value is not an numpy ndarray! Nothing added! Used type: ' + str(type(v)))
+            warning('Value is not an numpy ndarray! Nothing added! Used type: ' + str(type(v)))
 
     def gen_meshes(self, V1_min: float, V1_max: float, V1_step,
                         V2_min: float, V2_max: float, V2_step,

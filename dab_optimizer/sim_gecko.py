@@ -6,10 +6,10 @@ import numpy as np
 
 import leapythontoolbox as lpt
 import classes_datasets as ds
-import debug_tools as db
+from debug_tools import *
 
 
-@db.timeit
+@timeit
 def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
               mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     # Gecko Basics
@@ -35,7 +35,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
             'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
             'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
         }
-        print(sim_params)
+        debug(sim_params)
         # print("phi: ", type(sim_params['phi']))
 
         # start simulation for this operation point
@@ -66,7 +66,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
             values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
 
         power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
-        print("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
+        debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
         # print("power_deviation", power_deviation)
 
         # save simulation results in array

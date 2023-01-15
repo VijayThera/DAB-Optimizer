@@ -6,10 +6,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import classes_datasets as ds
-import debug_tools as db
+from debug_tools import *
 
 
-@db.timeit
+@timeit
 def plot_modulation(mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
     # plot
     fig, axs = plt.subplots(1, 3, sharey=True)
@@ -31,7 +31,7 @@ def plot_modulation(mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
     return fig
 
 
-@db.timeit
+@timeit
 def plot_rms_current(mesh_V2, mesh_P, mvvp_iLs):
     # plot
     fig, axs = plt.subplots(1, 3, sharey=True)

@@ -5,10 +5,10 @@
 import numpy as np
 
 import classes_datasets as ds
-import debug_tools as db
+from debug_tools import *
 
 
-@db.timeit
+@timeit
 def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     # init 3d arrays
     # mvvp_phi = np.zeros_like(mesh_V1)
