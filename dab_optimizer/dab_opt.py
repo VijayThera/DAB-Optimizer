@@ -3,8 +3,12 @@
 # python >= 3.10
 
 import os
+import sys
+
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime
+import logging
+import argparse
 
 import classes_datasets as ds
 import debug_tools as db
@@ -16,7 +20,7 @@ from plotWindow import plotWindow
 
 
 def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
-                 directory = str(), name = str(), timestamp = True, comment = str()):
+                 directory=str(), name=str(), timestamp=True, comment=str()):
     """
     Save everything (except plots) in one file.
     WARNING: Existing files will be overwritten!
@@ -38,6 +42,7 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
         dab_results_sim_cpm_iLs: simulation results with mod_cpm for iLs
         dab_results_sim_cpm_S11_p_sw:
 
+    :param comment:
     :param dab_specs:
     :param dab_results:
     :param directory: Folder where to save the files
@@ -80,8 +85,9 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
         return
 
     # numpy saves everything for us in a handy zip file
-    #np.savez(file=file, **kwds)
+    # np.savez(file=file, **kwds)
     np.savez_compressed(file=file, **kwds)
+
 
 def load_from_file(file: str) -> tuple[ds.DAB_Specification, ds.DAB_Results]:
     """
@@ -113,8 +119,68 @@ def load_from_file(file: str) -> tuple[ds.DAB_Specification, ds.DAB_Results]:
     return dab_specs, dab_results
 
 
+def main_init():
+    parser = argparse.ArgumentParser()
+    # parser.add_argument("configfile", help="config file")
+    parser.add_argument("-l", help="Log to file: <datetime>_<name>.log with -l <name>")
+    parser.add_argument("-d", help="Set log output to debug level", action="store_true")
+    args = parser.parse_args()
+
+    # if os.path.isfile(args.configfile):
+    #     config = yaml.load(open(args.configfile))
+    # else:
+    #     logging.error("[ERROR] configfile '{}' does not exist!".format(args.configfile), file=sys.stderr)
+    #     sys.exit(1)
+
+    # print("this should be before logger init")
+    # # Set up the logger
+    # if args.d or db.DEBUG or __debug__:
+    #     loglevel = logging.DEBUG
+    # else:
+    #     loglevel = logging.INFO
+    #
+    # format = '%(asctime)s %(module)s %(levelname)s: %(message)s'
+    # if args.l:
+    #     logging.basicConfig(format=format, level=loglevel,
+    #                         filename=str(datetime.now().strftime("%Y-%m-%d_%H%M%S")) + "_" + args.l + ".log",
+    #                         encoding='utf-8', force=True)
+    # else:
+    #     logging.basicConfig(format=format, level=loglevel, force=True)
+    #     #logging.basicConfig(format='%(asctime)s %(message)s', level=loglevel)
+    #
+    # # create log
+    # #logging.root.setLevel(loglevel)
+    # log = logging.getLogger(__name__)
+    # #log.setLevel(logging.DEBUG)
+    # # create console handler and set level to debug
+    # # ch = logging.StreamHandler()
+    # # ch.setLevel(logging.DEBUG)
+    # # # create formatter
+    # # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # # # add formatter to ch
+    # # ch.setFormatter(formatter)
+    # # # add ch to log
+    # # log.addHandler(ch)
+    #
+    # # 'application' code
+    # log.debug('debug message')
+    # log.info('info message')
+    # log.warning('warn message')
+    # log.error('error message')
+    # log.critical('critical message')
+    #
+    # log.debug("TEST")
+    # log.debug("INT %s", 5)
+    # log.info("INFO")
+    # d = {"name" : "John", "age": 10}
+    # log.info('Test dict: %s', d)
+    #
+    # print("this should be after logger init")
+    # sys.exit(0)
+
+
 @db.timeit
-def main():
+def test_dab():
     """
     Run the complete optimization procedure
     """
@@ -167,8 +233,8 @@ def main():
                                                                         dab_results.mod_phi,
                                                                         dab_results.mod_tau1,
                                                                         dab_results.mod_tau2)
-    print("mvvp_iLs: \n", dab_results.sim_iLs)
-    print("mvvp_S11_p_sw: \n", dab_results.sim_S11_p_sw)
+    print("sim_iLs: \n", dab_results.sim_iLs)
+    print("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
 
     # Plotting
     pw = plotWindow()
@@ -187,7 +253,7 @@ def main():
                                     dab_results.sim_S11_p_sw)
     pw.addPlot("S11 p_sw", fig)
     # plot_dab.show_plot()
-    #pw.show()
+    # pw.show()
 
     # Saving
     # save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
@@ -205,8 +271,10 @@ def main():
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
-    print("Start of DAB Optimizer ...")
+    logging.info("Start of DAB Optimizer ...")
+    # Do some basic init like logging, args, etc.
+    main_init()
+    # Test the DAB functions
+    test_dab()
 
-    main()
-
-# sys.exit(0)
+    # sys.exit(0)

@@ -9,6 +9,9 @@ import inspect
 from functools import wraps
 import time
 
+# Set a global DEBUG variable to switch some debugging code.
+# This is evaluated a runtime, not like the Python __debug__ that is evaluated in preprocess.
+DEBUG = True
 
 def dump_args(func):
     """

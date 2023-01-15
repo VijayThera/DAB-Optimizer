@@ -10,7 +10,8 @@ import debug_tools as db
 
 
 @db.timeit
-def start_sim(mesh_V1, mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
+def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
+              mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     # Gecko Basics
     # TODO make this variable
     sim_filepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -19,7 +20,7 @@ def start_sim(mesh_V1, mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
 
     # init array to store RMS currents
     mvvp_iLs = np.full_like(mesh_V1, np.nan)
-    print(mvvp_iLs.shape)
+    # print(mvvp_iLs.shape)
     mvvp_S11_p_sw = np.full_like(mesh_V1, np.nan)
 
     for vec_vvp in np.ndindex(mvvp_iLs.shape):
@@ -28,11 +29,11 @@ def start_sim(mesh_V1, mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
         # set simulation parameters and convert tau to inverse-tau for Gecko
         sim_params = {
             # TODO find a way to do this with sparse arrays
-            'v_dc1': mesh_V1[vec_vvp].item(),
-            'v_dc2': mesh_V2[vec_vvp].item(),
-            'phi': mvvp_phi[vec_vvp].item() / np.pi * 180,
-            'tau1_inv': (np.pi - mvvp_tau1[vec_vvp].item()) / np.pi * 180,
-            'tau2_inv': (np.pi - mvvp_tau2[vec_vvp].item()) / np.pi * 180
+            'v_dc1':    mesh_V1[vec_vvp].item(),
+            'v_dc2':    mesh_V2[vec_vvp].item(),
+            'phi':      mod_phi[vec_vvp].item() / np.pi * 180,
+            'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
+            'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
         }
         print(sim_params)
         # print("phi: ", type(sim_params['phi']))
@@ -65,8 +66,8 @@ def start_sim(mesh_V1, mesh_V2, mesh_P, mvvp_phi, mvvp_tau1, mvvp_tau2):
             values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
 
         power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
-        print("power_target", mesh_P[vec_vvp].item())
-        print("power_deviation", power_deviation)
+        print("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
+        # print("power_deviation", power_deviation)
 
         # save simulation results in array
         mvvp_iLs[vec_vvp] = values_rms['rms']['i_Ls']
