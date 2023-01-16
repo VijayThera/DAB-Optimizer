@@ -102,10 +102,16 @@ def debug(*args, sep=' ', **kwargs):
     :param kwargs:
     """
     if DEBUG or __debug__:
-        print(*args, **kwargs)
+        # print(*args, **kwargs)
         # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + sep.join(map(str, args)), **kwargs)
+        # detailed output
         # print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(inspect.stack()[1][0]).__name__ +
         #       ' ' + sep.join(map(str, args)), **kwargs)
+        # highly detailed output
+        print(datetime.now().isoformat(timespec='milliseconds') + ' ' +
+              inspect.getmodule(inspect.stack()[1][0]).__name__ + ' ' +
+              inspect.currentframe().f_back.f_code.co_name + '\n' +
+              sep.join(map(str, args)), **kwargs)
 
 
 # ---------- MAIN ----------

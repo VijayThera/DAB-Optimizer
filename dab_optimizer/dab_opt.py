@@ -274,6 +274,40 @@ def test_dab():
     # warning("test")
     # error("test")
 
+def test_plot():
+    # Loading
+    dab_specs, dab_results = load_from_file('test-save.npz')
+    # dab_specs.pprint()
+    # dab_results.pprint()
+
+    info("\nStart Plotting\n")
+    plt_dab = plot_dab.Plot_DAB()
+    plt_dab.new_fig(1, 3)
+    plt_dab.plot_modulation(plt_dab.figs_axes[-1],
+                            dab_results.mesh_P[:, 1, :],
+                            dab_results.mesh_V2[:, 1, :],
+                            dab_results.mod_phi[:, 1, :],
+                            dab_results.mod_tau1[:, 1, :],
+                            dab_results.mod_tau2[:, 1, :])
+
+    plt_dab.new_fig(1, 3)
+    plt_dab.plot_modulation(plt_dab.figs_axes[-1],
+                            dab_results.mesh_P[:, 1, :],
+                            dab_results.mesh_V2[:, 1, :],
+                            dab_results.mod_phi[:, 1, :],
+                            dab_results.mod_tau1[:, 1, :],
+                            dab_results.mod_tau2[:, 1, :])
+
+    # now redraw the first fig
+    plt_dab.plot_modulation(plt_dab.figs_axes[0],
+                            dab_results.mesh_P[:, 1, :],
+                            dab_results.mesh_V2[:, 1, :],
+                            dab_results.mod_phi[:, 1, :],
+                            dab_results.mod_phi[:, 1, :],
+                            dab_results.mod_tau2[:, 1, :])
+
+    plt_dab.show()
+
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
@@ -281,6 +315,8 @@ if __name__ == '__main__':
     # Do some basic init like logging, args, etc.
     main_init()
     # Test the DAB functions
-    test_dab()
+    #test_dab()
+    # Test the Plot functions
+    test_plot()
 
     # sys.exit(0)

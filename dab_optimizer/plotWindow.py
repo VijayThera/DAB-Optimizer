@@ -13,7 +13,7 @@ import sys
 
 import matplotlib
 # prevent NoneType error for versions of matplotlib 3.1.0rc1+ by calling matplotlib.use()
-# For more on why it's nececessary, see
+# For more on why it's necessary, see
 # https://stackoverflow.com/questions/59656632/using-qt5agg-backend-with-matplotlib-3-1-2-get-backend-changes-behavior
 matplotlib.use('qt5agg')
 
@@ -39,7 +39,8 @@ class plotWindow:
         layout = QVBoxLayout()
         new_tab.setLayout(layout)
 
-        figure.subplots_adjust(left=0.05, right=0.99, bottom=0.05, top=0.91, wspace=0.2, hspace=0.2)
+        # figure.subplots_adjust(left=0.05, right=0.99, bottom=0.05, top=0.91, wspace=0.2, hspace=0.2)
+        figure.subplots_adjust(left=0.05, right=0.99, bottom=0.08, top=0.91, wspace=0.06, hspace=0.2)
         new_canvas = FigureCanvas(figure)
         new_toolbar = NavigationToolbar(new_canvas, new_tab)
 
