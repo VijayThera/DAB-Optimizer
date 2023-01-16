@@ -10,7 +10,8 @@ import threading as td
 # from multiprocessing import Process, Lock
 import multiprocessing as mp
 # manage gecko java
-import jnius
+# THIS makes jnius and Gecko stop working!!!
+# import jnius
 # Status bar
 from tqdm import tqdm
 # from time import sleep
@@ -201,7 +202,8 @@ class SimGecko:
             # dab_converter.__del__()
 
         finally:
-            jnius.detach()
+            # jnius.detach()
+            pass
         # ************ Gecko End **********
 
 
@@ -243,7 +245,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
             'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
             'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
         }
-        # debug(sim_params)
+        # info(sim_params)
 
         # start simulation for this operation point
         # TODO optimize for multithreading, maybe multiple Gecko instances needed
@@ -277,6 +279,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
             da_sim_results[k][vec_vvp] = values_mean['mean'][k]
         for k in l_rms_keys:
             da_sim_results[k][vec_vvp] = values_rms['rms'][k]
+        # info(values_mean)
 
         # Progressbar update, default increment +1
         pbar.update()
@@ -284,7 +287,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
 
     # Progressbar end
     pbar.close()
-    # debug(da_sim_results)
+    # info(da_sim_results)
     return da_sim_results
 
 
