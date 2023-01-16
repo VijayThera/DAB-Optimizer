@@ -231,12 +231,28 @@ def dab_sim_save():
     simtime = 15e-6
 
     # Simulation
-    d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
+    # d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
+    #                             dab_results.mesh_V2,
+    #                             dab_results.mod_cpm_phi,
+    #                             dab_results.mod_cpm_tau1,
+    #                             dab_results.mod_cpm_tau2,
+    #                             simfilepath, timestep, simtime)
+
+    # Simulation
+    dab_sim = sim_gecko.SimGecko()
+    d_sim = dab_sim.start_sim_threads(dab_results.mesh_V1,
                                 dab_results.mesh_V2,
                                 dab_results.mod_cpm_phi,
                                 dab_results.mod_cpm_tau1,
                                 dab_results.mod_cpm_tau2,
                                 simfilepath, timestep, simtime)
+
+    # d_sim = dab_sim.start_sim_multi(dab_results.mesh_V1,
+    #                             dab_results.mesh_V2,
+    #                             dab_results.mod_cpm_phi,
+    #                             dab_results.mod_cpm_tau1,
+    #                             dab_results.mod_cpm_tau2,
+    #                             simfilepath, timestep, simtime)
 
     # Unpack the results
     for k, v in d_sim.items():
@@ -291,7 +307,7 @@ def test_dab():
 
     # Modulation Calculation
     # TODO how to name the arrays according to some kind of given pattern?
-    dab_results.mod_phi, dab_results.mod_tau1, dab_results.mod_tau2 = mod_cpm.calc_modulation(dab_specs.n,
+    dab_results.mod_cpm_phi, dab_results.mod_cpm_tau1, dab_results.mod_cpm_tau2 = mod_cpm.calc_modulation(dab_specs.n,
                                                                                               dab_specs.L_s,
                                                                                               dab_specs.fs_nom,
                                                                                               dab_results.mesh_V1,
@@ -315,21 +331,21 @@ def test_dab():
     for k, v in d_sim.items():
         dab_results['sim_' + k] = v
 
-    debug("sim_iLs: \n", dab_results.sim_iLs)
+    debug("sim_i_Ls: \n", dab_results.sim_i_Ls)
     debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
 
     # Plotting
     pw = plotWindow()
     fig = plot_dab.plot_modulation(dab_results.mesh_V2,
                                    dab_results.mesh_P,
-                                   dab_results.mod_phi,
-                                   dab_results.mod_tau1,
-                                   dab_results.mod_tau2)
+                                   dab_results.mod_cpm_phi,
+                                   dab_results.mod_cpm_tau1,
+                                   dab_results.mod_cpm_tau2)
     pw.addPlot("DAB Modulation Angles", fig)
     fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
                                     dab_results.mesh_P,
-                                    dab_results.sim_iLs)
-    pw.addPlot("iLs", fig)
+                                    dab_results.sim_i_Ls)
+    pw.addPlot("i_Ls", fig)
     fig = plot_dab.plot_rms_current(dab_results.mesh_V2,
                                     dab_results.mesh_P,
                                     dab_results.sim_S11_p_sw)
@@ -339,7 +355,7 @@ def test_dab():
 
     # Saving
     # save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
-    # save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
+    save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading
     # dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
@@ -369,25 +385,25 @@ def test_plot():
     plt_dab.plot_modulation(plt_dab.figs_axes[-1],
                             dab_results.mesh_P[:, 1, :],
                             dab_results.mesh_V2[:, 1, :],
-                            dab_results.mod_phi[:, 1, :],
-                            dab_results.mod_tau1[:, 1, :],
-                            dab_results.mod_tau2[:, 1, :])
+                            dab_results.mod_cpm_phi[:, 1, :],
+                            dab_results.mod_cpm_tau1[:, 1, :],
+                            dab_results.mod_cpm_tau2[:, 1, :])
 
     plt_dab.new_fig(1, 3)
     plt_dab.plot_modulation(plt_dab.figs_axes[-1],
                             dab_results.mesh_P[:, 1, :],
                             dab_results.mesh_V2[:, 1, :],
-                            dab_results.mod_phi[:, 1, :],
-                            dab_results.mod_tau1[:, 1, :],
-                            dab_results.mod_tau2[:, 1, :])
+                            dab_results.mod_cpm_phi[:, 1, :],
+                            dab_results.mod_cpm_tau1[:, 1, :],
+                            dab_results.mod_cpm_tau2[:, 1, :])
 
     # now redraw the first fig
     plt_dab.plot_modulation(plt_dab.figs_axes[0],
                             dab_results.mesh_P[:, 1, :],
                             dab_results.mesh_V2[:, 1, :],
-                            dab_results.mod_phi[:, 1, :],
-                            dab_results.mod_phi[:, 1, :],
-                            dab_results.mod_tau2[:, 1, :])
+                            dab_results.mod_cpm_phi[:, 1, :],
+                            dab_results.mod_cpm_phi[:, 1, :],
+                            dab_results.mod_cpm_tau2[:, 1, :])
 
     plt_dab.show()
 
@@ -399,11 +415,11 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    dab_sim_save()
+    # dab_sim_save()
 
     # Test the DAB functions
-    # test_dab()
+    test_dab()
     # Test the Plot functions
-    # test_plot()
+    test_plot()
 
     # sys.exit(0)

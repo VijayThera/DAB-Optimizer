@@ -3,45 +3,213 @@
 # python >= 3.10
 
 import numpy as np
-# for threads
-# import threading
-# run parallel on multiple cpu's
+# For threads: run parallel in single process
+# from threading import Thread, Lock
+import threading as td
+# For processes: run parallel on multiple cpu's
+# from multiprocessing import Process, Lock
 import multiprocessing as mp
 # manage gecko java
 import jnius
 # Status bar
-from time import sleep
 from tqdm import tqdm
+# from time import sleep
 
 import leapythontoolbox as lpt
-import classes_datasets as ds
 from debug_tools import *
 
 
-class Sim_Gecko:
+class SimGecko:
+    # mean values we want to get from the simulation
+    l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
+    l_rms_keys = ['i_Ls']
+    mutex: td.Lock = None
+
+    def __init__(self):
+        # Number of threads or processes in parallel
+        self.thread_count = 1
+        # Init dict to store simulation result arrays
+        self.da_sim_results = dict()
+        # self.td_mutex = td.Lock()
+        # self.mp_mutex = mp.Lock()
 
     @timeit
-    def start_sim_multi(self, mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
-                           mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray,
-                           num_threads: int = 6) -> dict:
+    def start_sim_threads(self, mesh_V1: np.ndarray, mesh_V2: np.ndarray,
+                          mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray,
+                          simfilepath: str, timestep: float = None, simtime: float = None,
+                          timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036,
+                          gdebug: bool = False) -> dict:
+
+        # Init arrays to store simulation results
+        for k in self.l_means_keys:
+            self.da_sim_results[k] = np.full_like(mod_phi, np.nan)
+        for k in self.l_rms_keys:
+            self.da_sim_results[k] = np.full_like(mod_phi, np.nan)
+
+        # Progressbar init
+        # Calc total number of iterations to simulate
+        it_total = mod_phi.size
+        pbar = tqdm(total=it_total)
+
+        # ************ Gecko Start **********
+
+        self.mutex = td.Lock()
+        threads = []
+        # Start the worker threads
+        for i in range(self.thread_count):
+            kwargs = {'mesh_V1':   mesh_V1, 'mesh_V2': mesh_V2, 'mod_phi': mod_phi, 'mod_tau1': mod_tau1,
+                      'mod_tau2':  mod_tau2, 'simfilepath': simfilepath, 'timestep': timestep,
+                      'simtime':   simtime, 'timestep_pre': timestep_pre, 'simtime_pre': simtime_pre,
+                      'geckoport': geckoport + i, 'gdebug': gdebug}
+            t = td.Thread(target=self._start_sim_single, kwargs=kwargs)
+            t.start()
+            threads.append(t)
+
+        # Wait for the threads to complete
+        for t in threads:
+            t.join()
+
+        # ************ Gecko End **********
+
+        # Progressbar end
+        pbar.close()
+        debug(self.da_sim_results)
+        return self.da_sim_results
+
+    @timeit
+    def start_sim_multi(self, mesh_V1: np.ndarray, mesh_V2: np.ndarray,
+                        mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray,
+                        simfilepath: str, timestep: float = None, simtime: float = None,
+                        timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036,
+                        gdebug: bool = False) -> dict:
+
+        # Init arrays to store simulation results
+        for k in self.l_means_keys:
+            self.da_sim_results[k] = np.full_like(mod_phi, np.nan)
+        for k in self.l_rms_keys:
+            self.da_sim_results[k] = np.full_like(mod_phi, np.nan)
+
+        # Progressbar init
+        # Calc total number of iterations to simulate
+        it_total = mod_phi.size
+        pbar = tqdm(total=it_total)
+
+        # ************ Gecko Start **********
+
+        self.mutex = mp.Lock()
+        processes = []
+        # Start the worker threads
+        for i in range(self.thread_count):
+            kwargs = {'mesh_V1':   mesh_V1, 'mesh_V2': mesh_V2, 'mod_phi': mod_phi, 'mod_tau1': mod_tau1,
+                      'mod_tau2':  mod_tau2, 'simfilepath': simfilepath, 'timestep': timestep,
+                      'simtime':   simtime, 'timestep_pre': timestep_pre, 'simtime_pre': simtime_pre,
+                      'geckoport': geckoport + i, 'gdebug': gdebug}
+            t = mp.Process(target=self._start_sim_single, kwargs=kwargs)
+            t.start()
+            processes.append(t)
+
+        # Wait for the threads to complete
+        for t in processes:
+            t.join()
+
+        # kwargs = {'mesh_V1':   mesh_V1, 'mesh_V2': mesh_V2, 'mod_phi': mod_phi, 'mod_tau1': mod_tau1,
+        #           'mod_tau2':  mod_tau2, 'simfilepath': simfilepath, 'timestep': timestep,
+        #           'simtime':   simtime, 'timestep_pre': timestep_pre, 'simtime_pre': simtime_pre,
+        #           'geckoport': geckoport + 1, 'gdebug': gdebug}
+        # self._start_sim_single(**kwargs)
+
+        # self._start_sim_single(mesh_V1, mesh_V2, mod_phi, mod_tau1, mod_tau2, simfilepath, timestep, simtime, timestep_pre, simtime_pre, geckoport)
+
+        # ************ Gecko End **********
+
+        # Progressbar end
+        pbar.close()
+        debug(self.da_sim_results)
+        return self.da_sim_results
+
+    def _start_sim_single(self, mesh_V1: np.ndarray, mesh_V2: np.ndarray,
+                          mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray,
+                          simfilepath: str, timestep: float = None, simtime: float = None,
+                          timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036,
+                          gdebug: bool = False):
+
+        info(geckoport, simfilepath)
+
+        # ************ Gecko Start **********
 
         try:
             # use pyjnius here
-            True
+
+            if not __debug__:
+                # Gecko Basics
+                dab_converter = lpt.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
+
+            for vec_vvp in np.ndindex(mod_phi.shape):
+                # debug(vec_vvp, mod_phi[vec_vvp], mod_tau1[vec_vvp], mod_tau2[vec_vvp], sep='\n')
+
+                # set simulation parameters and convert tau to inverse-tau for Gecko
+                sim_params = {
+                    # TODO find a way to do this with sparse arrays
+                    'v_dc1':    mesh_V1[vec_vvp].item(),
+                    'v_dc2':    mesh_V2[vec_vvp].item(),
+                    'phi':      mod_phi[vec_vvp].item() / np.pi * 180,
+                    'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
+                    'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
+                }
+                # debug(sim_params)
+
+                # start simulation for this operation point
+                # TODO optimize for multithreading, maybe multiple Gecko instances needed
+                if not __debug__:
+                    dab_converter.set_global_parameters(sim_params)
+                if not __debug__:
+                    # TODO time settings should be variable
+                    # dab_converter.run_simulation(timestep=100e-12, simtime=15e-6, timestep_pre=50e-9, simtime_pre=10e-3)
+                    # TODO Bug in LPT with _pre settings! Does this still run a pre-simulation like in the model?
+                    # Start the simulation and get the results
+                    dab_converter.run_simulation(timestep=timestep, simtime=simtime)
+                    values_mean = dab_converter.get_values(
+                        nodes=self.l_means_keys,
+                        operations=['mean']
+                    )
+                    values_rms = dab_converter.get_values(
+                        nodes=self.l_rms_keys,
+                        operations=['rms']
+                    )
+                else:
+                    # generate some fake data for debugging
+                    values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
+                                            'S11_p_sw':   np.random.uniform(0.0, 10),
+                                            'S11_p_cond': np.random.uniform(0.0, 10),
+                                            'S12_p_sw':   np.random.uniform(0.0, 1000),
+                                            'S12_p_cond': np.random.uniform(0.0, 100)}}
+                    values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
+
+                # ***** LOCK Start *****
+                self.mutex.acquire()
+                # save simulation results in arrays
+                for k in self.l_means_keys:
+                    self.da_sim_results[k][vec_vvp] = values_mean['mean'][k]
+                for k in self.l_rms_keys:
+                    self.da_sim_results[k][vec_vvp] = values_rms['rms'][k]
+
+                # Progressbar update, default increment +1
+                # pbar.update()
+                self.mutex.release()
+                # ***** LOCK End *****
+
+            # dab_converter.__del__()
+
         finally:
             jnius.detach()
-
-    @timeit
-    def _start_sim_single(self, mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
-                          mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray):
-        True
+        # ************ Gecko End **********
 
 
 @timeit
 def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
               mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray,
               simfilepath: str, timestep: float = None, simtime: float = None,
-              timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036, debug: bool = False) -> dict:
+              timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036, gdebug: bool = False) -> dict:
     # mean values we want to get from the simulation
     l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
     l_rms_keys = ['i_Ls']
@@ -61,7 +229,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
     # ************ Gecko Start **********
     if not __debug__:
         # Gecko Basics
-        dab_converter = lpt.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=debug)
+        dab_converter = lpt.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
 
     for vec_vvp in np.ndindex(mod_phi.shape):
         # debug(vec_vvp, mod_phi[vec_vvp], mod_tau1[vec_vvp], mod_tau2[vec_vvp], sep='\n')
@@ -97,10 +265,10 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
             )
         else:
             # generate some fake data for debugging
-            values_mean = {'mean': {'p_dc1': np.random.uniform(0.0, 1000),
-                                    'S11_p_sw': np.random.uniform(0.0, 10),
+            values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
+                                    'S11_p_sw':   np.random.uniform(0.0, 10),
                                     'S11_p_cond': np.random.uniform(0.0, 10),
-                                    'S12_p_sw': np.random.uniform(0.0, 1000),
+                                    'S12_p_sw':   np.random.uniform(0.0, 1000),
                                     'S12_p_cond': np.random.uniform(0.0, 100)}}
             values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
 
