@@ -190,15 +190,18 @@ def dab_sim_save():
     dab_specs.V1_nom = 700
     dab_specs.V1_min = 600
     dab_specs.V1_max = 800
-    dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
+    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
+    dab_specs.V1_step = 3
     dab_specs.V2_nom = 235
     dab_specs.V2_min = 175
     dab_specs.V2_max = 295
-    dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
+    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
+    dab_specs.V2_step = 4
     dab_specs.P_min = 400
     dab_specs.P_max = 2200
     dab_specs.P_nom = 2000
-    dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
+    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
+    dab_specs.P_step = 5
     dab_specs.n = 2.99
     dab_specs.L_s = 84e-6
     dab_specs.L_m = 599e-6
@@ -222,21 +225,30 @@ def dab_sim_save():
                                                            dab_results.mesh_V2,
                                                            dab_results.mesh_P)
 
+    # TODO where to save??? spec only float...
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    timestep = 100e-12
+    simtime = 15e-6
+
     # Simulation
     d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
                                 dab_results.mesh_V2,
-                                dab_results.mesh_P,
                                 dab_results.mod_cpm_phi,
                                 dab_results.mod_cpm_tau1,
-                                dab_results.mod_cpm_tau2)
+                                dab_results.mod_cpm_tau2,
+                                simfilepath, timestep, simtime)
 
     # Unpack the results
     for k, v in d_sim.items():
         dab_results['sim_' + k] = v
 
+    # Calc power deviation from expected power target
+    # power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
+    # debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
+
     # Saving
-    save_to_file(dab_specs, dab_results, name='mod_cpm_sim_v21-v25-p19',
-                 comment='Simulation results for mod_cpm with V1 10V res, V2 5V res and P 100W res.')
+    # save_to_file(dab_specs, dab_results, name='mod_cpm_sim_v21-v25-p19',
+    #              comment='Simulation results for mod_cpm with V1 10V res, V2 5V res and P 100W res.')
 
 
 @timeit
@@ -286,13 +298,23 @@ def test_dab():
                                                                                               dab_results.mesh_V2,
                                                                                               dab_results.mesh_P)
 
+    # TODO where to save??? spec only float...
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    timestep = 100e-12
+    simtime = 15e-6
+
     # Simulation
-    dab_results.sim_iLs, dab_results.sim_S11_p_sw = sim_gecko.start_sim(dab_results.mesh_V1,
-                                                                        dab_results.mesh_V2,
-                                                                        dab_results.mesh_P,
-                                                                        dab_results.mod_phi,
-                                                                        dab_results.mod_tau1,
-                                                                        dab_results.mod_tau2)
+    d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
+                                dab_results.mesh_V2,
+                                dab_results.mod_cpm_phi,
+                                dab_results.mod_cpm_tau1,
+                                dab_results.mod_cpm_tau2,
+                                simfilepath, timestep, simtime)
+
+    # Unpack the results
+    for k, v in d_sim.items():
+        dab_results['sim_' + k] = v
+
     debug("sim_iLs: \n", dab_results.sim_iLs)
     debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
 
