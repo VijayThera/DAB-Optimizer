@@ -12,7 +12,7 @@ import time
 
 # Set a global DEBUG variable to switch some debugging code.
 # This is evaluated a runtime, not like the Python __debug__ that is evaluated in preprocess.
-DEBUG = True
+DEBUG = False
 
 
 def dump_args(func):

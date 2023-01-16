@@ -11,19 +11,29 @@ from debug_tools import *
 
 @timeit
 def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
-              mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+              mod_phi: np.ndarray, mod_tau1: np.ndarray, mod_tau2: np.ndarray) -> dict:
     # Gecko Basics
     # TODO make this variable
     sim_filepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
     if not __debug__:
         dab_converter = lpt.GeckoSimulation(sim_filepath)
 
+    # mean values we want to get from the simulation
+    l_means = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
     # init array to store RMS currents
     mvvp_iLs = np.full_like(mesh_V1, np.nan)
     # print(mvvp_iLs.shape)
-    mvvp_S11_p_sw = np.full_like(mesh_V1, np.nan)
+    # ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
+    # mvvp_p_dc1 = np.full_like(mesh_V1, np.nan)
+    # mvvp_S11_p_sw = np.full_like(mesh_V1, np.nan)
+    # mvvp_S11_p_cond = np.full_like(mesh_V1, np.nan)
+    # mvvp_S12_p_sw = np.full_like(mesh_V1, np.nan)
+    # mvvp_S12_p_cond = np.full_like(mesh_V1, np.nan)
+    d_mvvp_means = dict()
+    for k in l_means:
+        d_mvvp_means[k] = np.full_like(mesh_V1, np.nan)
 
-    for vec_vvp in np.ndindex(mvvp_iLs.shape):
+    for vec_vvp in np.ndindex(mod_phi.shape):
         # print(vec_vvp, mvvp_phi[vec_vvp], mvvp_tau1[vec_vvp], mvvp_tau2[vec_vvp], sep='\n')
 
         # set simulation parameters and convert tau to inverse-tau for Gecko
@@ -48,8 +58,12 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
         # does this still run a pre-simulation like in the model?
         if not __debug__:
             dab_converter.run_simulation(timestep=100e-12, simtime=15e-6)
+            # values_mean = dab_converter.get_values(
+            #     nodes=['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond'],
+            #     operations=['mean']
+            # )
             values_mean = dab_converter.get_values(
-                nodes=['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond'],
+                nodes=l_means,
                 operations=['mean']
             )
             values_rms = dab_converter.get_values(
@@ -71,9 +85,15 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray, mesh_P: np.ndarray,
 
         # save simulation results in array
         mvvp_iLs[vec_vvp] = values_rms['rms']['i_Ls']
-        mvvp_S11_p_sw[vec_vvp] = values_mean['mean']['S11_p_sw']
+        # ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
+        # mvvp_S11_p_sw[vec_vvp] = values_mean['mean']['S11_p_sw']
+        for k, v in d_mvvp_means.items():
+            v[vec_vvp] = values_mean['mean'][k]
 
-    return mvvp_iLs, mvvp_S11_p_sw
+    # TODO dirty hack to add the rms current
+    d_mvvp_means['i_Ls'] = mvvp_iLs
+
+    return d_mvvp_means
 
 
 # ---------- MAIN ----------

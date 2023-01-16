@@ -6,6 +6,7 @@ import os
 import sys
 
 import numpy as np
+import math
 from datetime import datetime
 import logging
 import argparse
@@ -180,6 +181,65 @@ def main_init():
 
 
 @timeit
+def dab_sim_save():
+    """
+    Run the complete optimization procedure and save the results in a file
+    """
+    # Set the basic DAB Specification
+    dab_specs = ds.DAB_Specification()
+    dab_specs.V1_nom = 700
+    dab_specs.V1_min = 600
+    dab_specs.V1_max = 800
+    dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
+    dab_specs.V2_nom = 235
+    dab_specs.V2_min = 175
+    dab_specs.V2_max = 295
+    dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
+    dab_specs.P_min = 400
+    dab_specs.P_max = 2200
+    dab_specs.P_nom = 2000
+    dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
+    dab_specs.n = 2.99
+    dab_specs.L_s = 84e-6
+    dab_specs.L_m = 599e-6
+    dab_specs.fs_nom = 200000
+
+    # Object to store all generated data
+    dab_results = ds.DAB_Results()
+    # Generate meshes
+    dab_results.gen_meshes(
+        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
+        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
+        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
+
+    # Modulation Calculation
+    dab_results.mod_cpm_phi, \
+        dab_results.mod_cpm_tau1, \
+        dab_results.mod_cpm_tau2 = mod_cpm.calc_modulation(dab_specs.n,
+                                                           dab_specs.L_s,
+                                                           dab_specs.fs_nom,
+                                                           dab_results.mesh_V1,
+                                                           dab_results.mesh_V2,
+                                                           dab_results.mesh_P)
+
+    # Simulation
+    d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
+                                dab_results.mesh_V2,
+                                dab_results.mesh_P,
+                                dab_results.mod_cpm_phi,
+                                dab_results.mod_cpm_tau1,
+                                dab_results.mod_cpm_tau2)
+
+    # Unpack the results
+    for k, v in d_sim.items():
+        dab_results['sim_' + k] = v
+
+    # Saving
+    save_to_file(dab_specs, dab_results, name='mod_cpm_sim_v21-v25-p19',
+                 comment='Simulation results for mod_cpm with V1 10V res, V2 5V res and P 100W res.')
+
+
+@timeit
 def test_dab():
     """
     Run the complete optimization procedure
@@ -274,6 +334,7 @@ def test_dab():
     # warning("test")
     # error("test")
 
+
 def test_plot():
     # Loading
     dab_specs, dab_results = load_from_file('test-save.npz')
@@ -314,9 +375,13 @@ if __name__ == '__main__':
     info("Start of DAB Optimizer ...")
     # Do some basic init like logging, args, etc.
     main_init()
+
+    # Generate simulation data
+    dab_sim_save()
+
     # Test the DAB functions
-    #test_dab()
+    # test_dab()
     # Test the Plot functions
-    test_plot()
+    # test_plot()
 
     # sys.exit(0)
