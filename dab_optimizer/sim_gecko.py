@@ -25,10 +25,11 @@ class SimGecko:
     l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
     l_rms_keys = ['i_Ls']
     mutex: td.Lock = None
+    pbar: tqdm = None
 
     def __init__(self):
         # Number of threads or processes in parallel
-        self.thread_count = 1
+        self.thread_count = 3
         # Init dict to store simulation result arrays
         self.da_sim_results = dict()
         # self.td_mutex = td.Lock()
@@ -50,7 +51,7 @@ class SimGecko:
         # Progressbar init
         # Calc total number of iterations to simulate
         it_total = mod_phi.size
-        pbar = tqdm(total=it_total)
+        self.pbar = tqdm(total=it_total)
 
         # ************ Gecko Start **********
 
@@ -62,7 +63,7 @@ class SimGecko:
                       'mod_tau2':  mod_tau2, 'simfilepath': simfilepath, 'timestep': timestep,
                       'simtime':   simtime, 'timestep_pre': timestep_pre, 'simtime_pre': simtime_pre,
                       'geckoport': geckoport + i, 'gdebug': gdebug}
-            t = td.Thread(target=self._start_sim_single, kwargs=kwargs)
+            t = td.Thread(target=self._start_sim_single, kwargs=kwargs, name=i)
             t.start()
             threads.append(t)
 
@@ -73,7 +74,7 @@ class SimGecko:
         # ************ Gecko End **********
 
         # Progressbar end
-        pbar.close()
+        self.pbar.close()
         debug(self.da_sim_results)
         return self.da_sim_results
 
@@ -93,7 +94,7 @@ class SimGecko:
         # Progressbar init
         # Calc total number of iterations to simulate
         it_total = mod_phi.size
-        pbar = tqdm(total=it_total)
+        self.pbar = tqdm(total=it_total)
 
         # ************ Gecko Start **********
 
@@ -124,7 +125,7 @@ class SimGecko:
         # ************ Gecko End **********
 
         # Progressbar end
-        pbar.close()
+        self.pbar.close()
         debug(self.da_sim_results)
         return self.da_sim_results
 
@@ -195,7 +196,7 @@ class SimGecko:
                     self.da_sim_results[k][vec_vvp] = values_rms['rms'][k]
 
                 # Progressbar update, default increment +1
-                # pbar.update()
+                self.pbar.update()
                 self.mutex.release()
                 # ***** LOCK End *****
 
