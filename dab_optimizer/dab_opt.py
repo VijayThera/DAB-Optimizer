@@ -394,7 +394,7 @@ def test_dab():
     # Plotting
     info("\nStart Plotting\n")
     Plot_Dab = plot_dab.Plot_DAB()
-
+    # Mod SPS
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
     Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
                              Dab_Results.mesh_V2[:, 1, :],
@@ -429,19 +429,14 @@ def test_dab():
                              ax=Plot_Dab.figs_axes[-1][1][2],
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
-
+    # Mod MCL
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation')
-    Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
                       Dab_Results.mesh_P[:, 1, :],
                       Dab_Results.mesh_V2[:, 1, :],
                       Dab_Results.sim_p_dc1[:, 1, :],
                       Dab_Results.sim_S11_p_sw[:, 1, :],
-                      Dab_Results.sim_S11_p_cond[:, 1, :],
-                      'P / W',
-                      'U2 / V',
-                      'phi in rad',
-                      'tau1 in rad',
-                      'tau2 in rad')
+                      Dab_Results.sim_S11_p_cond[:, 1, :])
 
     Plot_Dab.show()
 
@@ -497,7 +492,7 @@ def test_plot():
                       'S11_p_sw',
                       'S11_p_cond')
 
-    Plot_Dab.new_fig(1, 3)
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation')
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
                             Dab_Results.mesh_P[:, 1, :],
                             Dab_Results.mesh_V2[:, 1, :],

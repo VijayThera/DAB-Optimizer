@@ -106,27 +106,34 @@ class Plot_DAB:
         :param z2:
         :param z3:
         """
-        # plot
+        # Some defaults
         fig = fig_axes[0]
         axs = fig_axes[1]
-        fig.suptitle("DAB Modulation Angles")
-        # fig.tight_layout()
-        cf = axs[0].contourf(x, y, z1)
-        axs[1].contourf(x, y, z2)
-        axs[2].contourf(x, y, z3)
-        axs[0].set_title("phi")
-        axs[1].set_title("tau1")
-        axs[2].set_title("tau2")
+        num_cont_lines = 20
+        cmap = 'viridis'
+        z_min = 0
+        z_max = np.pi
+        # Plot the contourf maps
+        axs[0].contourf(x, y, z1, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        axs[1].contourf(x, y, z2, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        axs[2].contourf(x, y, z3, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        # Set the labels
+        # fig.suptitle("DAB Modulation Angles")
+        axs[0].set_title("phi in rad")
+        axs[1].set_title("tau1 in rad")
+        axs[2].set_title("tau2 in rad")
         for ax in axs.flat:
             ax.set(xlabel='P / W', ylabel='U2 / V')
             ax.label_outer()
+        # Apply the limits to the colorbar. That way the colorbar does not depend on one plot.
+        mappable = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=z_min, vmax=z_max), cmap=cmap)
         # Only add colorbar if there was none
         if fig.axes[-1].get_label() == '<colorbar>':
             # TODO update colorbar
-            debug("update colorbar")
+            warning("update colorbar not implemented")
             cbar = fig.axes[-1]
         else:
-            cbar = fig.colorbar(cf, ax=axs)
+            cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02)
         # tight_layout and colorbar are tricky
         # fig.tight_layout()
         # Redraw the current figure

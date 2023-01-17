@@ -76,4 +76,16 @@ if __name__ == '__main__':
     print("mod_phi[0,0,0]", type(Dab_Results.mod_phi[0, 0, 0]))
     print("mod_tau1[0,0,0]", type(Dab_Results.mod_tau1[0, 0, 0]))
     print("mod_tau2[0,0,0]", type(Dab_Results.mod_tau2[0, 0, 0]))
-    
+
+    info("\nStart Plotting\n")
+    import plot_dab
+    Plot_Dab = plot_dab.Plot_DAB()
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                      Dab_Results.mesh_P[:, 1, :],
+                      Dab_Results.mesh_V2[:, 1, :],
+                      Dab_Results.mod_phi[:, 1, :],
+                      Dab_Results.mod_tau1[:, 1, :],
+                      Dab_Results.mod_tau2[:, 1, :])
+    Plot_Dab.show()
