@@ -1,6 +1,13 @@
 #!/usr/bin/python3
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 # coding: utf-8
 # python >= 3.10
+
+"""
+Calculation of the Modulation for a DAB (Dual Active Bridge).
+
+This module calculates the **CPM (Conventional Phaseshift Modulation)**.
+"""
 
 import numpy as np
 

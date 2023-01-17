@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 # coding: utf-8
 # python >= 3.10
 
