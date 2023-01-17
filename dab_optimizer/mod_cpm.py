@@ -28,41 +28,44 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
 if __name__ == '__main__':
     print("Start of Module CPM ...")
 
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    dab_specs.V1_step = 3
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    dab_specs.V2_step = 3
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    dab_specs.P_step = 3
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    Dab_Specs.V1_step = 3
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    Dab_Specs.V2_step = 4
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    Dab_Specs.P_step = 5
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
 
     # Object to store all generated data
-    dab_results = ds.DAB_Results()
-    # gen mesh manually
-    dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
-        np.linspace(dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step),
-        np.linspace(dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step),
-        np.linspace(dab_specs.P_min, dab_specs.P_max, dab_specs.P_step), sparse=False)
+    Dab_Results = ds.DAB_Results()
+    # gen meshes
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    dab_results.mvvp_phi, dab_results.mvvp_tau1, dab_results.mvvp_tau2 = calc_modulation(dab_specs.n,
-                                                                                         dab_specs.L_s,
-                                                                                         dab_specs.fs_nom,
-                                                                                         dab_results.mesh_V1,
-                                                                                         dab_results.mesh_V2,
-                                                                                         dab_results.mesh_P)
+    Dab_Results.mod_phi, Dab_Results.mod_tau1, Dab_Results.mod_tau2 = calc_modulation(Dab_Specs.n,
+                                                                                      Dab_Specs.L_s,
+                                                                                      Dab_Specs.fs_nom,
+                                                                                      Dab_Results.mesh_V1,
+                                                                                      Dab_Results.mesh_V2,
+                                                                                      Dab_Results.mesh_P)
 
-    print(dab_results.mvvp_phi)
-    print("mvvp_phi[0,0,0]", type(dab_results.mvvp_phi[0, 0, 0]))
-    print("mvvp_tau1[0,0,0]", type(dab_results.mvvp_tau1[0, 0, 0]))
+    print("mod_phi:", Dab_Results.mod_phi, sep='\n')
+    print("mod_tau1:", Dab_Results.mod_tau1, sep='\n')
+    print("mod_tau2:", Dab_Results.mod_tau2, sep='\n')
+    print("mod_phi[0,0,0]", type(Dab_Results.mod_phi[0, 0, 0]))
+    print("mod_tau1[0,0,0]", type(Dab_Results.mod_tau1[0, 0, 0]))
+    print("mod_tau2[0,0,0]", type(Dab_Results.mod_tau2[0, 0, 0]))
     

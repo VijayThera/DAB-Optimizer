@@ -327,11 +327,11 @@ def test_dab():
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    Dab_Specs.V2_step = 2
+    Dab_Specs.V2_step = 3
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    Dab_Specs.P_step = 2
+    Dab_Specs.P_step = 3
     Dab_Specs.n = 2.99
     Dab_Specs.L_s = 84e-6
     Dab_Specs.L_m = 599e-6
@@ -393,6 +393,7 @@ def test_dab():
     # Plotting
     info("\nStart Plotting\n")
     Plot_Dab = plot_dab.Plot_DAB()
+
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
     Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
                              Dab_Results.mesh_V2[:, 1, :],
@@ -411,6 +412,24 @@ def test_dab():
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_p_dc1[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][0],
+                             xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_sw[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][1],
+                             xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_cond[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][2],
+                             xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+
+
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='RMS Modulation')
     Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
                       Dab_Results.mesh_P[:, 1, :],
                       Dab_Results.mesh_V2[:, 1, :],
@@ -419,14 +438,14 @@ def test_dab():
                       Dab_Results.sim_S11_p_cond[:, 1, :],
                       'P / W',
                       'U2 / V',
-                      'p_dc1',
-                      'S11_p_sw',
-                      'S11_p_cond')
+                      'phi in rad',
+                      'tau1 in rad',
+                      'tau2 in rad')
 
     Plot_Dab.show()
 
     # Saving
-    save_to_file(Dab_Specs, Dab_Results, name='test-save', comment='This is a saving test with random data!')
+    save_to_file(Dab_Specs, Dab_Results, directory='/mnt/MA LEA/LEA/Workdir/dab_optimizer_output', name='test-save', comment='This is a saving test with random data!')
     # save_to_file(Dab_Specs, Dab_Results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading
