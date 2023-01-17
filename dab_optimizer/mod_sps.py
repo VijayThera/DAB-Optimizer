@@ -6,7 +6,8 @@
 """
 Calculation of the Modulation for a DAB (Dual Active Bridge).
 
-This module calculates the **CPM (Conventional Phaseshift Modulation)**.
+This module calculates the **CPS (Conventional Phase Shift) Modulation**
+which is often also referred to as **SPS (Single-phase-shift) Modulation**.
 """
 
 import numpy as np
