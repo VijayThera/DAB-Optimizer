@@ -57,6 +57,43 @@ class Plot_DAB:
         self.figs_axes.append((fig, axs))
         self.pw.addPlot(title=tab_title, figure=fig)
 
+    def plot_3by1(self, fig_axes: tuple, x, y, z1, z2, z3, xl: str = 'x', yl: str = 'y', t1: str = 'z1', t2: str = 'z2', t3: str = 'z3'):
+        """
+        Plots three contourf plots with a shared colorbar.
+
+        :param fig_axes: Provide the tuple (fig, axs)
+        :param x:
+        :param y:
+        :param z1:
+        :param z2:
+        :param z3:
+        """
+        # plot
+        fig = fig_axes[0]
+        axs = fig_axes[1]
+        # fig.suptitle("subtitle")
+        # fig.tight_layout()
+        cf = axs[0].contourf(x, y, z1)
+        axs[1].contourf(x, y, z2)
+        axs[2].contourf(x, y, z3)
+        axs[0].set_title(t1)
+        axs[1].set_title(t2)
+        axs[2].set_title(t3)
+        for ax in axs.flat:
+            ax.set(xlabel=xl, ylabel=yl)
+            ax.label_outer()
+        # Only add colorbar if there was none
+        if fig.axes[-1].get_label() == '<colorbar>':
+            # TODO update colorbar
+            debug("update colorbar")
+            cbar = fig.axes[-1]
+        else:
+            cbar = fig.colorbar(cf, ax=axs)
+        # tight_layout and colorbar are tricky
+        # fig.tight_layout()
+        # Redraw the current figure
+        plt.draw()
+
     def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3):
         """
         Plots three contourf plots with a shared colorbar.
