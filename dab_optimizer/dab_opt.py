@@ -11,7 +11,7 @@ from datetime import datetime
 import logging
 import argparse
 
-import classes_datasets as ds
+import dab_datasets as ds
 from debug_tools import *
 import mod_cpm
 import sim_gecko
@@ -133,6 +133,13 @@ def main_init():
     #     logging.error("[ERROR] configfile '{}' does not exist!".format(args.configfile), file=sys.stderr)
     #     sys.exit(1)
 
+    # Test the logging
+    # info("test")
+    # debug("test")
+    # warning("test")
+    # error("test")
+
+    # Logging with logger is problematic!
     # print("this should be before logger init")
     # # Set up the logger
     # if args.d or db.DEBUG or __debug__:
@@ -186,44 +193,44 @@ def dab_sim_save():
     Run the complete optimization procedure and save the results in a file
     """
     # Set the basic DAB Specification
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
-    dab_specs.V1_step = 3
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
-    dab_specs.V2_step = 4
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
-    dab_specs.P_step = 5
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
+    Dab_Specs.V1_step = 3
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1)
+    Dab_Specs.V2_step = 4
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1)
+    Dab_Specs.P_step = 5
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
 
     # Object to store all generated data
-    dab_results = ds.DAB_Results()
+    Dab_Results = ds.DAB_Results()
     # Generate meshes
-    dab_results.gen_meshes(
-        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
-        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
-        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    dab_results.mod_cpm_phi, \
-        dab_results.mod_cpm_tau1, \
-        dab_results.mod_cpm_tau2 = mod_cpm.calc_modulation(dab_specs.n,
-                                                           dab_specs.L_s,
-                                                           dab_specs.fs_nom,
-                                                           dab_results.mesh_V1,
-                                                           dab_results.mesh_V2,
-                                                           dab_results.mesh_P)
+    Dab_Results.mod_cpm_phi, \
+        Dab_Results.mod_cpm_tau1, \
+        Dab_Results.mod_cpm_tau2 = mod_cpm.calc_modulation(Dab_Specs.n,
+                                                           Dab_Specs.L_s,
+                                                           Dab_Specs.fs_nom,
+                                                           Dab_Results.mesh_V1,
+                                                           Dab_Results.mesh_V2,
+                                                           Dab_Results.mesh_P)
 
     # TODO where to save??? spec only float...
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -231,77 +238,77 @@ def dab_sim_save():
     simtime = 15e-6
 
     # Simulation
-    # d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
-    #                             dab_results.mesh_V2,
-    #                             dab_results.mod_cpm_phi,
-    #                             dab_results.mod_cpm_tau1,
-    #                             dab_results.mod_cpm_tau2,
+    # d_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
+    #                             Dab_Results.mesh_V2,
+    #                             Dab_Results.mod_cpm_phi,
+    #                             Dab_Results.mod_cpm_tau1,
+    #                             Dab_Results.mod_cpm_tau2,
     #                             simfilepath, timestep, simtime)
 
     # Simulation
-    dab_sim = sim_gecko.SimGecko()
-    # d_sim = dab_sim.start_sim_threads(dab_results.mesh_V1,
-    #                                   dab_results.mesh_V2,
-    #                                   dab_results.mod_cpm_phi,
-    #                                   dab_results.mod_cpm_tau1,
-    #                                   dab_results.mod_cpm_tau2,
+    Dab_Sim = sim_gecko.Sim_Gecko()
+    # d_sim = Dab_Sim.start_sim_threads(Dab_Results.mesh_V1,
+    #                                   Dab_Results.mesh_V2,
+    #                                   Dab_Results.mod_cpm_phi,
+    #                                   Dab_Results.mod_cpm_tau1,
+    #                                   Dab_Results.mod_cpm_tau2,
     #                                   simfilepath, timestep, simtime)
 
-    d_sim = dab_sim.start_sim_multi(dab_results.mesh_V1,
-                                dab_results.mesh_V2,
-                                dab_results.mod_cpm_phi,
-                                dab_results.mod_cpm_tau1,
-                                dab_results.mod_cpm_tau2,
+    d_sim = Dab_Sim.start_sim_multi(Dab_Results.mesh_V1,
+                                Dab_Results.mesh_V2,
+                                Dab_Results.mod_cpm_phi,
+                                Dab_Results.mod_cpm_tau1,
+                                Dab_Results.mod_cpm_tau2,
                                 simfilepath, timestep, simtime)
 
     # Unpack the results
     for k, v in d_sim.items():
-        dab_results['sim_' + k] = v
+        Dab_Results['sim_' + k] = v
 
-    debug("sim_i_Ls: \n", dab_results.sim_i_Ls)
-    debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
+    debug("sim_i_Ls: \n", Dab_Results.sim_i_Ls)
+    debug("sim_S11_p_sw: \n", Dab_Results.sim_S11_p_sw)
 
     # Plotting
     info("\nStart Plotting\n")
-    plt_dab = plot_dab.Plot_DAB()
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.mod_cpm_phi[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][0],
+    Plot_Dab = plot_dab.Plot_DAB()
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.mod_cpm_phi[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][0],
                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_i_Ls[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][1],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_i_Ls[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][1],
                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_S11_p_sw[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][2],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_sw[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][2],
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
-    plt_dab.plot_3by1(plt_dab.figs_axes[-1],
-                      dab_results.mesh_P[:, 1, :],
-                      dab_results.mesh_V2[:, 1, :],
-                      dab_results.sim_p_dc1[:, 1, :],
-                      dab_results.sim_S11_p_sw[:, 1, :],
-                      dab_results.sim_S11_p_cond[:, 1, :],
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
+    Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
+                      Dab_Results.mesh_P[:, 1, :],
+                      Dab_Results.mesh_V2[:, 1, :],
+                      Dab_Results.sim_p_dc1[:, 1, :],
+                      Dab_Results.sim_S11_p_sw[:, 1, :],
+                      Dab_Results.sim_S11_p_cond[:, 1, :],
                       'P / W',
                       'U2 / V',
                       'p_dc1',
                       'S11_p_sw',
                       'S11_p_cond')
 
-    plt_dab.show()
+    Plot_Dab.show()
 
     # Calc power deviation from expected power target
     # power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
     # debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
 
     # Saving
-    # save_to_file(dab_specs, dab_results, name='mod_cpm_sim_v21-v25-p19',
+    # save_to_file(Dab_Specs, Dab_Results, name='mod_cpm_sim_v21-v25-p19',
     #              comment='Simulation results for mod_cpm with V1 10V res, V2 5V res and P 100W res.')
 
 
@@ -312,45 +319,55 @@ def test_dab():
     """
     # Set the basic DAB Specification
     # Setting it this way enables tab completion.
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    dab_specs.V1_step = 2
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    dab_specs.V2_step = 2
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    dab_specs.P_step = 2
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    Dab_Specs.V1_step = 2
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    Dab_Specs.V2_step = 2
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    Dab_Specs.P_step = 2
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
 
     # Object to store all generated data
-    dab_results = ds.DAB_Results()
+    Dab_Results = ds.DAB_Results()
     # gen mesh manually
     # TODO provide a generator function for this in the DAB_Results class
-    # dab_results.mesh_V1, dab_results.mesh_V2, dab_results.mesh_P = np.meshgrid(
-    #     np.linspace(dab_specs.V1_min, dab_specs.V1_max, int(dab_specs.V1_step)),
-    #     np.linspace(dab_specs.V2_min, dab_specs.V2_max, int(dab_specs.V2_step)),
-    #     np.linspace(dab_specs.P_min, dab_specs.P_max, int(dab_specs.P_step)), sparse=False)
-    dab_results.gen_meshes(
-        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
-        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
-        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
+    # Dab_Results.mesh_V1, Dab_Results.mesh_V2, Dab_Results.mesh_P = np.meshgrid(
+    #     np.linspace(Dab_Specs.V1_min, Dab_Specs.V1_max, int(Dab_Specs.V1_step)),
+    #     np.linspace(Dab_Specs.V2_min, Dab_Specs.V2_max, int(Dab_Specs.V2_step)),
+    #     np.linspace(Dab_Specs.P_min, Dab_Specs.P_max, int(Dab_Specs.P_step)), sparse=False)
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
     # TODO how to name the arrays according to some kind of given pattern?
-    dab_results.mod_cpm_phi, dab_results.mod_cpm_tau1, dab_results.mod_cpm_tau2 = mod_cpm.calc_modulation(dab_specs.n,
-                                                                                                          dab_specs.L_s,
-                                                                                                          dab_specs.fs_nom,
-                                                                                                          dab_results.mesh_V1,
-                                                                                                          dab_results.mesh_V2,
-                                                                                                          dab_results.mesh_P)
+    # CPM Modulation
+    Dab_Results.mod_cpm_phi, Dab_Results.mod_cpm_tau1, Dab_Results.mod_cpm_tau2 = mod_cpm.calc_modulation(Dab_Specs.n,
+                                                                                                          Dab_Specs.L_s,
+                                                                                                          Dab_Specs.fs_nom,
+                                                                                                          Dab_Results.mesh_V1,
+                                                                                                          Dab_Results.mesh_V2,
+                                                                                                          Dab_Results.mesh_P)
+
+    # RMS Modulation
+    # Dab_Results.mod_rms_phi, Dab_Results.mod_rms_tau1, Dab_Results.mod_rms_tau2 = mod_rms.calc_modulation(Dab_Specs.n,
+    #                                                                                                       Dab_Specs.L_s,
+    #                                                                                                       Dab_Specs.fs_nom,
+    #                                                                                                       Dab_Results.mesh_V1,
+    #                                                                                                       Dab_Results.mesh_V2,
+    #                                                                                                       Dab_Results.mesh_P)
+
 
     # TODO where to save??? spec only float...
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -358,58 +375,59 @@ def test_dab():
     simtime = 15e-6
 
     # Simulation
-    d_sim = sim_gecko.start_sim(dab_results.mesh_V1,
-                                dab_results.mesh_V2,
-                                dab_results.mod_cpm_phi,
-                                dab_results.mod_cpm_tau1,
-                                dab_results.mod_cpm_tau2,
+    d_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
+                                Dab_Results.mesh_V2,
+                                Dab_Results.mod_cpm_phi,
+                                Dab_Results.mod_cpm_tau1,
+                                Dab_Results.mod_cpm_tau2,
                                 simfilepath, timestep, simtime)
 
     # Unpack the results
+    # TODO maybe put this as a function in DAB_Results
     for k, v in d_sim.items():
-        dab_results['sim_' + k] = v
+        Dab_Results['sim_' + k] = v
 
-    debug("sim_i_Ls: \n", dab_results.sim_i_Ls)
-    debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
+    debug("sim_i_Ls: \n", Dab_Results.sim_i_Ls)
+    debug("sim_S11_p_sw: \n", Dab_Results.sim_S11_p_sw)
 
     # Plotting
     info("\nStart Plotting\n")
-    plt_dab = plot_dab.Plot_DAB()
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.mod_cpm_phi[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][0],
+    Plot_Dab = plot_dab.Plot_DAB()
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.mod_cpm_phi[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][0],
                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_i_Ls[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][1],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_i_Ls[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][1],
                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_S11_p_sw[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][2],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_sw[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][2],
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
-    plt_dab.plot_3by1(plt_dab.figs_axes[-1],
-                      dab_results.mesh_P[:, 1, :],
-                      dab_results.mesh_V2[:, 1, :],
-                      dab_results.sim_p_dc1[:, 1, :],
-                      dab_results.sim_S11_p_sw[:, 1, :],
-                      dab_results.sim_S11_p_cond[:, 1, :],
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
+    Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
+                      Dab_Results.mesh_P[:, 1, :],
+                      Dab_Results.mesh_V2[:, 1, :],
+                      Dab_Results.sim_p_dc1[:, 1, :],
+                      Dab_Results.sim_S11_p_sw[:, 1, :],
+                      Dab_Results.sim_S11_p_cond[:, 1, :],
                       'P / W',
                       'U2 / V',
                       'p_dc1',
                       'S11_p_sw',
                       'S11_p_cond')
 
-    plt_dab.show()
+    Plot_Dab.show()
 
     # Saving
-    save_to_file(dab_specs, dab_results, name='test-save', comment='This is a saving test with random data!')
-    # save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
+    save_to_file(Dab_Specs, Dab_Results, name='test-save', comment='This is a saving test with random data!')
+    # save_to_file(Dab_Specs, Dab_Results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading
     # dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
@@ -420,68 +438,62 @@ def test_dab():
     # dab_results_loaded.foo = np.array([1, 2, 3])
     # dab_results_loaded.bar = "test"
 
-    # Test the logging
-    # info("test")
-    # debug("test")
-    # warning("test")
-    # error("test")
-
 
 def test_plot():
     # Loading
-    dab_specs, dab_results = load_from_file('test-cpm-save.npz')
-    dab_specs.pprint()
-    # dab_results.pprint()
+    Dab_Specs, Dab_Results = load_from_file('test-cpm-save.npz')
+    Dab_Specs.pprint()
+    # Dab_Results.pprint()
 
     info("\nStart Plotting\n")
-    plt_dab = plot_dab.Plot_DAB()
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.mod_cpm_phi[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][0],
+    Plot_Dab = plot_dab.Plot_DAB()
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Overview')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.mod_cpm_phi[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][0],
                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_i_Ls[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][1],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_i_Ls[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][1],
                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
-    plt_dab.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_S11_p_sw[:, 1, :],
-                             ax=plt_dab.figs_axes[-1][1][2],
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_sw[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][2],
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
-    plt_dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
-    plt_dab.plot_3by1(plt_dab.figs_axes[-1],
-                      dab_results.mesh_P[:, 1, :],
-                      dab_results.mesh_V2[:, 1, :],
-                      dab_results.sim_p_dc1[:, 1, :],
-                      dab_results.sim_S11_p_sw[:, 1, :],
-                      dab_results.sim_S11_p_cond[:, 1, :],
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='CPM Power')
+    Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
+                      Dab_Results.mesh_P[:, 1, :],
+                      Dab_Results.mesh_V2[:, 1, :],
+                      Dab_Results.sim_p_dc1[:, 1, :],
+                      Dab_Results.sim_S11_p_sw[:, 1, :],
+                      Dab_Results.sim_S11_p_cond[:, 1, :],
                       'P / W',
                       'U2 / V',
                       'p_dc1',
                       'S11_p_sw',
                       'S11_p_cond')
 
-    plt_dab.new_fig(1, 3)
-    plt_dab.plot_modulation(plt_dab.figs_axes[-1],
-                            dab_results.mesh_P[:, 1, :],
-                            dab_results.mesh_V2[:, 1, :],
-                            dab_results.mod_cpm_phi[:, 1, :],
-                            dab_results.mod_cpm_tau1[:, 1, :],
-                            dab_results.mod_cpm_tau2[:, 1, :])
+    Plot_Dab.new_fig(1, 3)
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                            Dab_Results.mesh_P[:, 1, :],
+                            Dab_Results.mesh_V2[:, 1, :],
+                            Dab_Results.mod_cpm_phi[:, 1, :],
+                            Dab_Results.mod_cpm_tau1[:, 1, :],
+                            Dab_Results.mod_cpm_tau2[:, 1, :])
 
     # now redraw the previous fig
-    plt_dab.plot_modulation(plt_dab.figs_axes[-1],
-                            dab_results.mesh_P[:, 1, :],
-                            dab_results.mesh_V2[:, 1, :],
-                            dab_results.mod_cpm_phi[:, 1, :],
-                            dab_results.mod_cpm_phi[:, 1, :],
-                            dab_results.mod_cpm_tau2[:, 1, :])
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                            Dab_Results.mesh_P[:, 1, :],
+                            Dab_Results.mesh_V2[:, 1, :],
+                            Dab_Results.mod_cpm_phi[:, 1, :],
+                            Dab_Results.mod_cpm_phi[:, 1, :],
+                            Dab_Results.mod_cpm_tau2[:, 1, :])
 
-    plt_dab.show()
+    Plot_Dab.show()
 
 
 # ---------- MAIN ----------
@@ -491,10 +503,10 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    dab_sim_save()
+    # dab_sim_save()
 
     # Test the DAB functions
-    # test_dab()
+    test_dab()
     # Test the Plot functions
     # test_plot()
 

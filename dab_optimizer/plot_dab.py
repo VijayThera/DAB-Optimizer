@@ -5,7 +5,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-import classes_datasets as ds
+import dab_datasets as ds
 from debug_tools import *
 from plotWindow import plotWindow
 

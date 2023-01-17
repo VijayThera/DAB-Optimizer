@@ -20,7 +20,7 @@ import leapythontoolbox as lpt
 from debug_tools import *
 
 
-class SimGecko:
+class Sim_Gecko:
     # mean values we want to get from the simulation
     l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
     l_rms_keys = ['i_Ls']
