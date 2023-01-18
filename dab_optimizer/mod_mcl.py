@@ -182,9 +182,22 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     :return:
     """
     # TCM: calculate phi, Da and Db with (21)
+
     # interim value for what goes into sqrt
-    _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
-    phi = np.pi * np.sign(Pn) * np.sqrt(_isqrt)
+    # _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
+    # debug(np.shape(_isqrt))
+    # phi = _isqrt
+    # _isqrt[_isqrt < 0] = np.nan
+    # _bsqrt_elem_not_negative = np.bitwise_not(np.isnan(_isqrt))
+    # debug(np.shape(_bsqrt_elem_not_negative))
+    # debug(np.shape(phi))
+    # phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn) * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
+
+    phi = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
+    phi[phi < 0] = np.nan
+    phi[~np.isnan(phi)] = np.pi * np.sign(Pn) * np.sqrt(phi[~np.isnan(phi)])
+    # TODO ValueError: operands could not be broadcast together with shapes (4,3,5) (30,)
+
 
     Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
 
