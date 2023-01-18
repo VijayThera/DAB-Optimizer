@@ -112,7 +112,7 @@ class Plot_DAB:
         num_cont_lines = 20
         cmap = 'viridis'
         z_min = 0
-        z_max = np.pi
+        z_max = np.pi / 2
         # Plot the contourf maps
         axs[0].contourf(x, y, z1, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
         axs[1].contourf(x, y, z2, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
@@ -133,7 +133,9 @@ class Plot_DAB:
             warning("update colorbar not implemented")
             cbar = fig.axes[-1]
         else:
-            cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02)
+            cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02, ticks=[0, np.pi/8, np.pi/4, np.pi * 3/8, np.pi/2])
+            cbar.ax.set_yticklabels(['0', 'π/8', 'π/4', 'π3/8', 'π/2'])
+            # alternative to this quick fix: https://stackoverflow.com/a/53586826
         # tight_layout and colorbar are tricky
         # fig.tight_layout()
         # Redraw the current figure

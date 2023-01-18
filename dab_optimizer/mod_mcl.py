@@ -84,7 +84,7 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     # if abs(Pn) <= Pn_tcmmax: use TCM
     #_tcm_mask = np.full_like(Pn, np.nan)
     _tcm_mask = np.less_equal(np.abs(Pn), Pn_tcmmax)
-    debug('TCM MASK\n', _tcm_mask)
+    # debug('TCM MASK\n', _tcm_mask)
 
     # Calculate Pn_optmax with (25)
     # OTM for Pn_tcmmax < abs(Pn) <= Pn_optmax
@@ -93,8 +93,8 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     _cpm_mask = np.bitwise_not(_otm_mask)
     # From the OTM mask we now "subtract" the TCM mask, that way where TCM is possible OTM mask is false too
     _otm_mask[_tcm_mask] = False
-    debug('OPT MASK\n', _otm_mask)
-    debug('CPM MASK\n', _cpm_mask)
+    # debug('OPT MASK\n', _otm_mask)
+    # debug('CPM MASK\n', _cpm_mask)
 
     # Finally select the results according to their boundaries
     phi = np.full_like(Pn, np.nan)
@@ -115,13 +115,6 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     phi[_cpm_mask] = phi_cpm[_cpm_mask]
     Da[_cpm_mask] = da_cpm[_cpm_mask]
     Db[_cpm_mask] = db_cpm[_cpm_mask]
-
-
-    # TODO ********** ONLY for DEBUG start **********
-    # phi = phi_tcm
-    # Da = da_tcm
-    # Db = da_tcm
-    # TODO ********** ONLY for DEBUG end **********
 
     # Determine D1 and D2 with (20)
     D1 = np.full_like(Da, np.nan)
@@ -323,15 +316,15 @@ if __name__ == '__main__':
     Dab_Specs.V1_nom = 700
     Dab_Specs.V1_min = 600
     Dab_Specs.V1_max = 800
-    Dab_Specs.V1_step = 10
+    Dab_Specs.V1_step = 21
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    Dab_Specs.V2_step = 10
+    Dab_Specs.V2_step = 25
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    Dab_Specs.P_step = 10
+    Dab_Specs.P_step = 19
     Dab_Specs.n = 2.99
     Dab_Specs.L_s = 84e-6
     Dab_Specs.L_m = 599e-6
@@ -353,12 +346,12 @@ if __name__ == '__main__':
                                                                                       Dab_Results.mesh_V2,
                                                                                       Dab_Results.mesh_P)
 
-    print("mod_phi:", Dab_Results.mod_phi, sep='\n')
-    print("mod_tau1:", Dab_Results.mod_tau1, sep='\n')
-    print("mod_tau2:", Dab_Results.mod_tau2, sep='\n')
-    print("mod_phi[0,0,0]", type(Dab_Results.mod_phi[0, 0, 0]))
-    print("mod_tau1[0,0,0]", type(Dab_Results.mod_tau1[0, 0, 0]))
-    print("mod_tau2[0,0,0]", type(Dab_Results.mod_tau2[0, 0, 0]))
+    # print("mod_phi:", Dab_Results.mod_phi, sep='\n')
+    # print("mod_tau1:", Dab_Results.mod_tau1, sep='\n')
+    # print("mod_tau2:", Dab_Results.mod_tau2, sep='\n')
+    # print("mod_phi[0,0,0]", type(Dab_Results.mod_phi[0, 0, 0]))
+    # print("mod_tau1[0,0,0]", type(Dab_Results.mod_tau1[0, 0, 0]))
+    # print("mod_tau2[0,0,0]", type(Dab_Results.mod_tau2[0, 0, 0]))
 
     info("\nStart Plotting\n")
     import plot_dab
