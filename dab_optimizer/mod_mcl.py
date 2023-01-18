@@ -48,32 +48,29 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     Pn_max = _Pn_max(V1n, V2n)
 
     # Limit Pn to +/- Pn_max
-    Pn_max = _limit_Pn(Pn, Pn_max)
+    Pn_no_lim = Pn # saved just in case...
+    Pn = _limit_Pn(Pn, Pn_max)
 
     # Determine Van and Vbn with (20)
+    Van = np.full_like(V1n, np.nan)
+    Vbn = np.full_like(V1n, np.nan)
     # input value mapping
-    # TODO ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-    # TODO bool_array = np.less_equal(V1n, V2n) then do something with it... maybe do the mapping element wise?
+    _transformation_mask = np.less_equal(V1n, V2n)
+    # debug(_transformation_mask)
     # if np.less_equal(V1n, V2n):
-    #     Van = V1n
-    #     Vbn = V2n
-    # else:
-    #     if np.greater(V1n, V2n):
-    #         Van = V2n
-    #         Vbn = V1n
-    #     else:
-    #         error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
-
-    # TODO DEBUG
-    Van = V1n
-    Vbn = V2n
+    Van[_transformation_mask] = V1n[_transformation_mask]
+    Vbn[_transformation_mask] = V2n[_transformation_mask]
+    # else: if np.greater(V1n, V2n):
+    Van[np.bitwise_not(_transformation_mask)] = V2n[np.bitwise_not(_transformation_mask)]
+    Vbn[np.bitwise_not(_transformation_mask)] = V1n[np.bitwise_not(_transformation_mask)]
 
     # Calculate Pn_tcm,max with (22). Maximum power for TCM!
-    # TODO maybe check if DAB P_max it higher
     Pn_tcmmax = np.pi / 2 * (np.power(Van, 2) * (Vbn - Van)) / Vbn
 
-    # if abs(Pn) <= Pn_tcmmax: calc TCM else: do the rest
-    # TODO how to calculate thins partially?
+    # ***** Change in contrast to paper *****
+    # Instead of fist checking the power limits for each modulation and only calculate each mod. partly,
+    # all the modulations are calculated first even for useless areas and we decide later which part is useful.
+    # This should be faster and easier.
 
     # TCM: calculate phi, Da and Db with (21)
     phi_tcm, da_tcm, db_tcm = _calc_TCM(Van, Vbn, Pn)
@@ -84,34 +81,58 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     # CPM/SPS: calculate phi, Da and Db with (26)
     phi_cpm, da_cpm, db_cpm = _calc_CPM(Van, Vbn, Pn)
 
+    # if abs(Pn) <= Pn_tcmmax: use TCM
+    #_tcm_mask = np.full_like(Pn, np.nan)
+    _tcm_mask = np.less_equal(np.abs(Pn), Pn_tcmmax)
+    debug('TCM MASK\n', _tcm_mask)
 
+    # Calculate Pn_optmax with (25)
+    # OTM for Pn_tcmmax < abs(Pn) <= Pn_optmax
+    _otm_mask = np.less_equal(db_otm, 1/2)
+    # CPM where db_otm > 1/2 or nan, this is simply the inverse
+    _cpm_mask = np.bitwise_not(_otm_mask)
+    # From the OTM mask we now "subtract" the TCM mask, that way where TCM is possible OTM mask is false too
+    _otm_mask[_tcm_mask] = False
+    debug('OPT MASK\n', _otm_mask)
+    debug('CPM MASK\n', _cpm_mask)
 
+    # Finally select the results according to their boundaries
+    phi = np.full_like(Pn, np.nan)
+    Da = np.full_like(Pn, np.nan)
+    Db = np.full_like(Pn, np.nan)
 
+    # use TCM: if abs(Pn) <= Pn_tcmmax
+    phi[_tcm_mask] = phi_tcm[_tcm_mask]
+    Da[_tcm_mask] = da_tcm[_tcm_mask]
+    Db[_tcm_mask] = db_tcm[_tcm_mask]
+
+    # use OTM: if Pn_tcmmax < abs(Pn) <= Pn_optmax
+    phi[_otm_mask] = phi_otm[_otm_mask]
+    Da[_otm_mask] = da_otm[_otm_mask]
+    Db[_otm_mask] = db_otm[_otm_mask]
+
+    # use CPM: if abs(Pn) > Pn_optmax
+    phi[_cpm_mask] = phi_cpm[_cpm_mask]
+    Da[_cpm_mask] = da_cpm[_cpm_mask]
+    Db[_cpm_mask] = db_cpm[_cpm_mask]
 
 
     # TODO ********** ONLY for DEBUG start **********
-    phi = phi_tcm
-    Da = da_tcm
-    Db = da_tcm
+    # phi = phi_tcm
+    # Da = da_tcm
+    # Db = da_tcm
     # TODO ********** ONLY for DEBUG end **********
 
     # Determine D1 and D2 with (20)
+    D1 = np.full_like(Da, np.nan)
+    D2 = np.full_like(Da, np.nan)
     # output value mapping
-    # TODO ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-    # TODO bool_array = np.less_equal(V1n, V2n) then do something with it... maybe do the mapping element wise?
     # if np.less_equal(V1n, V2n):
-    #     D1 = Da
-    #     D2 = Db
-    # else:
-    #     if np.greater(V1n, V2n):
-    #         D2 = Da
-    #         D1 = Db
-    #     else:
-    #         error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
-
-    # TODO DEBUG
-    D1 = Da
-    D2 = Db
+    D1[_transformation_mask] = Da[_transformation_mask]
+    D2[_transformation_mask] = Db[_transformation_mask]
+    # else: if np.greater(V1n, V2n):
+    D2[np.bitwise_not(_transformation_mask)] = Da[np.bitwise_not(_transformation_mask)]
+    D1[np.bitwise_not(_transformation_mask)] = Db[np.bitwise_not(_transformation_mask)]
 
     # convert duty cycle D into radiant angle tau
     tau1 = D1 * np.pi
@@ -142,7 +163,7 @@ def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: flo
     V2n = n * mesh_V2 / V_ref
     Pn = mesh_P / P_ref
 
-    debug(V1n, V2n, Pn, sep='\n')
+    # debug(V1n, V2n, Pn, sep='\n')
     return V1n, V2n, Pn
 
 def _Pn_max(V1n: np.ndarray, V2n: np.ndarray) -> np.ndarray:
@@ -155,7 +176,7 @@ def _Pn_max(V1n: np.ndarray, V2n: np.ndarray) -> np.ndarray:
     """
     Pn_max = (np.pi * V1n * V2n) / 4
 
-    debug(Pn_max, sep='\n')
+    # debug(Pn_max, sep='\n')
     return Pn_max
 
 def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
@@ -168,9 +189,13 @@ def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
     """
     Pn_limit = np.clip(Pn, -Pn_max, Pn_max)
 
-    debug(Pn_limit, sep='\n')
+    if not np.all(np.equal(Pn, Pn_limit)):
+        warning('Pn was limited! False elements show the limited elements.', np.equal(Pn, Pn_limit))
+
+    # debug(Pn_limit, sep='\n')
     return Pn_limit
 
+@timeit
 def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
@@ -184,31 +209,19 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     # TCM: calculate phi, Da and Db with (21)
 
     # interim value for what goes into sqrt
-    # _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
-    # debug(np.shape(_isqrt))
-    # phi = _isqrt
-    # _isqrt[_isqrt < 0] = np.nan
-    # _bsqrt_elem_not_negative = np.bitwise_not(np.isnan(_isqrt))
-    # debug(np.shape(_bsqrt_elem_not_negative))
-    # debug(np.shape(phi))
-    # phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn) * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
-
-    phi = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
-    debug(phi)
-    phi[phi < 0] = np.nan
-    debug(phi)
-    debug(~np.isnan(phi))
-    phi[~np.isnan(phi)] = np.pi * np.sign(Pn) * np.sqrt(phi[~np.isnan(phi)])
-    # TODO ValueError: operands could not be broadcast together with shapes (4,3,5) (30,)
-
+    _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
+    _isqrt[_isqrt < 0] = np.nan
+    phi = np.pi * np.sign(Pn) * np.sqrt(_isqrt)
+    #phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn)[_bsqrt_elem_not_negative] * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
 
     Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
 
     Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
 
-    debug(phi, Da, Db, sep='\n')
+    # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
 
+@timeit
 def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     OTM (Optimal Transition Mode) Modulation calculation, which will return phi, tau1 and tau2
@@ -239,6 +252,8 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
          (4 * np.power(Van, 2) + 13 * np.power(Van, 2)) + \
          16 * np.power(np.abs(Pn) / np.pi, 2) * Van * np.power((np.power(Van, 2) + np.power(Van, 2)), 2) * \
          (4 * np.power(Van, 2) * Vbn + np.power(Van, 3))
+    # Mask values <0 with NaN so that we can do sqrt(e3) in the next step
+    e3[e3 < 0] = np.nan
 
     e4 = 8 * np.power(Van, 9) * np.power(Van, 3) - 8 * np.power(np.abs(Pn) / np.pi, 3) * \
          (8 * np.power(Van, 2) - np.power(Van, 2)) * np.power((np.power(Van, 2) + np.power(Van, 2)), 2) - \
@@ -257,22 +272,27 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
     e7 = np.power(e4, (1 / 3)) / (6 * np.power(Van, 3) * Vbn + 6 * Van * np.power(Van, 3)) + \
          np.power(e1, 2) / 4 - (2 * e2) / 3 + e5
+    # Mask values <0 with NaN so that we can do sqrt(e7) in the next step
+    e7[e7 < 0] = np.nan
 
     e8 = 1 / 4 * ((- np.power(e1, 3) - e6) / np.sqrt(e7) + 3 * np.power(e1, 2) - 8 * e2 - 4 * e7)
+    # Mask values <0 with NaN so that we can do sqrt(e8) in the next step
+    e8[e8 < 0] = np.nan
 
     # The resulting formulas:
 
-    Da = 1 / 2
-
     Db = 1 / 4 * (2 * np.sqrt(e7) - 2 * np.sqrt(e8) - e1)
+
+    Da = np.full_like(Db, 1/2)
 
     # (24) OTM phi
     phi = np.pi * np.sign(Pn) * \
           (1 / 2 - np.sqrt(Da * (1 - Da) + Db * (1 - Db) - 1 / 4 - np.abs(Pn) / np.pi * 1 / (Van * Vbn)))
 
-    debug(phi, Da, Db, sep='\n')
+    # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
 
+@timeit
 def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     CPM (Conventional Phaseshift Modulation) (egal to SPS Modulation) calculation, which will return phi, tau1 and tau2
@@ -286,11 +306,11 @@ def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     # CPM/SPS: calculate phi, Da and Db with (26)
     phi = np.pi * np.sign(Pn) * (1 / 2 - np.sqrt(1 / 4 - np.abs(Pn) / np.pi * 1 / (Van * Vbn)))
 
-    Da = 1 / 2
+    Da = np.full_like(phi, 1/2)
 
-    Db = 1 / 2
+    Db = np.full_like(phi, 1/2)
 
-    debug(phi, Da, Db, sep='\n')
+    # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
 
 
@@ -303,15 +323,15 @@ if __name__ == '__main__':
     Dab_Specs.V1_nom = 700
     Dab_Specs.V1_min = 600
     Dab_Specs.V1_max = 800
-    Dab_Specs.V1_step = 3
+    Dab_Specs.V1_step = 10
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    Dab_Specs.V2_step = 4
+    Dab_Specs.V2_step = 10
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    Dab_Specs.P_step = 5
+    Dab_Specs.P_step = 10
     Dab_Specs.n = 2.99
     Dab_Specs.L_s = 84e-6
     Dab_Specs.L_m = 599e-6
