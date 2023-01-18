@@ -480,17 +480,32 @@ def test_plot():
                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
-    Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
-                      Dab_Results.mesh_P[:, 1, :],
-                      Dab_Results.mesh_V2[:, 1, :],
-                      Dab_Results.sim_p_dc1[:, 1, :],
-                      Dab_Results.sim_S11_p_sw[:, 1, :],
-                      Dab_Results.sim_S11_p_cond[:, 1, :],
-                      'P / W',
-                      'U2 / V',
-                      'p_dc1',
-                      'S11_p_sw',
-                      'S11_p_cond')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_p_dc1[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][0],
+                             xlabel='P / W', ylabel='U2 / V', title='sim_p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_sw[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][1],
+                             xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, 1, :],
+                             Dab_Results.mesh_V2[:, 1, :],
+                             Dab_Results.sim_S11_p_cond[:, 1, :],
+                             ax=Plot_Dab.figs_axes[-1][1][2],
+                             xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+    # Plot_Dab.plot_3by1(Plot_Dab.figs_axes[-1],
+    #                   Dab_Results.mesh_P[:, 1, :],
+    #                   Dab_Results.mesh_V2[:, 1, :],
+    #                   Dab_Results.sim_p_dc1[:, 1, :],
+    #                   Dab_Results.sim_S11_p_sw[:, 1, :],
+    #                   Dab_Results.sim_S11_p_cond[:, 1, :],
+    #                   'P / W',
+    #                   'U2 / V',
+    #                   'p_dc1',
+    #                   'S11_p_sw',
+    #                   'S11_p_cond')
 
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation')
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
@@ -501,12 +516,12 @@ def test_plot():
                             Dab_Results.mod_sps_tau2[:, 1, :])
 
     # now redraw the previous fig
-    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
-                            Dab_Results.mesh_P[:, 1, :],
-                            Dab_Results.mesh_V2[:, 1, :],
-                            Dab_Results.mod_sps_phi[:, 1, :],
-                            Dab_Results.mod_sps_phi[:, 1, :],
-                            Dab_Results.mod_sps_tau2[:, 1, :])
+    # Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+    #                         Dab_Results.mesh_P[:, 1, :],
+    #                         Dab_Results.mesh_V2[:, 1, :],
+    #                         Dab_Results.mod_sps_phi[:, 1, :],
+    #                         Dab_Results.mod_sps_phi[:, 1, :],
+    #                         Dab_Results.mod_sps_tau2[:, 1, :])
 
     Plot_Dab.show()
 
@@ -521,8 +536,8 @@ if __name__ == '__main__':
     # dab_sim_save()
 
     # Test the DAB functions
-    test_dab()
+    # test_dab()
     # Test the Plot functions
-    # test_plot()
+    test_plot()
 
     # sys.exit(0)

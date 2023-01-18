@@ -194,7 +194,10 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     # phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn) * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
 
     phi = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
+    debug(phi)
     phi[phi < 0] = np.nan
+    debug(phi)
+    debug(~np.isnan(phi))
     phi[~np.isnan(phi)] = np.pi * np.sign(Pn) * np.sqrt(phi[~np.isnan(phi)])
     # TODO ValueError: operands could not be broadcast together with shapes (4,3,5) (30,)
 
