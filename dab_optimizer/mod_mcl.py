@@ -53,15 +53,20 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     # Determine Van and Vbn with (20)
     # input value mapping
     # TODO ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-    if np.less_equal(V1n, V2n):
-        Van = V1n
-        Vbn = V2n
-    else:
-        if np.greater(V1n, V2n):
-            Van = V2n
-            Vbn = V1n
-        else:
-            error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+    # TODO bool_array = np.less_equal(V1n, V2n) then do something with it... maybe do the mapping element wise?
+    # if np.less_equal(V1n, V2n):
+    #     Van = V1n
+    #     Vbn = V2n
+    # else:
+    #     if np.greater(V1n, V2n):
+    #         Van = V2n
+    #         Vbn = V1n
+    #     else:
+    #         error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+
+    # TODO DEBUG
+    Van = V1n
+    Vbn = V2n
 
     # Calculate Pn_tcm,max with (22). Maximum power for TCM!
     # TODO maybe check if DAB P_max it higher
@@ -90,16 +95,23 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     Db = da_tcm
     # TODO ********** ONLY for DEBUG end **********
 
+    # Determine D1 and D2 with (20)
     # output value mapping
-    if np.less_equal(V1n, V2n):
-        D1 = Da
-        D2 = Db
-    else:
-        if np.greater(V1n, V2n):
-            D2 = Da
-            D1 = Db
-        else:
-            error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+    # TODO ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+    # TODO bool_array = np.less_equal(V1n, V2n) then do something with it... maybe do the mapping element wise?
+    # if np.less_equal(V1n, V2n):
+    #     D1 = Da
+    #     D2 = Db
+    # else:
+    #     if np.greater(V1n, V2n):
+    #         D2 = Da
+    #         D1 = Db
+    #     else:
+    #         error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+
+    # TODO DEBUG
+    D1 = Da
+    D2 = Db
 
     # convert duty cycle D into radiant angle tau
     tau1 = D1 * np.pi
@@ -170,7 +182,9 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     :return:
     """
     # TCM: calculate phi, Da and Db with (21)
-    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+    # interim value for what goes into sqrt
+    _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
+    phi = np.pi * np.sign(Pn) * np.sqrt(_isqrt)
 
     Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
 
@@ -181,42 +195,84 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
 def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
-    TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
-    It will not be checked if Pn <= Pn_tcmmax
+    OTM (Optimal Transition Mode) Modulation calculation, which will return phi, tau1 and tau2
+    It will not be checked if Pn_tcmmax < Pn <= Pn_optmax
 
     :param Van:
     :param Vbn:
     :param Pn:
     :return:
     """
-    #TODO
-    # TCM: calculate phi, Da and Db with (21)
-    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+    # OTM: calculate phi, Da and Db with (23) and (24)
 
-    Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
+    # (23) OTM Da and Db
+    # Formula is taken *as-is* from the Paper with all its interim values
 
-    Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
+    # TODO Some more interim values that may improve performance
+    # f1 = np.power(Van, 2) + np.power(Van, 2)
+    # f2 = np.abs(Pn) / np.pi
+
+    e1 = - (2 * np.power(Van, 2) + np.power(Van, 2)) / (np.power(Van, 2) + np.power(Van, 2))
+
+    e2 = (np.power(Van, 3) * Vbn + np.abs(Pn) / np.pi * (np.power(Van, 2) + np.power(Van, 2))) / \
+         (np.power(Van, 3) * Vbn + Van * np.power(Van, 3))
+
+    e3 = 8 * np.power(Van, 7) * np.power(Van, 5) - 64 * np.power(np.abs(Pn) / np.pi, 3) * \
+         np.power((np.power(Van, 2) + np.power(Van, 2)), 3) - \
+         np.abs(Pn) / np.pi * np.power(Van, 4) * np.power(Van, 2) * (4 * np.power(Van, 2) + np.power(Van, 2)) * \
+         (4 * np.power(Van, 2) + 13 * np.power(Van, 2)) + \
+         16 * np.power(np.abs(Pn) / np.pi, 2) * Van * np.power((np.power(Van, 2) + np.power(Van, 2)), 2) * \
+         (4 * np.power(Van, 2) * Vbn + np.power(Van, 3))
+
+    e4 = 8 * np.power(Van, 9) * np.power(Van, 3) - 8 * np.power(np.abs(Pn) / np.pi, 3) * \
+         (8 * np.power(Van, 2) - np.power(Van, 2)) * np.power((np.power(Van, 2) + np.power(Van, 2)), 2) - \
+         12 * np.abs(Pn) / np.pi * np.power(Van, 6) * np.power(Van, 2) * (4 * np.power(Van, 2) + np.power(Van, 2)) + \
+         3 * np.power(np.abs(Pn) / np.pi, 2) * np.power(Van, 3) * Vbn * (4 * np.power(Van, 2) + np.power(Van, 2)) * \
+         (8 * np.power(Van, 2) + 5 * np.power(Van, 2)) + \
+         np.power((3 * np.abs(Pn) / np.pi), (3 / 2)) * Van * np.power(Van, 2) * np.sqrt(e3)
+
+    e5 = (2 * np.power(Van, 6) * np.power(Van, 2) + 2 * np.abs(Pn) / np.pi * (4 * np.power(Van, 2) + np.power(Van, 2)) *
+         (np.abs(Pn) / np.pi * (np.power(Van, 2) + np.power(Van, 2)) - np.power(Van, 3) * Vbn)) * \
+         1 / (3 * Van * Vbn * (np.power(Van, 2) + np.power(Van, 2)) * np.power(e4, (1 / 3)))
+
+    e6 = (4 * (np.power(Van, 3) * np.power(Van, 2) + 2 * np.power(Van, 5)) + 4 *
+          np.abs(Pn) / np.pi * (np.power(Van, 2) * Vbn + np.power(Van, 3))) / \
+         (Van * np.power((np.power(Van, 2) + np.power(Van, 2)), 2))
+
+    e7 = np.power(e4, (1 / 3)) / (6 * np.power(Van, 3) * Vbn + 6 * Van * np.power(Van, 3)) + \
+         np.power(e1, 2) / 4 - (2 * e2) / 3 + e5
+
+    e8 = 1 / 4 * ((- np.power(e1, 3) - e6) / np.sqrt(e7) + 3 * np.power(e1, 2) - 8 * e2 - 4 * e7)
+
+    # The resulting formulas:
+
+    Da = 1 / 2
+
+    Db = 1 / 4 * (2 * np.sqrt(e7) - 2 * np.sqrt(e8) - e1)
+
+    # (24) OTM phi
+    phi = np.pi * np.sign(Pn) * \
+          (1 / 2 - np.sqrt(Da * (1 - Da) + Db * (1 - Db) - 1 / 4 - np.abs(Pn) / np.pi * 1 / (Van * Vbn)))
 
     debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
 
 def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
-    TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
-    It will not be checked if Pn <= Pn_tcmmax
+    CPM (Conventional Phaseshift Modulation) (egal to SPS Modulation) calculation, which will return phi, tau1 and tau2
+    It will not be checked if abs(Pn) > Pn_optmax and abs(Pn) <= Pn_max
 
     :param Van:
     :param Vbn:
     :param Pn:
     :return:
     """
-    #TODO
-    # TCM: calculate phi, Da and Db with (21)
-    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+    # CPM/SPS: calculate phi, Da and Db with (26)
+    phi = np.pi * np.sign(Pn) * (1 / 2 - np.sqrt(1 / 4 - np.abs(Pn) / np.pi * 1 / (Van * Vbn)))
 
-    Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
+    Da = 1 / 2
 
-    Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
+    Db = 1 / 2
 
     debug(phi, Da, Db, sep='\n')
     return phi, Da, Db

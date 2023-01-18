@@ -74,7 +74,7 @@ e1 = - (2 * Van^2 + Vbn^2) / (Van^2 + Vbn^2)
 
 e2 = (Van^3 * Vbn + abs(Pn) / pi * (Van^2 + Vbn^2)) / (Van^3 * Vbn + Van * Vbn^3)
 
-e3 = 8 * Van^7 * Vbn^5 - 64 abs(Pn)^3 / pi^3 * (Van^2 + Vbn^2)^3 
+e3 = 8 * Van^7 * Vbn^5 - 64 * abs(Pn)^3 / pi^3 * (Van^2 + Vbn^2)^3 
 - abs(Pn) / pi * Van^4 * Vbn^2 * (4 * Van^2 + Vbn^2) * (4 * Van^2 + 13 * Vbn^2)
 + 16 * Pn^2 / pi^2 * Van * (Van^2 + Vbn^2)^2 * (4 * Van^2 * Vbn + Vbn^3)
 
@@ -86,11 +86,11 @@ e4 = 8 * Van^9 * Vbn^3 - 8 * (abs(Pn) / pi)^3 * (8 * Van^2 - Vbn^2) * (Van^2 + V
 e5 = (2 * Van^6 * Vbn^2 + 2 * abs(Pn) / pi * (4 * Van^2 + Vbn^2) * (abs(Pn) / pi * (Van^2 + Vbn^2) - Van^3 * Vbn)) *
 (3 * Van * Vbn * (Van^2 + Vbn^2) * e4^(1/3))^(-1)
 
-e6 = (4 * (Van^3 * Vbn^2 + 2 * Van^5) + 4 * abs(Pn) / pi (Van^2 * Vbn + Vbn^3)) / (Van * (Van^2 + Vbn^2)^2)
+e6 = (4 * (Van^3 * Vbn^2 + 2 * Van^5) + 4 * abs(Pn) / pi * (Van^2 * Vbn + Vbn^3)) / (Van * (Van^2 + Vbn^2)^2)
 
 e7 = e4^(1/3) / (6 * Van^3 * Vbn + 6 * Van * Vbn^3) + e1^2 / 4 - (2 * e2) / 3 + e5
 
-e8 = 1 / 4 ((-e1^3 - e6) / sqrt(e7) + 3 * e1^2 - 8 * e2 - 4 * e7)
+e8 = 1 / 4 * ((-e1^3 - e6) / sqrt(e7) + 3 * e1^2 - 8 * e2 - 4 * e7)
 
 The resulting formulas:
 
