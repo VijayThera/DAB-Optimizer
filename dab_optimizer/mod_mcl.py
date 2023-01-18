@@ -7,6 +7,7 @@
 Calculation of the Modulation for a DAB (Dual Active Bridge).
 
 This module calculates the **MCL (Minimum Conduction Loss) Modulation** according to the Paper [IEEE][1].
+It minimizes the inductor rms current I_L.
 
 It was tried to be as close as possible to the depicted algorithm but a around formula (25) and (23) had been made.
 
@@ -24,18 +25,202 @@ from debug_tools import *
 
 @timeit
 def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
-    # init 3d arrays
-    # mvvp_phi = np.zeros_like(mesh_V1)
-    # init these with pi because they are constant for CPM
-    mvvp_tau1 = np.full_like(mesh_V1, np.pi)
-    mvvp_tau2 = np.full_like(mesh_V1, np.pi)
+    """
+    MCL (Minimum Conduction Loss) Modulation calculation, which will return phi, tau1 and tau2
 
-    # Calculate phase shift difference from input to output bridge
-    # TODO maybe have to consider the case sqrt(<0). When does this happen?
-    # maybe like this: mln_phi[mln_phi < 0] = np.nan
-    mvvp_phi = np.pi / 2 * (1 - np.sqrt(1 - (8 * fs_nom * L_s * mesh_P) / (n * mesh_V1 * mesh_V2)))
+    :param n: Transformer turns ratio
+    :param L_s: DAB converter inductance.
+    :param fs_nom: Switching frequency
+    :param mesh_V1: input voltage (voltage on side 1)
+    :param mesh_V2: output voltage (voltage on side 2)
+    :param mesh_P: DAB power (assuming a lossless DAB)
+    :return: phi, tau1, tau2
+    """
 
-    return mvvp_phi, mvvp_tau1, mvvp_tau2
+    # Reference voltage, any arbitrary voltage!
+    V_ref = 100
+
+    # Calculate normalized voltage and power values V1n, V2n, Pn
+    V1n, V2n, Pn = _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref)
+
+    # Calculate Pn_max with (14)
+    # TODO maybe check if inductor L_s is too big for the power P_max
+    Pn_max = _Pn_max(V1n, V2n)
+
+    # Limit Pn to +/- Pn_max
+    Pn_max = _limit_Pn(Pn, Pn_max)
+
+    # Determine Van and Vbn with (20)
+    # input value mapping
+    # TODO ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+    if np.less_equal(V1n, V2n):
+        Van = V1n
+        Vbn = V2n
+    else:
+        if np.greater(V1n, V2n):
+            Van = V2n
+            Vbn = V1n
+        else:
+            error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+
+    # Calculate Pn_tcm,max with (22). Maximum power for TCM!
+    # TODO maybe check if DAB P_max it higher
+    Pn_tcmmax = np.pi / 2 * (np.power(Van, 2) * (Vbn - Van)) / Vbn
+
+    # if abs(Pn) <= Pn_tcmmax: calc TCM else: do the rest
+    # TODO how to calculate thins partially?
+
+    # TCM: calculate phi, Da and Db with (21)
+    phi_tcm, da_tcm, db_tcm = _calc_TCM(Van, Vbn, Pn)
+
+    # OTM: calculate phi, Da and Db with (23) and (24)
+    phi_otm, da_otm, db_otm = _calc_OTM(Van, Vbn, Pn)
+
+    # CPM/SPS: calculate phi, Da and Db with (26)
+    phi_cpm, da_cpm, db_cpm = _calc_CPM(Van, Vbn, Pn)
+
+
+
+
+
+
+    # TODO ********** ONLY for DEBUG start **********
+    phi = phi_tcm
+    Da = da_tcm
+    Db = da_tcm
+    # TODO ********** ONLY for DEBUG end **********
+
+    # output value mapping
+    if np.less_equal(V1n, V2n):
+        D1 = Da
+        D2 = Db
+    else:
+        if np.greater(V1n, V2n):
+            D2 = Da
+            D1 = Db
+        else:
+            error('Neither is V1n <= V2n or V1n > V2n, therefore there must be an overlap in V1n and V2n!')
+
+    # convert duty cycle D into radiant angle tau
+    tau1 = D1 * np.pi
+    tau2 = D2 * np.pi
+
+    return phi, tau1, tau2
+
+def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100):
+    """
+    Normalize the given meshes to the reference voltage.
+    The lower case "n" denotes that these values are normalized.
+
+    :param n: Transformer turns ratio
+    :param L_s: DAB converter inductance
+    :param fs_nom: Switching frequency
+    :param mesh_V1: input voltage (voltage on side 1)
+    :param mesh_V2: output voltage (voltage on side 2)
+    :param mesh_P: DAB power (assuming a lossless DAB)
+    :param V_ref: any arbitrary voltage
+    :return: the normalized meshes from input V1, V2 and P
+    """
+    # scalars
+    # V_ref = any arbitrary voltage
+    Z_ref = 2 * np.pi * fs_nom * L_s
+    P_ref = V_ref ** 2 / Z_ref
+    # arrays
+    V1n = mesh_V1 / V_ref
+    V2n = n * mesh_V2 / V_ref
+    Pn = mesh_P / P_ref
+
+    debug(V1n, V2n, Pn, sep='\n')
+    return V1n, V2n, Pn
+
+def _Pn_max(V1n: np.ndarray, V2n: np.ndarray) -> np.ndarray:
+    """
+    Calculate Pn_max, which is the limit for SPS/CPM and therefore the absolute max for the DAB!
+
+    :param V1n: normalized input voltage (voltage on side 1)
+    :param V2n: normalized output voltage (voltage on side 2)
+    :return: Pn_max
+    """
+    Pn_max = (np.pi * V1n * V2n) / 4
+
+    debug(Pn_max, sep='\n')
+    return Pn_max
+
+def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
+    """
+    Replace Pn values beyond Pn_max with values from Pn_max
+
+    :param Pn:
+    :param Pn_max:
+    :return:
+    """
+    Pn_limit = np.clip(Pn, -Pn_max, Pn_max)
+
+    debug(Pn_limit, sep='\n')
+    return Pn_limit
+
+def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
+    """
+    TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
+    It will not be checked if Pn <= Pn_tcmmax
+
+    :param Van:
+    :param Vbn:
+    :param Pn:
+    :return:
+    """
+    # TCM: calculate phi, Da and Db with (21)
+    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+
+    Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
+
+    Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
+
+    debug(phi, Da, Db, sep='\n')
+    return phi, Da, Db
+
+def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
+    """
+    TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
+    It will not be checked if Pn <= Pn_tcmmax
+
+    :param Van:
+    :param Vbn:
+    :param Pn:
+    :return:
+    """
+    #TODO
+    # TCM: calculate phi, Da and Db with (21)
+    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+
+    Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
+
+    Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
+
+    debug(phi, Da, Db, sep='\n')
+    return phi, Da, Db
+
+def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
+    """
+    TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
+    It will not be checked if Pn <= Pn_tcmmax
+
+    :param Van:
+    :param Vbn:
+    :param Pn:
+    :return:
+    """
+    #TODO
+    # TCM: calculate phi, Da and Db with (21)
+    phi = np.pi * np.sgn(Pn) * np.sqrt((Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi)
+
+    Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
+
+    Db = np.abs(phi) / np.pi * Van / (Vbn - Van)
+
+    debug(phi, Da, Db, sep='\n')
+    return phi, Da, Db
+
 
 
 # ---------- MAIN ----------
