@@ -48,7 +48,7 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     Pn_max = _Pn_max(V1n, V2n)
 
     # Limit Pn to +/- Pn_max
-    Pn_no_lim = Pn # saved just in case...
+    Pn_no_lim = Pn  # saved just in case...
     Pn = _limit_Pn(Pn, Pn_max)
 
     # Determine Van and Vbn with (20)
@@ -82,13 +82,13 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     phi_cpm, da_cpm, db_cpm = _calc_CPM(Van, Vbn, Pn)
 
     # if abs(Pn) <= Pn_tcmmax: use TCM
-    #_tcm_mask = np.full_like(Pn, np.nan)
+    # _tcm_mask = np.full_like(Pn, np.nan)
     _tcm_mask = np.less_equal(np.abs(Pn), Pn_tcmmax)
     # debug('TCM MASK\n', _tcm_mask)
 
     # Calculate Pn_optmax with (25)
     # OTM for Pn_tcmmax < abs(Pn) <= Pn_optmax
-    _otm_mask = np.less_equal(db_otm, 1/2)
+    _otm_mask = np.less_equal(db_otm, 1 / 2)
     # CPM where db_otm > 1/2 or nan, this is simply the inverse
     _cpm_mask = np.bitwise_not(_otm_mask)
     # From the OTM mask we now "subtract" the TCM mask, that way where TCM is possible OTM mask is false too
@@ -101,11 +101,6 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     Da = np.full_like(Pn, np.nan)
     Db = np.full_like(Pn, np.nan)
 
-    # use TCM: if abs(Pn) <= Pn_tcmmax
-    phi[_tcm_mask] = phi_tcm[_tcm_mask]
-    Da[_tcm_mask] = da_tcm[_tcm_mask]
-    Db[_tcm_mask] = db_tcm[_tcm_mask]
-
     # use OTM: if Pn_tcmmax < abs(Pn) <= Pn_optmax
     phi[_otm_mask] = phi_otm[_otm_mask]
     Da[_otm_mask] = da_otm[_otm_mask]
@@ -115,6 +110,11 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     phi[_cpm_mask] = phi_cpm[_cpm_mask]
     Da[_cpm_mask] = da_cpm[_cpm_mask]
     Db[_cpm_mask] = db_cpm[_cpm_mask]
+
+    # use TCM: if abs(Pn) <= Pn_tcmmax
+    phi[_tcm_mask] = phi_tcm[_tcm_mask]
+    Da[_tcm_mask] = da_tcm[_tcm_mask]
+    Db[_tcm_mask] = db_tcm[_tcm_mask]
 
     # Determine D1 and D2 with (20)
     D1 = np.full_like(Da, np.nan)
@@ -131,7 +131,8 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     tau1 = D1 * np.pi
     tau2 = D2 * np.pi
 
-    return phi, tau1, tau2
+    return phi, tau1, tau2, _tcm_mask, _cpm_mask
+
 
 def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100):
     """
@@ -159,6 +160,7 @@ def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: flo
     # debug(V1n, V2n, Pn, sep='\n')
     return V1n, V2n, Pn
 
+
 def _Pn_max(V1n: np.ndarray, V2n: np.ndarray) -> np.ndarray:
     """
     Calculate Pn_max, which is the limit for SPS/CPM and therefore the absolute max for the DAB!
@@ -171,6 +173,7 @@ def _Pn_max(V1n: np.ndarray, V2n: np.ndarray) -> np.ndarray:
 
     # debug(Pn_max, sep='\n')
     return Pn_max
+
 
 def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
     """
@@ -187,6 +190,7 @@ def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
 
     # debug(Pn_limit, sep='\n')
     return Pn_limit
+
 
 @timeit
 def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
@@ -205,7 +209,7 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     _isqrt = (Vbn - Van) / (2 * np.power(Van, 2) * Vbn) * np.abs(Pn) / np.pi
     _isqrt[_isqrt < 0] = np.nan
     phi = np.pi * np.sign(Pn) * np.sqrt(_isqrt)
-    #phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn)[_bsqrt_elem_not_negative] * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
+    # phi[_bsqrt_elem_not_negative] = np.pi * np.sign(Pn)[_bsqrt_elem_not_negative] * np.sqrt(_isqrt[_bsqrt_elem_not_negative])
 
     Da = np.abs(phi) / np.pi * Vbn / (Vbn - Van)
 
@@ -213,6 +217,7 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
     # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
+
 
 @timeit
 def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
@@ -230,9 +235,10 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     # (23) OTM Da and Db
     # Formula is taken *as-is* from the Paper with all its interim values
 
-    # TODO Some more interim values that may improve performance
+    # Some more interim values that may improve performance
     # f1 = np.power(Van, 2) + np.power(Van, 2)
     # f2 = np.abs(Pn) / np.pi
+    # This returns some very odd results!
 
     e1 = - (2 * np.power(Van, 2) + np.power(Van, 2)) / (np.power(Van, 2) + np.power(Van, 2))
 
@@ -256,7 +262,7 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
          np.power((3 * np.abs(Pn) / np.pi), (3 / 2)) * Van * np.power(Van, 2) * np.sqrt(e3)
 
     e5 = (2 * np.power(Van, 6) * np.power(Van, 2) + 2 * np.abs(Pn) / np.pi * (4 * np.power(Van, 2) + np.power(Van, 2)) *
-         (np.abs(Pn) / np.pi * (np.power(Van, 2) + np.power(Van, 2)) - np.power(Van, 3) * Vbn)) * \
+          (np.abs(Pn) / np.pi * (np.power(Van, 2) + np.power(Van, 2)) - np.power(Van, 3) * Vbn)) * \
          1 / (3 * Van * Vbn * (np.power(Van, 2) + np.power(Van, 2)) * np.power(e4, (1 / 3)))
 
     e6 = (4 * (np.power(Van, 3) * np.power(Van, 2) + 2 * np.power(Van, 5)) + 4 *
@@ -276,7 +282,7 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
     Db = 1 / 4 * (2 * np.sqrt(e7) - 2 * np.sqrt(e8) - e1)
 
-    Da = np.full_like(Db, 1/2)
+    Da = np.full_like(Db, 1 / 2)
 
     # (24) OTM phi
     phi = np.pi * np.sign(Pn) * \
@@ -284,6 +290,7 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
     # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
+
 
 @timeit
 def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
@@ -299,13 +306,12 @@ def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     # CPM/SPS: calculate phi, Da and Db with (26)
     phi = np.pi * np.sign(Pn) * (1 / 2 - np.sqrt(1 / 4 - np.abs(Pn) / np.pi * 1 / (Van * Vbn)))
 
-    Da = np.full_like(phi, 1/2)
+    Da = np.full_like(phi, 1 / 2)
 
-    Db = np.full_like(phi, 1/2)
+    Db = np.full_like(phi, 1 / 2)
 
     # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
-
 
 
 # ---------- MAIN ----------
@@ -316,15 +322,15 @@ if __name__ == '__main__':
     Dab_Specs.V1_nom = 700
     Dab_Specs.V1_min = 600
     Dab_Specs.V1_max = 800
-    Dab_Specs.V1_step = 21
+    Dab_Specs.V1_step = 21 * 3
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    Dab_Specs.V2_step = 25
+    Dab_Specs.V2_step = 25 * 3
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    Dab_Specs.P_step = 19
+    Dab_Specs.P_step = 19 * 3
     Dab_Specs.n = 2.99
     Dab_Specs.L_s = 84e-6
     Dab_Specs.L_m = 599e-6
@@ -339,12 +345,15 @@ if __name__ == '__main__':
         Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    Dab_Results.mod_phi, Dab_Results.mod_tau1, Dab_Results.mod_tau2 = calc_modulation(Dab_Specs.n,
-                                                                                      Dab_Specs.L_s,
-                                                                                      Dab_Specs.fs_nom,
-                                                                                      Dab_Results.mesh_V1,
-                                                                                      Dab_Results.mesh_V2,
-                                                                                      Dab_Results.mesh_P)
+    Dab_Results.mod_phi, Dab_Results.mod_tau1, Dab_Results.mod_tau2, tcm_mask, cpm_mask = calc_modulation(Dab_Specs.n,
+                                                                                                          Dab_Specs.L_s,
+                                                                                                          Dab_Specs.fs_nom,
+                                                                                                          Dab_Results.mesh_V1,
+                                                                                                          Dab_Results.mesh_V2,
+                                                                                                          Dab_Results.mesh_P)
+
+    # cpm_mask = cpm_mask * 1
+    # debug(cpm_mask)
 
     # print("mod_phi:", Dab_Results.mod_phi, sep='\n')
     # print("mod_tau1:", Dab_Results.mod_tau1, sep='\n')
@@ -355,13 +364,31 @@ if __name__ == '__main__':
 
     info("\nStart Plotting\n")
     import plot_dab
+
+    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+
     Plot_Dab = plot_dab.Plot_DAB()
     # Plot all modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
-                      Dab_Results.mesh_P[:, 1, :],
-                      Dab_Results.mesh_V2[:, 1, :],
-                      Dab_Results.mod_phi[:, 1, :],
-                      Dab_Results.mod_tau1[:, 1, :],
-                      Dab_Results.mod_tau2[:, 1, :])
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_phi[:, v1_middle, :],
+                             Dab_Results.mod_tau1[:, v1_middle, :],
+                             Dab_Results.mod_tau2[:, v1_middle, :],
+                             mask1=tcm_mask[:, v1_middle, :],
+                             mask2=cpm_mask[:, v1_middle, :])
+
+    # Plot animation for every V1 cross-section
+    # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
+    #     print(v1)
+    #     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+    #                              Dab_Results.mesh_P[:, v1, :],
+    #                              Dab_Results.mesh_V2[:, v1, :],
+    #                              Dab_Results.mod_phi[:, v1, :],
+    #                              Dab_Results.mod_tau1[:, v1, :],
+    #                              Dab_Results.mod_tau2[:, v1, :],
+    #                              mask1=tcm_mask[:, v1, :],
+    #                              mask2=cpm_mask[:, v1, :])
+
     Plot_Dab.show()
