@@ -95,7 +95,7 @@ class Plot_DAB:
         # Redraw the current figure
         plt.draw()
 
-    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3):
+    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3, mask1 = None, mask2 = None, mask3 = None):
         """
         Plots three contourf plots with a shared colorbar.
 
@@ -113,10 +113,23 @@ class Plot_DAB:
         cmap = 'viridis'
         z_min = 0
         z_max = np.pi / 2
+        # Clear only the 3 subplots in case we update the same figure. Colorbar stays.
+        axs[0].clear()
+        axs[1].clear()
+        axs[2].clear()
         # Plot the contourf maps
         axs[0].contourf(x, y, z1, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        if not mask1 is None: axs[0].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
+        if not mask2 is None: axs[0].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
+        if not mask3 is None: axs[0].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
         axs[1].contourf(x, y, z2, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        if not mask1 is None: axs[1].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
+        if not mask2 is None: axs[1].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
+        if not mask3 is None: axs[1].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
         axs[2].contourf(x, y, z3, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
+        if not mask1 is None: axs[2].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
+        if not mask2 is None: axs[2].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
+        if not mask3 is None: axs[2].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
         # Set the labels
         # fig.suptitle("DAB Modulation Angles")
         axs[0].set_title("phi in rad")
@@ -139,7 +152,9 @@ class Plot_DAB:
         # tight_layout and colorbar are tricky
         # fig.tight_layout()
         # Redraw the current figure
-        plt.draw()
+        # plt.draw()
+        fig.canvas.draw()
+        fig.canvas.flush_events()
 
     @timeit
     def plot_rms_current(self, mesh_V2, mesh_P, mvvp_iLs):
