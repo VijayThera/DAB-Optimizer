@@ -64,7 +64,7 @@ class Sim_Gecko:
                       'mod_tau2':  mod_tau2, 'simfilepath': simfilepath, 'timestep': timestep,
                       'simtime':   simtime, 'timestep_pre': timestep_pre, 'simtime_pre': simtime_pre,
                       'geckoport': geckoport + i, 'gdebug': gdebug}
-            t = td.Thread(target=self._start_sim_single, kwargs=kwargs, name=i)
+            t = td.Thread(target=self._start_sim_single, kwargs=kwargs, name=str(i))
             t.start()
             threads.append(t)
 
