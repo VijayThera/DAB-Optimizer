@@ -76,6 +76,11 @@ class Sim_Gecko:
 
         # Progressbar end
         self.pbar.close()
+
+        # Rename the keys according to convention
+        for k in self.da_sim_results.keys():
+            self.da_sim_results['sim_' + k] = self.da_sim_results.pop(k)
+
         debug(self.da_sim_results)
         return self.da_sim_results
 
@@ -127,6 +132,11 @@ class Sim_Gecko:
 
         # Progressbar end
         self.pbar.close()
+
+        # Rename the keys according to convention
+        for k in self.da_sim_results.keys():
+            self.da_sim_results['sim_' + k] = self.da_sim_results.pop(k)
+
         debug(self.da_sim_results)
         return self.da_sim_results
 
@@ -289,6 +299,11 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
 
     # Progressbar end
     pbar.close()
+
+    # Rename the keys according to convention
+    for k in da_sim_results.keys():
+        da_sim_results['sim_' + k] = da_sim_results.pop(k)
+
     # info(da_sim_results)
     return da_sim_results
 

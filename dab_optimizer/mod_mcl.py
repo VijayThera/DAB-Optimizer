@@ -22,9 +22,12 @@ import numpy as np
 import dab_datasets as ds
 from debug_tools import *
 
+# The dict keys this modulation will return
+MOD_KEYS = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2', 'mod_mcl_mask_tcm', 'mod_mcl_mask_otm', 'mod_mcl_mask_cpm']
+
 
 @timeit
-def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
+def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     """
     MCL (Minimum Conduction Loss) Modulation calculation, which will return phi, tau1 and tau2
 
@@ -131,10 +134,21 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     tau1 = D1 * np.pi
     tau2 = D2 * np.pi
 
-    return phi, tau1, tau2, _tcm_mask, _cpm_mask
+    # Init return dict
+    da_mod_results = dict()
+    # Save the results in the dict
+    da_mod_results[MOD_KEYS[0]] = phi
+    da_mod_results[MOD_KEYS[1]] = tau1
+    da_mod_results[MOD_KEYS[2]] = tau2
+    da_mod_results[MOD_KEYS[3]] = _tcm_mask
+    da_mod_results[MOD_KEYS[4]] = _otm_mask
+    da_mod_results[MOD_KEYS[5]] = _cpm_mask
+
+    return da_mod_results
 
 
-def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100) -> [np.ndarray, np.ndarray, np.ndarray]:
+def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100) -> [np.ndarray, np.ndarray,
+                                                                                              np.ndarray]:
     """
     Normalize the given meshes to the reference voltage.
     The lower case "n" denotes that these values are normalized.
@@ -345,22 +359,22 @@ if __name__ == '__main__':
         Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    Dab_Results.mod_phi, Dab_Results.mod_tau1, Dab_Results.mod_tau2, tcm_mask, cpm_mask = calc_modulation(Dab_Specs.n,
-                                                                                                          Dab_Specs.L_s,
-                                                                                                          Dab_Specs.fs_nom,
-                                                                                                          Dab_Results.mesh_V1,
-                                                                                                          Dab_Results.mesh_V2,
-                                                                                                          Dab_Results.mesh_P)
+    da_mod = calc_modulation(Dab_Specs.n,
+                             Dab_Specs.L_s,
+                             Dab_Specs.fs_nom,
+                             Dab_Results.mesh_V1,
+                             Dab_Results.mesh_V2,
+                             Dab_Results.mesh_P)
 
-    # cpm_mask = cpm_mask * 1
-    # debug(cpm_mask)
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
 
-    # print("mod_phi:", Dab_Results.mod_phi, sep='\n')
-    # print("mod_tau1:", Dab_Results.mod_tau1, sep='\n')
-    # print("mod_tau2:", Dab_Results.mod_tau2, sep='\n')
-    # print("mod_phi[0,0,0]", type(Dab_Results.mod_phi[0, 0, 0]))
-    # print("mod_tau1[0,0,0]", type(Dab_Results.mod_tau1[0, 0, 0]))
-    # print("mod_tau2[0,0,0]", type(Dab_Results.mod_tau2[0, 0, 0]))
+    # print("mod_mcl_phi:", Dab_Results.mod_mcl_phi, sep='\n')
+    # print("mod_mcl_tau1:", Dab_Results.mod_mcl_tau1, sep='\n')
+    # print("mod_mcl_tau2:", Dab_Results.mod_mcl_tau2, sep='\n')
+    # print("mod_mcl_phi[0,0,0]", type(Dab_Results.mod_mcl_phi[0, 0, 0]))
+    # print("mod_mcl_tau1[0,0,0]", type(Dab_Results.mod_mcl_tau1[0, 0, 0]))
+    # print("mod_mcl_tau2[0,0,0]", type(Dab_Results.mod_mcl_tau2[0, 0, 0]))
 
     info("\nStart Plotting\n")
     import plot_dab
@@ -373,11 +387,11 @@ if __name__ == '__main__':
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
                              Dab_Results.mesh_P[:, v1_middle, :],
                              Dab_Results.mesh_V2[:, v1_middle, :],
-                             Dab_Results.mod_phi[:, v1_middle, :],
-                             Dab_Results.mod_tau1[:, v1_middle, :],
-                             Dab_Results.mod_tau2[:, v1_middle, :],
-                             mask1=tcm_mask[:, v1_middle, :],
-                             mask2=cpm_mask[:, v1_middle, :])
+                             Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau1[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau2[:, v1_middle, :],
+                             mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
+                             mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :])
 
     # Plot animation for every V1 cross-section
     # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
@@ -385,10 +399,10 @@ if __name__ == '__main__':
     #     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
     #                              Dab_Results.mesh_P[:, v1, :],
     #                              Dab_Results.mesh_V2[:, v1, :],
-    #                              Dab_Results.mod_phi[:, v1, :],
-    #                              Dab_Results.mod_tau1[:, v1, :],
-    #                              Dab_Results.mod_tau2[:, v1, :],
-    #                              mask1=tcm_mask[:, v1, :],
-    #                              mask2=cpm_mask[:, v1, :])
+    #                              Dab_Results.mod_mcl_phi[:, v1, :],
+    #                              Dab_Results.mod_mcl_tau1[:, v1, :],
+    #                              Dab_Results.mod_mcl_tau2[:, v1, :],
+    #                              mask1=Dab_Results.mod_mcl_mask_tcm[:, v1, :],
+    #                              mask2=Dab_Results.mod_mcl_mask_cpm[:, v1, :])
 
     Plot_Dab.show()

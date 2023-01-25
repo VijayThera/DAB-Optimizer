@@ -4,21 +4,20 @@
 # python >= 3.10
 
 import os
-import sys
+# import sys
 
 import numpy as np
-import math
-from datetime import datetime
-import logging
+# import math
+# from datetime import datetime
+# import logging
 import argparse
 
 import dab_datasets as ds
 from debug_tools import *
 import mod_sps
+import mod_mcl
 import sim_gecko
 import plot_dab
-
-from plotWindow import plotWindow
 
 
 def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
@@ -224,14 +223,16 @@ def dab_sim_save():
         Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    Dab_Results.mod_sps_phi, \
-    Dab_Results.mod_sps_tau1, \
-    Dab_Results.mod_sps_tau2 = mod_sps.calc_modulation(Dab_Specs.n,
-                                                       Dab_Specs.L_s,
-                                                       Dab_Specs.fs_nom,
-                                                       Dab_Results.mesh_V1,
-                                                       Dab_Results.mesh_V2,
-                                                       Dab_Results.mesh_P)
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
 
     # TODO where to save??? spec only float...
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -248,12 +249,12 @@ def dab_sim_save():
 
     # Simulation
     Dab_Sim = sim_gecko.Sim_Gecko()
-    d_sim = Dab_Sim.start_sim_threads(Dab_Results.mesh_V1,
-                                      Dab_Results.mesh_V2,
-                                      Dab_Results.mod_sps_phi,
-                                      Dab_Results.mod_sps_tau1,
-                                      Dab_Results.mod_sps_tau2,
-                                      simfilepath, timestep, simtime)
+    da_sim = Dab_Sim.start_sim_threads(Dab_Results.mesh_V1,
+                                       Dab_Results.mesh_V2,
+                                       Dab_Results.mod_sps_phi,
+                                       Dab_Results.mod_sps_tau1,
+                                       Dab_Results.mod_sps_tau2,
+                                       simfilepath, timestep, simtime)
 
     # d_sim = Dab_Sim.start_sim_multi(Dab_Results.mesh_V1,
     #                                 Dab_Results.mesh_V2,
@@ -263,8 +264,7 @@ def dab_sim_save():
     #                                 simfilepath, timestep, simtime)
 
     # Unpack the results
-    for k, v in d_sim.items():
-        Dab_Results['sim_' + k] = v
+    Dab_Results.append_result_dict(da_sim)
 
     debug("sim_i_Ls: \n", Dab_Results.sim_i_Ls)
     debug("sim_S11_p_sw: \n", Dab_Results.sim_S11_p_sw)
@@ -352,22 +352,16 @@ def trial_dab():
         Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
 
     # Modulation Calculation
-    # TODO how to name the arrays according to some kind of given pattern?
     # SPS Modulation
-    Dab_Results.mod_sps_phi, Dab_Results.mod_sps_tau1, Dab_Results.mod_sps_tau2 = mod_sps.calc_modulation(Dab_Specs.n,
-                                                                                                          Dab_Specs.L_s,
-                                                                                                          Dab_Specs.fs_nom,
-                                                                                                          Dab_Results.mesh_V1,
-                                                                                                          Dab_Results.mesh_V2,
-                                                                                                          Dab_Results.mesh_P)
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
 
-    # RMS Modulation
-    # Dab_Results.mod_rms_phi, Dab_Results.mod_rms_tau1, Dab_Results.mod_rms_tau2 = mod_rms.calc_modulation(Dab_Specs.n,
-    #                                                                                                       Dab_Specs.L_s,
-    #                                                                                                       Dab_Specs.fs_nom,
-    #                                                                                                       Dab_Results.mesh_V1,
-    #                                                                                                       Dab_Results.mesh_V2,
-    #                                                                                                       Dab_Results.mesh_P)
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
 
     # TODO where to save??? spec only float...
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
@@ -454,7 +448,103 @@ def trial_dab():
     # dab_results_loaded.bar = "test"
 
 
-def trial_plot():
+@timeit
+def trial_plot_modresults():
+    """
+    Run the modulation optimization procedure and plot the results
+    """
+    # Set the basic DAB Specification
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    Dab_Specs.V1_step = 21 * 3
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    Dab_Specs.V2_step = 25 * 3
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    Dab_Specs.P_step = 19 * 3
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
+
+    # Object to store all generated data
+    Dab_Results = ds.DAB_Results()
+    # gen mesh
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_mcl.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    info("\nStart Plotting\n")
+
+    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+
+    Plot_Dab = plot_dab.Plot_DAB()
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau1[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau2[:, v1_middle, :],
+                             mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
+                             mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :])
+
+    # Plot animation for every V1 cross-section
+    # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
+    #     print(v1)
+    #     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+    #                              Dab_Results.mesh_P[:, v1, :],
+    #                              Dab_Results.mesh_V2[:, v1, :],
+    #                              Dab_Results.mod_mcl_phi[:, v1, :],
+    #                              Dab_Results.mod_mcl_tau1[:, v1, :],
+    #                              Dab_Results.mod_mcl_tau2[:, v1, :],
+    #                              mask1=Dab_Results.mod_mcl_mask_tcm[:, v1, :],
+    #                              mask2=Dab_Results.mod_mcl_mask_cpm[:, v1, :])
+
+    # Plot SPS modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_sps_phi[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau1[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau2[:, v1_middle, :])
+
+    Plot_Dab.show()
+
+
+def trial_plot_simresults():
     # Loading
     Dab_Specs, Dab_Results = load_from_file('/mnt/MA LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
     Dab_Specs.pprint()
@@ -533,11 +623,12 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    dab_sim_save()
+    # dab_sim_save()
 
     # Test the DAB functions
     # test_dab()
     # Test the Plot functions
-    # trial_plot()
+    # trial_plot_simresults()
+    trial_plot_modresults()
 
     # sys.exit(0)
