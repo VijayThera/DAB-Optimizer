@@ -20,11 +20,11 @@ matplotlib.use('qt5agg')
 
 
 class plotWindow:
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, window_title: str = 'plot window'):
         self.app = QApplication(sys.argv)
         self.MainWindow = QMainWindow()
         self.MainWindow.__init__()
-        self.MainWindow.setWindowTitle("plot window")
+        self.MainWindow.setWindowTitle(window_title)
         self.canvases = []
         self.figure_handles = []
         self.toolbar_handles = []

@@ -18,9 +18,9 @@ class Plot_DAB:
     pw: plotWindow
     figs_axes: list
 
-    def __init__(self):
+    def __init__(self, window_title: str = 'DAB Plots'):
         # Create new plotWindow that holds the tabs
-        self.pw = plotWindow()
+        self.pw = plotWindow(window_title=window_title)
         # Create empty list to store the fig and axe handlers
         self.figs_axes = []
 
