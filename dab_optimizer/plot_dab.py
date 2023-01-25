@@ -18,11 +18,20 @@ class Plot_DAB:
     pw: plotWindow
     figs_axes: list
 
-    def __init__(self, window_title: str = 'DAB Plots'):
+    def __init__(self, latex=False, window_title: str = 'DAB Plots'):
         # Create new plotWindow that holds the tabs
         self.pw = plotWindow(window_title=window_title)
         # Create empty list to store the fig and axe handlers
         self.figs_axes = []
+        # Switch between latex math usage and plain text where possible
+        # Note: For latex to work you must have it installed on your system!
+        self.latex = latex
+        if latex:
+            plt.rcParams.update({
+                "text.usetex": True,
+                "font.family": "serif",
+                "font.serif":  ["Palatino"],
+            })
 
     def global_plot_settings_font_latex(self) -> None:
         """
@@ -58,7 +67,8 @@ class Plot_DAB:
         self.figs_axes.append((fig, axs))
         self.pw.addPlot(title=tab_title, figure=fig)
 
-    def plot_3by1(self, fig_axes: tuple, x, y, z1, z2, z3, xl: str = 'x', yl: str = 'y', t1: str = 'z1', t2: str = 'z2', t3: str = 'z3'):
+    def plot_3by1(self, fig_axes: tuple, x, y, z1, z2, z3, xl: str = 'x', yl: str = 'y', t1: str = 'z1', t2: str = 'z2',
+                  t3: str = 'z3'):
         """
         Plots three contourf plots with a shared colorbar.
 
@@ -95,16 +105,19 @@ class Plot_DAB:
         # Redraw the current figure
         plt.draw()
 
-    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3, mask1 = None, mask2 = None, mask3 = None):
+    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3, title: str = '', mask1=None, mask2=None, mask3=None):
         """
         Plots three contourf plots with a shared colorbar.
 
         :param fig_axes: Provide the tuple (fig, axs)
-        :param x:
-        :param y:
-        :param z1:
-        :param z2:
-        :param z3:
+        :param x: x mesh, e.g. P
+        :param y: y mesh, e.g. V2
+        :param z1: z for subplot 1, e.g. phi
+        :param z2: z for subplot 2, e.g. tau1
+        :param z3: z for subplot 3, e.g. tau2
+        :param mask1: optional mask contour line
+        :param mask2: optional mask contour line
+        :param mask3: optional mask contour line
         """
         # Some defaults
         fig = fig_axes[0]
@@ -131,12 +144,15 @@ class Plot_DAB:
         if not mask2 is None: axs[2].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
         if not mask3 is None: axs[2].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
         # Set the labels
-        # fig.suptitle("DAB Modulation Angles")
-        axs[0].set_title("phi in rad")
-        axs[1].set_title("tau1 in rad")
-        axs[2].set_title("tau2 in rad")
+        if title: fig.suptitle(title)
+        axs[0].set_title(r"$\varphi / \mathrm{rad}$" if self.latex else "phi in rad")
+        axs[1].set_title(r"$\tau_1 / \mathrm{rad}$" if self.latex else "tau1 in rad")
+        axs[2].set_title(r"$\tau_2 / \mathrm{rad}$" if self.latex else "tau2 in rad")
         for ax in axs.flat:
-            ax.set(xlabel='P / W', ylabel='U2 / V')
+            if self.latex:
+                ax.set(xlabel=r'$P / \mathrm{W}$', ylabel=r'$U_2 / \mathrm{V}$')
+            else:
+                ax.set(xlabel='P / W', ylabel='U2 / V')
             ax.label_outer()
         # Apply the limits to the colorbar. That way the colorbar does not depend on one plot.
         mappable = plt.cm.ScalarMappable(norm=plt.Normalize(vmin=z_min, vmax=z_max), cmap=cmap)
@@ -146,8 +162,13 @@ class Plot_DAB:
             warning("update colorbar not implemented")
             cbar = fig.axes[-1]
         else:
-            cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02, ticks=[0, np.pi/8, np.pi/4, np.pi * 3/8, np.pi/2])
-            cbar.ax.set_yticklabels(['0', 'π/8', 'π/4', 'π3/8', 'π/2'])
+            cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02,
+                                ticks=[0, np.pi / 8, np.pi / 4, np.pi * 3 / 8, np.pi / 2])
+            if self.latex:
+                cbar.ax.set_yticklabels(
+                    [r'$0$', r'$\frac{1}{8} \pi$', r'$\frac{1}{4} \pi$', r'$\frac{3}{8} \pi$', r'$\frac{1}{2} \pi$'])
+            else:
+                cbar.ax.set_yticklabels(['0', 'π/8', 'π/4', 'π3/8', 'π/2'])
             # alternative to this quick fix: https://stackoverflow.com/a/53586826
         # tight_layout and colorbar are tricky
         # fig.tight_layout()

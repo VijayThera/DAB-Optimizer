@@ -511,14 +511,14 @@ def trial_plot_modresults():
     Plot_Dab = plot_dab.Plot_DAB()
     # Plot all modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
-    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
-                             Dab_Results.mesh_P[:, v1_middle, :],
-                             Dab_Results.mesh_V2[:, v1_middle, :],
-                             Dab_Results.mod_mcl_phi[:, v1_middle, :],
-                             Dab_Results.mod_mcl_tau1[:, v1_middle, :],
-                             Dab_Results.mod_mcl_tau2[:, v1_middle, :],
-                             mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
-                             mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :])
+    # Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+    #                          Dab_Results.mesh_P[:, v1_middle, :],
+    #                          Dab_Results.mesh_V2[:, v1_middle, :],
+    #                          Dab_Results.mod_mcl_phi[:, v1_middle, :],
+    #                          Dab_Results.mod_mcl_tau1[:, v1_middle, :],
+    #                          Dab_Results.mod_mcl_tau2[:, v1_middle, :],
+    #                          mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
+    #                          mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :])
 
     # Plot animation for every V1 cross-section
     # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
@@ -531,6 +531,46 @@ def trial_plot_modresults():
     #                              Dab_Results.mod_mcl_tau2[:, v1, :],
     #                              mask1=Dab_Results.mod_mcl_mask_tcm[:, v1, :],
     #                              mask2=Dab_Results.mod_mcl_mask_cpm[:, v1, :])
+
+    import matplotlib.animation as animation
+
+    def animate(v1, fig_axes: tuple, x, y, z1, z2, z3, mask1=None, mask2=None, mask3=None):
+        print(v1, Dab_Results.mesh_V1[0, v1, 0])
+        Plot_Dab.latex = True
+        if Plot_Dab.latex:
+            title = '$U_1 = {:.1f}'.format(Dab_Results.mesh_V1[0, v1, 0]) + '\mathrm{V}$'
+        else:
+            title = 'U_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1, 0])
+        Plot_Dab.plot_modulation(fig_axes,
+                                 x[:, v1, :],
+                                 y[:, v1, :],
+                                 z1[:, v1, :],
+                                 z2[:, v1, :],
+                                 z3[:, v1, :],
+                                 title,
+                                 mask1[:, v1, :],
+                                 mask2[:, v1, :])
+        return fig_axes[1]
+
+    args = (Plot_Dab.figs_axes[-1],
+            Dab_Results.mesh_P,
+            Dab_Results.mesh_V2,
+            Dab_Results.mod_mcl_phi,
+            Dab_Results.mod_mcl_tau1,
+            Dab_Results.mod_mcl_tau2,
+            Dab_Results.mod_mcl_mask_tcm,
+            Dab_Results.mod_mcl_mask_cpm)
+
+    ani = animation.FuncAnimation(
+        Plot_Dab.figs_axes[-1][0],
+        animate,
+        frames=np.shape(Dab_Results.mesh_P)[1] - 1,
+        fargs=args,
+        blit=False,  # blitting can't be used with Figure artists
+    )
+
+    FFwriter = animation.FFMpegWriter(fps=10)
+    ani.save('animation.mp4', writer = FFwriter)
 
     # Plot SPS modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
