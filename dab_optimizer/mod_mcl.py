@@ -134,7 +134,7 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P):
     return phi, tau1, tau2, _tcm_mask, _cpm_mask
 
 
-def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100):
+def _normalize_input_arrays(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P, V_ref: float = 100) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     Normalize the given meshes to the reference voltage.
     The lower case "n" denotes that these values are normalized.
