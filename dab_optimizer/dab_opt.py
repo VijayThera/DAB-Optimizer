@@ -357,12 +357,16 @@ def dab_sim_save():
     # Set file names
     directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/'
     name = 'mod_sps_mcl_sim_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
-                                                       int(Dab_Specs.V2_step),
-                                                       int(Dab_Specs.P_step))
+                                                    int(Dab_Specs.V2_step),
+                                                    int(Dab_Specs.P_step))
+    if __debug__:
+        name = 'debug_' + name
     comment = 'Simulation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
         int(Dab_Specs.V1_step),
         int(Dab_Specs.V2_step),
         int(Dab_Specs.P_step))
+    if __debug__:
+        comment = 'Debug ' + comment
 
     # Object to store all generated data
     Dab_Results = ds.DAB_Results()
@@ -546,8 +550,21 @@ def dab_sim_save():
                              )
 
     # Save plots
-    metadata = {'name':    name,
-                'comment': comment}
+    metadata = {'Title':       name,
+                'Description': comment,
+                'Author':      'Felix Langemeier',
+                'Software':    'python, matplotlib'}
+    # The PNG specification defines some common keywords:
+    # Title	Short (one line) title or caption for image
+    # Author	Name of image's creator
+    # Description	Description of image (possibly long)
+    # Copyright	Copyright notice
+    # Creation Time	Time of original image creation
+    # Software	Software used to create the image
+    # Disclaimer	Legal disclaimer
+    # Warning	Warning of nature of content
+    # Source	Device used to create the image
+    # Comment	Miscellaneous comment
     i = 0
     for fig in Plot_Dab.figs_axes:
         fname = os.path.join(directory + '/' + name + '_fig{:0>2d}.png'.format(i))

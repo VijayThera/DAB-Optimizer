@@ -48,7 +48,7 @@ class plotWindow:
         if self.figsize == (12.8, 8):
             figure.subplots_adjust(left=0.05, right=0.98, bottom=0.06, top=0.96, wspace=0.12, hspace=0.2)
         if self.figsize == (10, 5):
-            figure.subplots_adjust(left=0.062, right=0.98, bottom=0.092, top=0.94, wspace=0.17, hspace=0.2)
+            figure.subplots_adjust(left=0.062, right=0.975, bottom=0.092, top=0.94, wspace=0.17, hspace=0.2)
 
         new_canvas = FigureCanvas(figure)
         new_toolbar = NavigationToolbar(new_canvas, new_tab)

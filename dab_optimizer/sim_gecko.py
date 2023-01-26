@@ -284,10 +284,10 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
         else:
             # generate some fake data for debugging
             values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
-                                    'S11_p_sw':   np.random.uniform(0.0, 10),
+                                    'S11_p_sw':   np.random.uniform(0.0, 1),
                                     'S11_p_cond': np.random.uniform(0.0, 10),
-                                    'S12_p_sw':   np.random.uniform(0.0, 1000),
-                                    'S12_p_cond': np.random.uniform(0.0, 100)}}
+                                    'S12_p_sw':   np.random.uniform(0.0, 1),
+                                    'S12_p_cond': np.random.uniform(0.0, 10)}}
             values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
 
         # save simulation results in arrays
