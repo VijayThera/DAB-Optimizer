@@ -349,13 +349,19 @@ def dab_sim_save():
     Dab_Specs.fs_nom = 200000
 
     # TODO where to save??? spec only float...
+    # Set sim defaults
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
     timestep = 100e-12
     simtime = 15e-6
-
+    # Set file names
     directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/'
-    name = 'mod_sps_sim_v3-v25-p19'
-    comment = 'Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.'
+    name = 'mod_sps_mcl_sim_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
+                                                       int(Dab_Specs.V2_step),
+                                                       int(Dab_Specs.P_step))
+    comment = 'Simulation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
+        int(Dab_Specs.V1_step),
+        int(Dab_Specs.V2_step),
+        int(Dab_Specs.P_step))
 
     # Object to store all generated data
     Dab_Results = ds.DAB_Results()
@@ -418,6 +424,13 @@ def dab_sim_save():
     sim_mcl_power_deviation = 1 - Dab_Results.sim_mcl_p_dc1 / Dab_Results.mesh_P
 
     # Saving
+    # Create new dir for all files
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+    directory = os.path.expanduser(directory)
+    directory = os.path.expandvars(directory)
+    directory = os.path.abspath(directory)
+    os.mkdir(directory)
+    # Save data
     save_to_file(Dab_Specs, Dab_Results, directory=directory, name=name, comment=comment)
 
     # Plotting
@@ -532,17 +545,11 @@ def dab_sim_save():
                              )
 
     # Save plots
-    fdir = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + \
-           'mod_sps_sim_v3-v25-p19'
-    fdir = os.path.expanduser(fdir)
-    fdir = os.path.expandvars(fdir)
-    fdir = os.path.abspath(fdir)
-    os.mkdir(fdir)
     metadata = {'name':    name,
                 'comment': comment}
     i = 0
     for fig in Plot_Dab.figs_axes:
-        fname = os.path.join(fdir + '/' + name + '_fig{:0>2d}.png'.format(i))
+        fname = os.path.join(directory + '/' + name + '_fig{:0>2d}.png'.format(i))
         fig[0].savefig(fname=fname, metadata=metadata)
         i += 1
     # TODO Fix that the first and following image sizes differ. First is window size, following are 1000x500px.
