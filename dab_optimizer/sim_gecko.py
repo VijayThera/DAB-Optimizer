@@ -299,6 +299,10 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
 
         # Progressbar update, default increment +1
         pbar.update()
+
+    if not __debug__:
+        # Gecko Basics
+        dab_converter.__del__()
     # ************ Gecko End **********
 
     # Progressbar end
