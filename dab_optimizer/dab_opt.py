@@ -353,6 +353,7 @@ def dab_sim_save():
     simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
     timestep = 100e-12
     simtime = 15e-6
+    geckoport = 43036
     # Set file names
     directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/'
     name = 'mod_sps_mcl_sim_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
@@ -389,7 +390,7 @@ def dab_sim_save():
                                  Dab_Results.mod_sps_phi,
                                  Dab_Results.mod_sps_tau1,
                                  Dab_Results.mod_sps_tau2,
-                                 simfilepath, timestep, simtime)
+                                 simfilepath, timestep, simtime, geckoport=geckoport)
 
     # Unpack the results
     Dab_Results.append_result_dict(da_sim, name_pre='sim_sps_')
@@ -415,7 +416,7 @@ def dab_sim_save():
                                  Dab_Results.mod_mcl_phi,
                                  Dab_Results.mod_mcl_tau1,
                                  Dab_Results.mod_mcl_tau2,
-                                 simfilepath, timestep, simtime)
+                                 simfilepath, timestep, simtime, geckoport=geckoport)
 
     # Unpack the results
     Dab_Results.append_result_dict(da_sim, name_pre='sim_mcl_')
