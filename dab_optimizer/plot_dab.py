@@ -18,9 +18,20 @@ class Plot_DAB:
     pw: plotWindow
     figs_axes: list
 
-    def __init__(self, latex=False, window_title: str = 'DAB Plots'):
+    def __init__(self, latex=False, window_title: str = 'DAB Plots', figsize=(10, 5)):
+        """
+        Create the object with default settings for all further plots
+
+        :param latex: Use Latex fonts (if available) for labels
+        :param window_title:
+        :param figsize: Set default figsize for all plots and savefig (figsize * dpi = px)
+        """
         # Create new plotWindow that holds the tabs
-        self.pw = plotWindow(window_title=window_title)
+        self.pw = plotWindow(window_title=window_title, figsize=figsize)
+        # Set pyplot figsize for savefig
+        # Alternative default figsize=(10, 5) with default dpi = 100 may be used
+        self.figsize = figsize
+        plt.rcParams.update({'figure.figsize': figsize})
         # Create empty list to store the fig and axe handlers
         self.figs_axes = []
         # Switch between latex math usage and plain text where possible
@@ -33,22 +44,8 @@ class Plot_DAB:
                 "font.serif":  ["Palatino"],
             })
 
-    def global_plot_settings_font_latex(self) -> None:
-        """
-        Set the plot fonts to LaTeX-font
-
-        :return: None
-        :rtype: None
-        """
-        # TODO check these settings
-        plt.rcParams.update({
-            "text.usetex": True,
-            "font.family": "serif",
-            "font.serif":  ["Palatino"],
-        })
-
     def new_fig(self, nrows: int = 1, ncols: int = 1, sharex: str = True, sharey: str = True,
-                figsize=(10, 5), tab_title='addPlot title'):
+                tab_title='add Plot title'):
         """
         Create a new fig in a new tab with the amount of subplots specified
 
@@ -61,7 +58,7 @@ class Plot_DAB:
         """
         # self.figs_axes.append(plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, sharey=sharey,
         #                                    figsize=figsize, num=num))
-        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, sharey=sharey, figsize=figsize)
+        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, sharey=sharey, figsize=self.figsize)
         # Store the handlers in our list with tuples
         # TODO do we have to store axs if we can access them with fig.axes?
         self.figs_axes.append((fig, axs))
