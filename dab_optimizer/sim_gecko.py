@@ -78,8 +78,10 @@ class Sim_Gecko:
         self.pbar.close()
 
         # Rename the keys according to convention
-        for k in self.da_sim_results.keys():
-            self.da_sim_results['sim_' + k] = self.da_sim_results.pop(k)
+        # da_sim_results_temp = dict()
+        # for k, v in self.da_sim_results.items():
+        #     da_sim_results_temp['sim_' + k] = v
+        # self.da_sim_results = da_sim_results_temp
 
         debug(self.da_sim_results)
         return self.da_sim_results
@@ -134,8 +136,10 @@ class Sim_Gecko:
         self.pbar.close()
 
         # Rename the keys according to convention
-        for k in self.da_sim_results.keys():
-            self.da_sim_results['sim_' + k] = self.da_sim_results.pop(k)
+        # da_sim_results_temp = dict()
+        # for k, v in self.da_sim_results.items():
+        #     da_sim_results_temp['sim_' + k] = v
+        # self.da_sim_results = da_sim_results_temp
 
         debug(self.da_sim_results)
         return self.da_sim_results
@@ -301,8 +305,10 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
     pbar.close()
 
     # Rename the keys according to convention
-    for k in da_sim_results.keys():
-        da_sim_results['sim_' + k] = da_sim_results.pop(k)
+    # da_sim_results_temp = dict()
+    # for k, v in da_sim_results.items():
+    #     da_sim_results_temp['sim_' + k] = v
+    # da_sim_results = da_sim_results_temp
 
     # info(da_sim_results)
     return da_sim_results

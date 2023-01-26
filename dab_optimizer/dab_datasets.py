@@ -119,10 +119,10 @@ class DAB_Results(DotMap):
                                                               np.linspace(V2_min, V2_max, int(V2_step)),
                                                               np.linspace(P_min, P_max, int(P_step)), sparse=False)
 
-    def append_result_dict(self, result: dict, name_tail: str = ''):
+    def append_result_dict(self, result: dict, name_pre: str = '', name_post: str = ''):
         # Unpack the results
         for k, v in result.items():
-            self[k + name_tail] = v
+            self[name_pre + k + name_post] = v
 
 
 # class DAB_Specification:
