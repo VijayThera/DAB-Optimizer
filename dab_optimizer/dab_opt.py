@@ -7,7 +7,7 @@ import os
 # import sys
 
 import numpy as np
-# import math
+import math
 # from datetime import datetime
 # import logging
 import argparse
@@ -79,11 +79,17 @@ def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
             # set some default non-empty filename
             filename = "dab_opt_dataset"
 
-    if (not directory) or os.path.isdir(directory):
-        file = os.path.join(directory, filename)
+    if directory:
+        directory = os.path.expanduser(directory)
+        directory = os.path.expandvars(directory)
+        directory = os.path.abspath(directory)
+        if os.path.isdir(directory):
+            file = os.path.join(directory, filename)
+        else:
+            warning("Directory does not exist!")
+            file = os.path.join(filename)
     else:
-        warning("Directory does not exist!")
-        return
+        file = os.path.join(filename)
 
     # numpy saves everything for us in a handy zip file
     # np.savez(file=file, **kwds)
@@ -188,7 +194,7 @@ def main_init():
 
 
 @timeit
-def dab_sim_save():
+def trial_sim_save():
     """
     Run the complete optimization procedure and save the results in a file
     """
@@ -240,28 +246,28 @@ def dab_sim_save():
     simtime = 15e-6
 
     # Simulation
-    # d_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
-    #                             Dab_Results.mesh_V2,
-    #                             Dab_Results.mod_sps_phi,
-    #                             Dab_Results.mod_sps_tau1,
-    #                             Dab_Results.mod_sps_tau2,
-    #                             simfilepath, timestep, simtime)
+    da_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
+                                 Dab_Results.mesh_V2,
+                                 Dab_Results.mod_sps_phi,
+                                 Dab_Results.mod_sps_tau1,
+                                 Dab_Results.mod_sps_tau2,
+                                 simfilepath, timestep, simtime)
 
     # Simulation
-    Dab_Sim = sim_gecko.Sim_Gecko()
-    da_sim = Dab_Sim.start_sim_threads(Dab_Results.mesh_V1,
-                                       Dab_Results.mesh_V2,
-                                       Dab_Results.mod_sps_phi,
-                                       Dab_Results.mod_sps_tau1,
-                                       Dab_Results.mod_sps_tau2,
-                                       simfilepath, timestep, simtime)
+    # Dab_Sim = sim_gecko.Sim_Gecko()
+    # da_sim = Dab_Sim.start_sim_threads(Dab_Results.mesh_V1,
+    #                                    Dab_Results.mesh_V2,
+    #                                    Dab_Results.mod_sps_phi,
+    #                                    Dab_Results.mod_sps_tau1,
+    #                                    Dab_Results.mod_sps_tau2,
+    #                                    simfilepath, timestep, simtime)
 
-    # d_sim = Dab_Sim.start_sim_multi(Dab_Results.mesh_V1,
-    #                                 Dab_Results.mesh_V2,
-    #                                 Dab_Results.mod_sps_phi,
-    #                                 Dab_Results.mod_sps_tau1,
-    #                                 Dab_Results.mod_sps_tau2,
-    #                                 simfilepath, timestep, simtime)
+    # da_sim = Dab_Sim.start_sim_multi(Dab_Results.mesh_V1,
+    #                                  Dab_Results.mesh_V2,
+    #                                  Dab_Results.mod_sps_phi,
+    #                                  Dab_Results.mod_sps_tau1,
+    #                                  Dab_Results.mod_sps_tau2,
+    #                                  simfilepath, timestep, simtime)
 
     # Unpack the results
     Dab_Results.append_result_dict(da_sim)
@@ -311,6 +317,237 @@ def dab_sim_save():
     # Saving
     # save_to_file(Dab_Specs, Dab_Results, name='mod_sps_sim_v21-v25-p19',
     #              comment='Simulation results for mod_sps with V1 10V res, V2 5V res and P 100W res.')
+
+
+@timeit
+def dab_sim_save():
+    """
+    Run the complete optimization procedure and save the results in a file
+    """
+    # Set the basic DAB Specification
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
+    Dab_Specs.V1_step = 3
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1)
+    Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1)
+    # Dab_Specs.V2_step = 4
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1)
+    Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1)
+    # Dab_Specs.P_step = 5
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
+
+    # TODO where to save??? spec only float...
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    timestep = 100e-12
+    simtime = 15e-6
+
+    # Object to store all generated data
+    Dab_Results = ds.DAB_Results()
+    # Generate meshes
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    # Simulation
+    da_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
+                                 Dab_Results.mesh_V2,
+                                 Dab_Results.mod_sps_phi,
+                                 Dab_Results.mod_sps_tau1,
+                                 Dab_Results.mod_sps_tau2,
+                                 simfilepath, timestep, simtime)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_sim, name_pre='sim_sps_')
+
+    # Calc power deviation from expected power target
+    sim_sps_power_deviation = 1 - Dab_Results.sim_sps_p_dc1 / Dab_Results.mesh_P
+
+    # Modulation Calculation
+    # MCL Modulation
+    da_mod = mod_mcl.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    # Simulation
+    da_sim = sim_gecko.start_sim(Dab_Results.mesh_V1,
+                                 Dab_Results.mesh_V2,
+                                 Dab_Results.mod_mcl_phi,
+                                 Dab_Results.mod_mcl_tau1,
+                                 Dab_Results.mod_mcl_tau2,
+                                 simfilepath, timestep, simtime)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_sim, name_pre='sim_mcl_')
+
+    # Calc power deviation from expected power target
+    sim_mcl_power_deviation = 1 - Dab_Results.sim_mcl_p_dc1 / Dab_Results.mesh_P
+
+    # Saving
+    save_to_file(Dab_Specs, Dab_Results,
+                 directory='~/MA LEA/LEA/Workdir/dab_optimizer_output/',
+                 name='mod_sps_sim_v3-v25-p19',
+                 comment='Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.')
+
+    # Plotting
+    info("\nStart Plotting\n")
+    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    Plot_Dab = plot_dab.Plot_DAB()
+
+    # Plot SPS sim results
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.mod_sps_phi[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_sps_i_Ls[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_sps_S11_p_sw[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+
+    # Plot power loss
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
+    # Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+    #                           Dab_Results.mesh_V2[:, v1_middle, :],
+    #                           Dab_Results.sim_sps_p_dc1[:, v1_middle, :],
+    #                           ax=Plot_Dab.figs_axes[-1][1][0],
+    #                           xlabel='P / W', ylabel='U2 / V', title='sim_sps_p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              sim_sps_power_deviation[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_sps_S11_p_sw[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_sps_S11_p_cond[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_sps_phi[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau1[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau2[:, v1_middle, :],
+                             # mask1=Dab_Results.mod_sps_mask_tcm[:, v1_middle, :],
+                             # mask2=Dab_Results.mod_sps_mask_cpm[:, v1_middle, :]
+                             )
+
+    # Plot MCL sim results
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Overview')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_mcl_i_Ls[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+
+    # Plot power loss
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Power')
+    # Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+    #                           Dab_Results.mesh_V2[:, v1_middle, :],
+    #                           Dab_Results.sim_mcl_p_dc1[:, v1_middle, :],
+    #                           ax=Plot_Dab.figs_axes[-1][1][0],
+    #                           xlabel='P / W', ylabel='U2 / V', title='sim_mcl_p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              sim_mcl_power_deviation[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_mcl_S11_p_cond[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau1[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau2[:, v1_middle, :],
+                             mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
+                             mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :]
+                             )
+
+    # Save plots
+    directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/' + \
+                datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + \
+                'mod_sps_sim_v3-v25-p19'
+    directory = os.path.expanduser(directory)
+    directory = os.path.expandvars(directory)
+    directory = os.path.abspath(directory)
+    os.mkdir(directory)
+    metadata = {'name':    'mod_sps_sim_v3-v25-p19',
+                'comment': 'Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.'}
+    i = 0
+    for fig in Plot_Dab.figs_axes:
+        fname = os.path.join(directory + '/' + 'mod_sps_sim_v3-v25-p19_fig{:0>2d}.png'.format(i))
+        fig[0].savefig(fname=fname, metadata=metadata)
+        i += 1
+    # TODO Fix that the first and following image sizes differ. First is window size, following are 1000x500px.
+
+    Plot_Dab.show()
 
 
 @timeit
@@ -570,7 +807,7 @@ def trial_plot_modresults():
     )
 
     FFwriter = animation.FFMpegWriter(fps=10)
-    ani.save('animation.mp4', writer = FFwriter)
+    ani.save('animation.mp4', writer=FFwriter)
 
     # Plot SPS modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
@@ -663,12 +900,13 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    # dab_sim_save()
+    dab_sim_save()
+    # trial_sim_save()
 
     # Test the DAB functions
     # test_dab()
     # Test the Plot functions
     # trial_plot_simresults()
-    trial_plot_modresults()
+    # trial_plot_modresults()
 
     # sys.exit(0)
