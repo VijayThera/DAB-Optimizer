@@ -353,6 +353,10 @@ def dab_sim_save():
     timestep = 100e-12
     simtime = 15e-6
 
+    directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/'
+    name = 'mod_sps_sim_v3-v25-p19'
+    comment = 'Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.'
+
     # Object to store all generated data
     Dab_Results = ds.DAB_Results()
     # Generate meshes
@@ -414,10 +418,7 @@ def dab_sim_save():
     sim_mcl_power_deviation = 1 - Dab_Results.sim_mcl_p_dc1 / Dab_Results.mesh_P
 
     # Saving
-    save_to_file(Dab_Specs, Dab_Results,
-                 directory='~/MA LEA/LEA/Workdir/dab_optimizer_output/',
-                 name='mod_sps_sim_v3-v25-p19',
-                 comment='Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.')
+    save_to_file(Dab_Specs, Dab_Results, directory=directory, name=name, comment=comment)
 
     # Plotting
     info("\nStart Plotting\n")
@@ -531,18 +532,17 @@ def dab_sim_save():
                              )
 
     # Save plots
-    directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/' + \
-                datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + \
-                'mod_sps_sim_v3-v25-p19'
-    directory = os.path.expanduser(directory)
-    directory = os.path.expandvars(directory)
-    directory = os.path.abspath(directory)
-    os.mkdir(directory)
-    metadata = {'name':    'mod_sps_sim_v3-v25-p19',
-                'comment': 'Simulation results for mod_sps with V1 100V res, V2 5V res and P 100W res.'}
+    fdir = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + \
+           'mod_sps_sim_v3-v25-p19'
+    fdir = os.path.expanduser(fdir)
+    fdir = os.path.expandvars(fdir)
+    fdir = os.path.abspath(fdir)
+    os.mkdir(fdir)
+    metadata = {'name':    name,
+                'comment': comment}
     i = 0
     for fig in Plot_Dab.figs_axes:
-        fname = os.path.join(directory + '/' + 'mod_sps_sim_v3-v25-p19_fig{:0>2d}.png'.format(i))
+        fname = os.path.join(fdir + '/' + name + '_fig{:0>2d}.png'.format(i))
         fig[0].savefig(fname=fname, metadata=metadata)
         i += 1
     # TODO Fix that the first and following image sizes differ. First is window size, following are 1000x500px.
