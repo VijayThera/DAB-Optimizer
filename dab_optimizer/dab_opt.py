@@ -400,7 +400,7 @@ def dab_sim_save():
     Dab_Results.append_result_dict(da_sim, name_pre='sim_sps_')
 
     # Calc power deviation from expected power target
-    sim_sps_power_deviation = 1 - Dab_Results.sim_sps_p_dc1 / Dab_Results.mesh_P
+    sim_sps_power_deviation = Dab_Results.sim_sps_p_dc1 / Dab_Results.mesh_P - 1
 
     # Modulation Calculation
     # MCL Modulation
@@ -426,7 +426,7 @@ def dab_sim_save():
     Dab_Results.append_result_dict(da_sim, name_pre='sim_mcl_')
 
     # Calc power deviation from expected power target
-    sim_mcl_power_deviation = 1 - Dab_Results.sim_mcl_p_dc1 / Dab_Results.mesh_P
+    sim_mcl_power_deviation = Dab_Results.sim_mcl_p_dc1 / Dab_Results.mesh_P - 1
 
     # Saving
     # Create new dir for all files
