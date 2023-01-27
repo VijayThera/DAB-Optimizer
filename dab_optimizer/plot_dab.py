@@ -41,7 +41,7 @@ class Plot_DAB:
             plt.rcParams.update({
                 "text.usetex": True,
                 "font.family": "serif",
-                "font.serif":  ["Palatino"],
+                "font.serif": ["Palatino"],
             })
 
     def new_fig(self, nrows: int = 1, ncols: int = 1, sharex: str = True, sharey: str = True,
@@ -194,7 +194,6 @@ class Plot_DAB:
         # plt.show()
         return fig
 
-    @timeit
     def subplot_contourf(self, x, y, z, nan_matrix=None, ax: str = None,
                          num_cont_lines: int = 20, alpha: float = 0.75, cmap: str = 'inferno', axlinewidth=0.5,
                          axlinecolor: str = 'r', wp_x: float = None, wp_y: float = None, inlinespacing: int = -10,
