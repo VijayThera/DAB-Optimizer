@@ -441,6 +441,10 @@ def dab_sim_save():
     # Plotting
     info("\nStart Plotting\n")
     v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+
     Plot_Dab = plot_dab.Plot_DAB()
 
     # Plot SPS sim results
@@ -919,10 +923,14 @@ def trial_plot_simresults():
 
 
 def plot_simresults():
+    # Select File and V1 Plane
+    file = '2023-01-26_15:50:29_mod_sps_mcl_sim_L84_v3-v25-p19'
+    # V1 index
+    v1 = None
+    # v1 = 0
+
     # Loading
-    # Dab_Specs, Dab_Results = load_from_file('/mnt/MA LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
-    dab_file = '~/MA LEA/LEA/Workdir/dab_optimizer_output/2023-01-26_14:53:55_mod_sps_mcl_sim_L84_v3-v4-p5/2023-01-26_14:55:30_mod_sps_mcl_sim_L84_v3-v4-p5.npz'
-    # dab_file = os.path.realpath(dab_file)
+    dab_file = '~/MA LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
     dab_file = os.path.expanduser(dab_file)
     dab_file = os.path.expandvars(dab_file)
     dab_file = os.path.abspath(dab_file)
@@ -932,15 +940,10 @@ def plot_simresults():
 
     # Set file names
     directory = os.path.dirname(dab_file)
-    debug(directory)
-    debug(os.path.split(dab_file))
     file = os.path.basename(dab_file)
-    debug(file)
     name = os.path.splitext(file.split('_', 2)[2])[0]
-    debug(name)
 
     comment = str(Dab_Results._comment)
-    debug(comment)
 
     # Calc power deviation from expected power target
     sim_sps_power_deviation = Dab_Results.sim_sps_p_dc1 / Dab_Results.mesh_P - 1
@@ -948,7 +951,11 @@ def plot_simresults():
 
     # Plotting
     info("\nStart Plotting\n")
-    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    v1_middle = v1 if v1 is not None else int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+
     Plot_Dab = plot_dab.Plot_DAB()
 
     # Plot SPS sim results
