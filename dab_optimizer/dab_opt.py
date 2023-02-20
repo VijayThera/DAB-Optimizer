@@ -999,6 +999,29 @@ def plot_simresults():
                               ax=Plot_Dab.figs_axes[-1][1][2],
                               xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
+    # Plot power loss
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Power2')
+    # Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+    #                           Dab_Results.mesh_V2[:, v1_middle, :],
+    #                           Dab_Results.sim_sps_p_dc1[:, v1_middle, :],
+    #                           ax=Plot_Dab.figs_axes[-1][1][0],
+    #                           xlabel='P / W', ylabel='U2 / V', title='sim_sps_p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              sim_sps_power_deviation[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_sps_p_dc1[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.mod_sps_phi[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='phi / rad')
+
     # Plot all modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
@@ -1051,6 +1074,29 @@ def plot_simresults():
                               Dab_Results.sim_mcl_S11_p_cond[:, v1_middle, :],
                               ax=Plot_Dab.figs_axes[-1][1][2],
                               xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+
+    # Plot power loss
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Power2')
+    # Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+    #                           Dab_Results.mesh_V2[:, v1_middle, :],
+    #                           Dab_Results.sim_mcl_p_dc1[:, v1_middle, :],
+    #                           ax=Plot_Dab.figs_axes[-1][1][0],
+    #                           xlabel='P / W', ylabel='U2 / V', title='sim_mcl_p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              sim_mcl_power_deviation[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][0],
+                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.sim_mcl_p_dc1[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][1],
+                              xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+    Plot_Dab.subplot_contourf(Dab_Results.mesh_P[:, v1_middle, :],
+                              Dab_Results.mesh_V2[:, v1_middle, :],
+                              Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                              ax=Plot_Dab.figs_axes[-1][1][2],
+                              xlabel='P / W', ylabel='U2 / V', title='phi / rad')
 
     # Plot all modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
