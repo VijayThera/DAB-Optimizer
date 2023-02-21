@@ -137,7 +137,9 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     # Init return dict
     da_mod_results = dict()
     # Save the results in the dict
-    da_mod_results[MOD_KEYS[0]] = phi
+    # da_mod_results[MOD_KEYS[0]] = phi
+    # Convert phi because the math from the paper uses Middle-Pulse alignment but we use First-Falling-Edge alignment!
+    da_mod_results[MOD_KEYS[0]] = convert_phiM_to_phiF(phi, tau1, tau2)
     da_mod_results[MOD_KEYS[1]] = tau1
     da_mod_results[MOD_KEYS[2]] = tau2
     da_mod_results[MOD_KEYS[3]] = _tcm_mask
@@ -326,6 +328,34 @@ def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
 
     # debug(phi, Da, Db, sep='\n')
     return phi, Da, Db
+
+
+def convert_phiM_to_phiF(phi, tau1, tau2):
+    """
+    Convert phi from Middle-Pulse alignment to First-Falling-Edge alignment.
+    Middle-Pulse alignment:         _____|--M--|
+    First-Falling-Edge alignment:   _____|-----F
+    :param phi:
+    :param tau1:
+    :param tau2:
+    :return: phi
+    """
+    phi = phi - (tau1 -tau2) / 2
+    return phi
+
+
+def convert_phiF_to_phiM(phi, tau1, tau2):
+    """
+    Convert phi from First-Falling-Edge alignment to Middle-Pulse alignment.
+    Middle-Pulse alignment:         _____|--M--|
+    First-Falling-Edge alignment:   _____|-----F
+    :param phi:
+    :param tau1:
+    :param tau2:
+    :return: phi
+    """
+    phi = phi + (tau1 -tau2) / 2
+    return phi
 
 
 # ---------- MAIN ----------
