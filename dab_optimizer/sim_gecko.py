@@ -4,6 +4,7 @@
 # python >= 3.10
 
 import numpy as np
+from collections import defaultdict
 # For threads: run parallel in single process
 # from threading import Thread, Lock
 import threading as td
@@ -23,8 +24,9 @@ from debug_tools import *
 
 class Sim_Gecko:
     # mean values we want to get from the simulation
-    l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
-    l_rms_keys = ['i_Ls']
+    l_means_keys = ['p_dc1', 'p_dc2', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond', 'S21_p_sw', 'S21_p_cond',
+                    'S22_p_sw', 'S22_p_cond']
+    l_rms_keys = ['i_Ls', 'i_Lm', 'v_dc1', 'i_dc1', 'v_dc2', 'i_dc2', 'i_C11', 'i_C12', 'i_C21', 'i_C22']
     mutex: td.Lock = None
     pbar: tqdm = None
 
@@ -167,11 +169,14 @@ class Sim_Gecko:
                 # set simulation parameters and convert tau to inverse-tau for Gecko
                 sim_params = {
                     # TODO find a way to do this with sparse arrays
-                    'v_dc1':    mesh_V1[vec_vvp].item(),
-                    'v_dc2':    mesh_V2[vec_vvp].item(),
-                    'phi':      mod_phi[vec_vvp].item() / np.pi * 180,
-                    'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
-                    'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
+                    'v_dc1': mesh_V1[vec_vvp].item(),
+                    'v_dc2': mesh_V2[vec_vvp].item(),
+                    'phi':   mod_phi[vec_vvp].item() / np.pi * 180,
+                    'tau1':  mod_tau1[vec_vvp].item() / np.pi * 180,
+                    'tau2':  mod_tau2[vec_vvp].item() / np.pi * 180
+                    # Old v1 Model needed inverse tau
+                    # 'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
+                    # 'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
                 }
                 # debug(sim_params)
 
@@ -195,12 +200,18 @@ class Sim_Gecko:
                     )
                 else:
                     # generate some fake data for debugging
-                    values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
-                                            'S11_p_sw':   np.random.uniform(0.0, 10),
-                                            'S11_p_cond': np.random.uniform(0.0, 10),
-                                            'S12_p_sw':   np.random.uniform(0.0, 1000),
-                                            'S12_p_cond': np.random.uniform(0.0, 100)}}
-                    values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
+                    # values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
+                    #                         'S11_p_sw':   np.random.uniform(0.0, 10),
+                    #                         'S11_p_cond': np.random.uniform(0.0, 10),
+                    #                         'S12_p_sw':   np.random.uniform(0.0, 1000),
+                    #                         'S12_p_cond': np.random.uniform(0.0, 100)}}
+                    # values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
+                    values_mean = defaultdict(dict)
+                    values_rms = defaultdict(dict)
+                    for k in l_means_keys:
+                        values_mean['mean'][k] = np.random.uniform(0.0, 1)
+                    for k in l_rms_keys:
+                        values_rms['rms'][k] = np.random.uniform(0.0, 1)
 
                 # ***** LOCK Start *****
                 self.mutex.acquire()
@@ -229,8 +240,9 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
               simfilepath: str, timestep: float = None, simtime: float = None,
               timestep_pre: float = 0, simtime_pre: float = 0, geckoport: int = 43036, gdebug: bool = False) -> dict:
     # mean values we want to get from the simulation
-    l_means_keys = ['p_dc1', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond']
-    l_rms_keys = ['i_Ls']
+    l_means_keys = ['p_dc1', 'p_dc2', 'S11_p_sw', 'S11_p_cond', 'S12_p_sw', 'S12_p_cond', 'S21_p_sw', 'S21_p_cond',
+                    'S22_p_sw', 'S22_p_cond']
+    l_rms_keys = ['i_Ls', 'i_Lm', 'v_dc1', 'i_dc1', 'v_dc2', 'i_dc2', 'i_C11', 'i_C12', 'i_C21', 'i_C22']
 
     # Init arrays to store simulation results
     da_sim_results = dict()
@@ -255,11 +267,14 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
         # set simulation parameters and convert tau to inverse-tau for Gecko
         sim_params = {
             # TODO find a way to do this with sparse arrays
-            'v_dc1':    mesh_V1[vec_vvp].item(),
-            'v_dc2':    mesh_V2[vec_vvp].item(),
-            'phi':      mod_phi[vec_vvp].item() / np.pi * 180,
-            'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
-            'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
+            'v_dc1': mesh_V1[vec_vvp].item(),
+            'v_dc2': mesh_V2[vec_vvp].item(),
+            'phi':   mod_phi[vec_vvp].item() / np.pi * 180,
+            'tau1':  mod_tau1[vec_vvp].item() / np.pi * 180,
+            'tau2':  mod_tau2[vec_vvp].item() / np.pi * 180
+            # Old v1 Model needed inverse tau
+            # 'tau1_inv': (np.pi - mod_tau1[vec_vvp].item()) / np.pi * 180,
+            # 'tau2_inv': (np.pi - mod_tau2[vec_vvp].item()) / np.pi * 180
         }
         # info(sim_params)
 
@@ -283,12 +298,18 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
             )
         else:
             # generate some fake data for debugging
-            values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
-                                    'S11_p_sw':   np.random.uniform(0.0, 1),
-                                    'S11_p_cond': np.random.uniform(0.0, 10),
-                                    'S12_p_sw':   np.random.uniform(0.0, 1),
-                                    'S12_p_cond': np.random.uniform(0.0, 10)}}
-            values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
+            # values_mean = {'mean': {'p_dc1':      np.random.uniform(0.0, 1000),
+            #                         'S11_p_sw':   np.random.uniform(0.0, 1),
+            #                         'S11_p_cond': np.random.uniform(0.0, 10),
+            #                         'S12_p_sw':   np.random.uniform(0.0, 1),
+            #                         'S12_p_cond': np.random.uniform(0.0, 10)}}
+            # values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
+            values_mean = defaultdict(dict)
+            values_rms = defaultdict(dict)
+            for k in l_means_keys:
+                values_mean['mean'][k] = np.random.uniform(0.0, 1)
+            for k in l_rms_keys:
+                values_rms['rms'][k] = np.random.uniform(0.0, 1)
 
         # save simulation results in arrays
         for k in l_means_keys:

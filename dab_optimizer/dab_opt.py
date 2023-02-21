@@ -241,7 +241,7 @@ def trial_sim_save():
     Dab_Results.append_result_dict(da_mod)
 
     # TODO where to save??? spec only float...
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC_v2.ipes'
     timestep = 100e-12
     simtime = 15e-6
 
@@ -350,7 +350,7 @@ def dab_sim_save():
 
     # TODO where to save??? spec only float...
     # Set sim defaults
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC_v2.ipes'
     timestep = 100e-12
     simtime = 15e-6
     geckoport = 43036
@@ -630,7 +630,7 @@ def trial_dab():
     Dab_Results.append_result_dict(da_mod)
 
     # TODO where to save??? spec only float...
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC.ipes'
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC_v2.ipes'
     timestep = 100e-12
     simtime = 15e-6
 
@@ -1147,7 +1147,7 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    # dab_sim_save()
+    dab_sim_save()
     # trial_sim_save()
 
     # Test the DAB functions
@@ -1157,6 +1157,6 @@ if __name__ == '__main__':
     # trial_plot_modresults()
 
     # Plot saved results
-    plot_simresults()
+    # plot_simresults()
 
     # sys.exit(0)
