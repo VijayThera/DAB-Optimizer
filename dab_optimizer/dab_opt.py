@@ -126,6 +126,74 @@ def load_from_file(file: str) -> tuple[ds.DAB_Specification, ds.DAB_Results]:
     return dab_specs, dab_results
 
 
+def save_to_csv(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, key=str(), directory=str(), name=str(),
+                timestamp=True):
+    """
+    Save one array with name 'key' out of dab_results to a csv file
+    :param dab_specs:
+    :param dab_results:
+    :param key: name of the array in dab_results
+    :param directory:
+    :param name: filename without extension
+    :param timestamp: if the filename should prepended with a timestamp
+    """
+    if timestamp:
+        name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+    filename = os.path.join(directory + '/' + name + '_' + key + '.csv')
+
+    if directory:
+        directory = os.path.expanduser(directory)
+        directory = os.path.expandvars(directory)
+        directory = os.path.abspath(directory)
+        if os.path.isdir(directory):
+            file = os.path.join(directory, filename)
+        else:
+            warning("Directory does not exist!")
+            file = os.path.join(filename)
+    else:
+        file = os.path.join(filename)
+
+    comment = key + ' with P: {}, V1: {} and V2: {} steps.'.format(
+        int(dab_specs.P_step),
+        int(dab_specs.V1_step),
+        int(dab_specs.V2_step)
+    )
+
+    # Write the array to disk
+    with open(file, 'w') as outfile:
+        # I'm writing a header here just for the sake of readability
+        # Any line starting with "#" will be ignored by numpy.loadtxt
+        outfile.write('# ' + comment + '\n')
+        outfile.write('# Array shape: {0}\n'.format(dab_results[key].shape))
+        # x: P, y: V1, z(slices): V2
+        outfile.write('# x: P ({}-{}), y: V1 ({}-{}), z(slices): V2 ({}-{})\n'.format(
+            int(dab_specs.P_min),
+            int(dab_specs.P_max),
+            int(dab_specs.V1_min),
+            int(dab_specs.V1_max),
+            int(dab_specs.V2_min),
+            int(dab_specs.V2_max)
+        ))
+        outfile.write('# z: V2 ' + np.array_str(dab_results.mesh_V2[:, 0, 0], max_line_width=10000) + '\n')
+        outfile.write('# y: V1 ' + np.array_str(dab_results.mesh_V1[0, :, 0], max_line_width=10000) + '\n')
+        outfile.write('# x: P ' + np.array_str(dab_results.mesh_P[0, 0, :], max_line_width=10000) + '\n')
+
+        # Iterating through a ndimensional array produces slices along
+        # the last axis. This is equivalent to data[i,:,:] in this case
+        i = 0
+        for array_slice in dab_results.mod_mcl_phi:
+            # Writing out a break to indicate different slices...
+            outfile.write('# V2 slice {}V\n'.format(
+                (dab_specs.V2_min + i * (dab_specs.V2_max - dab_specs.V2_min) / (dab_specs.V2_step - 1))
+            ))
+            # The formatting string indicates that I'm writing out
+            # the values in left-justified columns 7 characters in width
+            # with 2 decimal places.
+            # np.savetxt(outfile, array_slice, fmt='%-7.2f')
+            np.savetxt(outfile, array_slice, delimiter=';')
+            i += 1
+
+
 def main_init():
     parser = argparse.ArgumentParser()
     # parser.add_argument("configfile", help="config file")
@@ -329,18 +397,19 @@ def dab_sim_save():
     Dab_Specs.V1_nom = 700
     Dab_Specs.V1_min = 600
     Dab_Specs.V1_max = 800
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
     # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
     Dab_Specs.V1_step = 3
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1)
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
     Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1)
     # Dab_Specs.V2_step = 4
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1)
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
     Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1)
     # Dab_Specs.P_step = 5
     Dab_Specs.n = 2.99
@@ -554,10 +623,10 @@ def dab_sim_save():
                              )
 
     # Save plots
-    metadata = {'Title': name,
+    metadata = {'Title':       name,
                 'Description': comment,
-                'Author': 'Felix Langemeier',
-                'Software': 'python, matplotlib'}
+                'Author':      'Felix Langemeier',
+                'Software':    'python, matplotlib'}
     # The PNG specification defines some common keywords:
     # Title	Short (one line) title or caption for image
     # Author	Name of image's creator
@@ -1112,10 +1181,10 @@ def plot_simresults():
 
     # Save plots
     name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
-    metadata = {'Title': name,
+    metadata = {'Title':       name,
                 'Description': comment,
-                'Author': 'Felix Langemeier',
-                'Software': 'python, matplotlib'}
+                'Author':      'Felix Langemeier',
+                'Software':    'python, matplotlib'}
     # The PNG specification defines some common keywords:
     # Title	Short (one line) title or caption for image
     # Author	Name of image's creator
@@ -1140,6 +1209,10 @@ def plot_simresults():
     Plot_Dab.show()
 
 
+def _main_dummy():
+    return
+
+
 # ---------- MAIN ----------
 if __name__ == '__main__':
     info("Start of DAB Optimizer ...")
@@ -1147,7 +1220,7 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    dab_sim_save()
+    # dab_sim_save()
     # trial_sim_save()
 
     # Test the DAB functions
@@ -1158,5 +1231,22 @@ if __name__ == '__main__':
 
     # Plot saved results
     # plot_simresults()
+
+    # Open existing file and export array to csv
+    file = '2023-02-21_05:42:24_mod_sps_mcl_sim_Gv2_L84_v3-v25-p19'
+    # Loading
+    dab_file = '~/MA LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
+    dab_file = os.path.expanduser(dab_file)
+    dab_file = os.path.expandvars(dab_file)
+    dab_file = os.path.abspath(dab_file)
+    dab_specs, dab_results = load_from_file(dab_file)
+    # results key:
+    keys = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
+    # Set file names
+    directory = os.path.dirname(dab_file)
+    file = os.path.basename(dab_file)
+    name = os.path.splitext(file.split('_', 2)[2])[0]
+    for key in keys:
+        save_to_csv(dab_specs, dab_results, key, directory, name)
 
     # sys.exit(0)
