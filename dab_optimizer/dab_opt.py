@@ -181,7 +181,7 @@ def save_to_csv(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, ke
         # Iterating through a ndimensional array produces slices along
         # the last axis. This is equivalent to data[i,:,:] in this case
         i = 0
-        for array_slice in dab_results.mod_mcl_phi:
+        for array_slice in dab_results[key]:
             # Writing out a break to indicate different slices...
             outfile.write('# V2 slice {}V\n'.format(
                 (dab_specs.V2_min + i * (dab_specs.V2_max - dab_specs.V2_min) / (dab_specs.V2_step - 1))
