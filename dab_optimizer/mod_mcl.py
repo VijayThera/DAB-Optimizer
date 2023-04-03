@@ -131,8 +131,10 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     D1[np.bitwise_not(_transformation_mask)] = Db[np.bitwise_not(_transformation_mask)]
 
     # convert duty cycle D into radiant angle tau
-    tau1 = D1 * np.pi
-    tau2 = D2 * np.pi
+    # FIXME: The duty cycle D=1/2 represents actually pi not pi/2! Therefore all Simulations before April 2023 are wrong!
+    # FIXED that hard to find error now to D*2*pi:
+    tau1 = D1 * 2 * np.pi
+    tau2 = D2 * 2 * np.pi
 
     # Init return dict
     da_mod_results = dict()
