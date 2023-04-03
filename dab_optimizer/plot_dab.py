@@ -122,7 +122,7 @@ class Plot_DAB:
         num_cont_lines = 20
         cmap = 'viridis'
         z_min = 0
-        z_max = np.pi / 2
+        z_max = np.pi
         # Clear only the 3 subplots in case we update the same figure. Colorbar stays.
         axs[0].clear()
         axs[1].clear()
@@ -160,12 +160,12 @@ class Plot_DAB:
             cbar = fig.axes[-1]
         else:
             cbar = fig.colorbar(mappable=mappable, ax=axs, fraction=0.05, pad=0.02,
-                                ticks=[0, np.pi / 8, np.pi / 4, np.pi * 3 / 8, np.pi / 2])
+                                ticks=[0, np.pi / 4, np.pi / 2, np.pi * 3 / 4, np.pi])
             if self.latex:
                 cbar.ax.set_yticklabels(
-                    [r'$0$', r'$\frac{1}{8} \pi$', r'$\frac{1}{4} \pi$', r'$\frac{3}{8} \pi$', r'$\frac{1}{2} \pi$'])
+                    [r'$0$', r'$\frac{1}{4} \pi$', r'$\frac{1}{2} \pi$', r'$\frac{3}{4} \pi$', r'$\pi$'])
             else:
-                cbar.ax.set_yticklabels(['0', 'π/8', 'π/4', 'π3/8', 'π/2'])
+                cbar.ax.set_yticklabels(['0', 'π/4', 'π/2', 'π3/4', 'π'])
             # alternative to this quick fix: https://stackoverflow.com/a/53586826
         # tight_layout and colorbar are tricky
         # fig.tight_layout()

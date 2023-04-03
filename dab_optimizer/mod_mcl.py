@@ -343,6 +343,8 @@ def convert_phiM_to_phiF(phi, tau1, tau2):
     :return: phi
     """
     phi = phi - (tau1 -tau2) / 2
+    # Fix tiny values like e-16 to useful resolution
+    phi = np.round(phi, decimals=8)
     return phi
 
 

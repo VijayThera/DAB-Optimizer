@@ -424,8 +424,8 @@ def dab_sim_save():
     simtime = 15e-6
     geckoport = 43036
     # Set file names
-    directory = '~/MA LEA/LEA/Workdir/dab_optimizer_output/'
-    name = 'mod_sps_mcl_sim_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
+    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    name = 'mod_sps_mcl_sim_Gv2_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
                                                     int(Dab_Specs.V2_step),
                                                     int(Dab_Specs.P_step))
     if __debug__:
@@ -434,6 +434,7 @@ def dab_sim_save():
         int(Dab_Specs.V1_step),
         int(Dab_Specs.V2_step),
         int(Dab_Specs.P_step))
+    comment = comment + '\n' + 'Using simfilepath = ' + simfilepath
     if __debug__:
         comment = 'Debug ' + comment
 
@@ -769,7 +770,7 @@ def trial_dab():
     Plot_Dab.show()
 
     # Saving
-    save_to_file(Dab_Specs, Dab_Results, directory='/mnt/MA LEA/LEA/Workdir/dab_optimizer_output', name='test-save',
+    save_to_file(Dab_Specs, Dab_Results, directory='~/MA-LEA/LEA/Workdir/dab_optimizer_output', name='test-save',
                  comment='This is a saving test with random data!')
     # save_to_file(Dab_Specs, Dab_Results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
@@ -921,7 +922,7 @@ def trial_plot_modresults():
 
 def trial_plot_simresults():
     # Loading
-    Dab_Specs, Dab_Results = load_from_file('/mnt/MA LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
+    Dab_Specs, Dab_Results = load_from_file('~/MA-LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
     Dab_Specs.pprint()
     # Dab_Results.pprint()
 
@@ -999,7 +1000,7 @@ def plot_simresults():
     # v1 = 0
 
     # Loading
-    dab_file = '~/MA LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
+    dab_file = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
     dab_file = os.path.expanduser(dab_file)
     dab_file = os.path.expandvars(dab_file)
     dab_file = os.path.abspath(dab_file)
@@ -1220,7 +1221,7 @@ if __name__ == '__main__':
     main_init()
 
     # Generate simulation data
-    # dab_sim_save()
+    dab_sim_save()
     # trial_sim_save()
 
     # Test the DAB functions
@@ -1232,21 +1233,21 @@ if __name__ == '__main__':
     # Plot saved results
     # plot_simresults()
 
-    # Open existing file and export array to csv
-    file = '2023-02-21_05:42:24_mod_sps_mcl_sim_Gv2_L84_v3-v25-p19'
-    # Loading
-    dab_file = '~/MA LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
-    dab_file = os.path.expanduser(dab_file)
-    dab_file = os.path.expandvars(dab_file)
-    dab_file = os.path.abspath(dab_file)
-    dab_specs, dab_results = load_from_file(dab_file)
-    # results key:
-    keys = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
-    # Set file names
-    directory = os.path.dirname(dab_file)
-    file = os.path.basename(dab_file)
-    name = os.path.splitext(file.split('_', 2)[2])[0]
-    for key in keys:
-        save_to_csv(dab_specs, dab_results, key, directory, name)
+    # # Open existing file and export array to csv
+    # file = '2023-02-21_05:42:24_mod_sps_mcl_sim_Gv2_L84_v3-v25-p19'
+    # # Loading
+    # dab_file = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
+    # dab_file = os.path.expanduser(dab_file)
+    # dab_file = os.path.expandvars(dab_file)
+    # dab_file = os.path.abspath(dab_file)
+    # dab_specs, dab_results = load_from_file(dab_file)
+    # # results key:
+    # keys = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
+    # # Set file names
+    # directory = os.path.dirname(dab_file)
+    # file = os.path.basename(dab_file)
+    # name = os.path.splitext(file.split('_', 2)[2])[0]
+    # for key in keys:
+    #     save_to_csv(dab_specs, dab_results, key, directory, name)
 
     # sys.exit(0)
