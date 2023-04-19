@@ -388,6 +388,178 @@ def trial_sim_save():
 
 
 @timeit
+def dab_mod_save():
+    """
+    Run the modulation optimization procedure and save the results in a file
+    """
+    # Set the basic DAB Specification
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 700
+    Dab_Specs.V1_max = 700
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
+    Dab_Specs.V1_step = 1
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
+    Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 20 + 1)
+    # Dab_Specs.V2_step = 4
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
+    Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 300 + 1)
+    # Dab_Specs.P_step = 5
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
+
+    # Set file names
+    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
+                                                    int(Dab_Specs.V2_step),
+                                                    int(Dab_Specs.P_step))
+    if __debug__:
+        name = 'debug_' + name
+    comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
+        int(Dab_Specs.V1_step),
+        int(Dab_Specs.V2_step),
+        int(Dab_Specs.P_step))
+    if __debug__:
+        comment = 'Debug ' + comment
+
+    # Object to store all generated data
+    Dab_Results = ds.DAB_Results()
+    # Generate meshes
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    # Modulation Calculation
+    # MCL Modulation
+    da_mod = mod_mcl.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+    # Saving
+    # Create new dir for all files
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+    directory = os.path.expanduser(directory)
+    directory = os.path.expandvars(directory)
+    directory = os.path.abspath(directory)
+    os.mkdir(directory)
+    # Save data
+    save_to_file(Dab_Specs, Dab_Results, directory=directory, name=name, timestamp=False, comment=comment)
+
+
+    # Open existing file and export array to csv
+    file = name
+    # Loading
+    dab_file = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
+    dab_file = os.path.join(directory, file) + '.npz'
+    dab_file = os.path.expanduser(dab_file)
+    dab_file = os.path.expandvars(dab_file)
+    dab_file = os.path.abspath(dab_file)
+    dab_specs, dab_results = load_from_file(dab_file)
+    # results key:
+    keys = ['mod_sps_phi', 'mod_sps_tau1', 'mod_sps_tau2', 'mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
+    # Convert phi, tau1/2 from rad to duty cycle * 10000
+    # This is for old saved results where phi,tau is in rad
+    # But in DAB-Controller we need duty cycle * 10000 (2pi eq. 10000)
+    for key in keys:
+        dab_results[key] = dab_results[key] / np.pi * 10000
+    # Set file names
+    directory = os.path.dirname(dab_file)
+    file = os.path.basename(dab_file)
+    name = os.path.splitext(file.split('_', 2)[2])[0]
+    for key in keys:
+        save_to_csv(dab_specs, dab_results, key, directory, name)
+
+
+    # Plotting
+    info("\nStart Plotting\n")
+    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+
+    Plot_Dab = plot_dab.Plot_DAB()
+
+    # Plot SPS sim results
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_sps_phi[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau1[:, v1_middle, :],
+                             Dab_Results.mod_sps_tau2[:, v1_middle, :],
+                             # mask1=Dab_Results.mod_sps_mask_tcm[:, v1_middle, :],
+                             # mask2=Dab_Results.mod_sps_mask_cpm[:, v1_middle, :]
+                             )
+
+    # Plot MCL sim results
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_mcl_phi[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau1[:, v1_middle, :],
+                             Dab_Results.mod_mcl_tau2[:, v1_middle, :],
+                             mask1=Dab_Results.mod_mcl_mask_tcm[:, v1_middle, :],
+                             mask2=Dab_Results.mod_mcl_mask_cpm[:, v1_middle, :]
+                             )
+
+    # Save plots
+    metadata = {'Title':       name,
+                'Description': comment,
+                'Author':      'Felix Langemeier',
+                'Software':    'python, matplotlib'}
+    # The PNG specification defines some common keywords:
+    # Title	Short (one line) title or caption for image
+    # Author	Name of image's creator
+    # Description	Description of image (possibly long)
+    # Copyright	Copyright notice
+    # Creation Time	Time of original image creation
+    # Software	Software used to create the image
+    # Disclaimer	Legal disclaimer
+    # Warning	Warning of nature of content
+    # Source	Device used to create the image
+    # Comment	Miscellaneous comment
+    i = 0
+    for fig in Plot_Dab.figs_axes:
+        fname = os.path.join(directory + '/' + name + '_fig{:0>2d}.png'.format(i))
+        fig[0].savefig(fname=fname, metadata=metadata)
+        i += 1
+    # TODO Fix that the first and following image sizes differ. First is window size, following are 1000x500px.
+
+    Plot_Dab.show()
+
+
+@timeit
 def dab_sim_save():
     """
     Run the complete optimization procedure and save the results in a file
@@ -1220,8 +1392,11 @@ if __name__ == '__main__':
     # Do some basic init like logging, args, etc.
     main_init()
 
+    # Only modulation calculation
+    dab_mod_save()
+
     # Generate simulation data
-    dab_sim_save()
+    # dab_sim_save()
     # trial_sim_save()
 
     # Test the DAB functions
@@ -1234,7 +1409,7 @@ if __name__ == '__main__':
     # plot_simresults()
 
     # # Open existing file and export array to csv
-    # file = '2023-02-21_05:42:24_mod_sps_mcl_sim_Gv2_L84_v3-v25-p19'
+    # file = '2023-04-03_04:57:55_mod_sps_mcl_sim_Gv2_L84_v3-v25-p19'
     # # Loading
     # dab_file = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/{0}/{0}.npz'.format(file)
     # dab_file = os.path.expanduser(dab_file)
@@ -1242,7 +1417,12 @@ if __name__ == '__main__':
     # dab_file = os.path.abspath(dab_file)
     # dab_specs, dab_results = load_from_file(dab_file)
     # # results key:
-    # keys = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
+    # keys = ['mod_sps_phi', 'mod_sps_tau1', 'mod_sps_tau2', 'mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
+    # # Convert phi, tau1/2 from rad to duty cycle * 10000
+    # # This is for old saved results where phi,tau is in rad
+    # # But in DAB-Controller we need duty cycle * 10000 (2pi eq. 10000)
+    # for key in keys:
+    #     dab_results[key] = dab_results[key] / np.pi * 10000
     # # Set file names
     # directory = os.path.dirname(dab_file)
     # file = os.path.basename(dab_file)
