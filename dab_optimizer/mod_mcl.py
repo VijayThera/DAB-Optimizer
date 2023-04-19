@@ -37,7 +37,7 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     :param mesh_V1: input voltage (voltage on side 1)
     :param mesh_V2: output voltage (voltage on side 2)
     :param mesh_P: DAB power (assuming a lossless DAB)
-    :return: phi, tau1, tau2
+    :return: dict with phi, tau1, tau2, masks
     """
 
     # Reference voltage, any arbitrary voltage!
@@ -359,6 +359,8 @@ def convert_phiF_to_phiM(phi, tau1, tau2):
     :return: phi
     """
     phi = phi + (tau1 -tau2) / 2
+    # Fix tiny values like e-16 to useful resolution
+    phi = np.round(phi, decimals=8)
     return phi
 
 
