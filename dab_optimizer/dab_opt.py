@@ -489,7 +489,7 @@ def dab_mod_save():
     # This is for old saved results where phi,tau is in rad
     # But in DAB-Controller we need duty cycle * 10000 (2pi eq. 10000)
     for key in keys:
-        dab_results[key] = dab_results[key] / np.pi * 10000
+        dab_results[key] = dab_results[key] / (2 * np.pi) * 10000
     # Set file names
     directory = os.path.dirname(dab_file)
     file = os.path.basename(dab_file)
@@ -1422,7 +1422,7 @@ if __name__ == '__main__':
     # # This is for old saved results where phi,tau is in rad
     # # But in DAB-Controller we need duty cycle * 10000 (2pi eq. 10000)
     # for key in keys:
-    #     dab_results[key] = dab_results[key] / np.pi * 10000
+    #     dab_results[key] = dab_results[key] / (2 * np.pi) * 10000
     # # Set file names
     # directory = os.path.dirname(dab_file)
     # file = os.path.basename(dab_file)
