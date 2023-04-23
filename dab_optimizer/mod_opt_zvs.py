@@ -6,14 +6,19 @@
 """
 Calculation of the Modulation for a DAB (Dual Active Bridge).
 
-This module calculates the **OptZVS (Optimal ZVS) Modulation** according to the Paper [IEEE][1].
+This file lists all formulas for the **OptZVS (Optimal ZVS) Modulation** according to the Paper [IEEE][1] and PhD Thesis [2].
 
-It was tried to be as close as possible to the depicted algorithm.
+All names are converted in such way that they can be python variables.
 
-[1]: https://ieeexplore.ieee.org/document/6671445 (
-J. Everts, F. Krismer, J. Van den Keybus, J. Driesen and J. W. Kolar,
-"Optimal ZVS Modulation of Single-Phase Single-Stage Bidirectional DAB AC–DC Converters,"
-in IEEE Transactions on Power Electronics, vol. 29, no. 8, pp. 3954-3970, Aug. 2014, doi: 10.1109/TPEL.2013.2292026.
+[1]: https://ieeexplore.ieee.org/document/7762886 (
+J. Everts, "Closed-Form Solution for Efficient ZVS Modulation of DAB Converters,"
+in IEEE Transactions on Power Electronics, vol. 32, no. 10, pp. 7561-7576, Oct. 2017, doi: 10.1109/TPEL.2016.2633507.
+)
+[2]: https://kuleuven.limo.libis.be/discovery/fulldisplay?docid=lirias1731206&context=SearchWebhook&vid=32KUL_KUL:Lirias&search_scope=lirias_profile&tab=LIRIAS&adaptor=SearchWebhook&lang=en (
+Everts, Jordi / Driesen, Johan
+Modeling and Optimization of Bidirectional Dual Active Bridge AC-DC Converter Topologies
+(Modellering en optimalisatie van bidirectionele dual active bridge AC-DC convertor topologieën)
+2014-04-11
 )
 """
 
