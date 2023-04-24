@@ -28,7 +28,7 @@ import dab_datasets as ds
 from debug_tools import *
 
 # The dict keys this modulation will return
-MOD_KEYS = ['mod_optzvs_phi', 'mod_optzvs_tau1', 'mod_optzvs_tau2', 'mod_optzvs_mask_zvs', 'mod_optzvs_mask_m1n', 'mod_optzvs_mask_m1p', 'mod_optzvs_mask_m2']
+MOD_KEYS = ['mod_zvs_phi', 'mod_zvs_tau1', 'mod_zvs_tau2', 'mod_zvs_mask_zvs', 'mod_zvs_mask_m1n', 'mod_zvs_mask_m1p', 'mod_zvs_mask_m2']
 
 
 @timeit
@@ -120,11 +120,11 @@ if __name__ == '__main__':
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
                              Dab_Results.mesh_P[:, v1_middle, :],
                              Dab_Results.mesh_V2[:, v1_middle, :],
-                             Dab_Results.mod_optzvs_phi[:, v1_middle, :],
-                             Dab_Results.mod_optzvs_tau1[:, v1_middle, :],
-                             Dab_Results.mod_optzvs_tau2[:, v1_middle, :],
-                             mask1=Dab_Results.mod_optzvs_mask_tcm[:, v1_middle, :],
-                             mask2=Dab_Results.mod_optzvs_mask_cpm[:, v1_middle, :])
+                             Dab_Results.mod_zvs_phi[:, v1_middle, :],
+                             Dab_Results.mod_zvs_tau1[:, v1_middle, :],
+                             Dab_Results.mod_zvs_tau2[:, v1_middle, :],
+                             mask1=Dab_Results.mod_zvs_mask_tcm[:, v1_middle, :],
+                             mask2=Dab_Results.mod_zvs_mask_cpm[:, v1_middle, :])
 
     # Plot animation for every V1 cross-section
     # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
@@ -132,10 +132,10 @@ if __name__ == '__main__':
     #     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
     #                              Dab_Results.mesh_P[:, v1, :],
     #                              Dab_Results.mesh_V2[:, v1, :],
-    #                              Dab_Results.mod_optzvs_phi[:, v1, :],
-    #                              Dab_Results.mod_optzvs_tau1[:, v1, :],
-    #                              Dab_Results.mod_optzvs_tau2[:, v1, :],
-    #                              mask1=Dab_Results.mod_optzvs_mask_tcm[:, v1, :],
-    #                              mask2=Dab_Results.mod_optzvs_mask_cpm[:, v1, :])
+    #                              Dab_Results.mod_zvs_phi[:, v1, :],
+    #                              Dab_Results.mod_zvs_tau1[:, v1, :],
+    #                              Dab_Results.mod_zvs_tau2[:, v1, :],
+    #                              mask1=Dab_Results.mod_zvs_mask_tcm[:, v1, :],
+    #                              mask2=Dab_Results.mod_zvs_mask_cpm[:, v1, :])
 
     Plot_Dab.show()

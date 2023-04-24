@@ -194,6 +194,24 @@ def save_to_csv(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, ke
             i += 1
 
 
+def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
+    """
+    Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
+    This may be generated with: https://apps.automeris.io/wpd/
+    :param dab_results:
+    :param file: csv file path
+    :param name: Name of the Dataset e.g. the MOSFET name "C3M0120100J"
+    """
+    file = os.path.expanduser(file)
+    file = os.path.expandvars(file)
+    file = os.path.abspath(file)
+
+    csv_data = np.genfromtxt(file, delimiter=';', dtype=float)
+    debug(csv_data)
+
+    dab_results['coss_' + name] = csv_data
+
+
 def main_init():
     parser = argparse.ArgumentParser()
     # parser.add_argument("configfile", help="config file")
@@ -388,6 +406,92 @@ def trial_sim_save():
 
 
 @timeit
+def trail_mod():
+    """
+    Run the modulation optimization procedure and show the results
+    """
+    # Set the basic DAB Specification
+    Dab_Specs = ds.DAB_Specification()
+    Dab_Specs.V1_nom = 700
+    Dab_Specs.V1_min = 700
+    Dab_Specs.V1_max = 700
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
+    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
+    Dab_Specs.V1_step = 1
+    Dab_Specs.V2_nom = 235
+    Dab_Specs.V2_min = 175
+    Dab_Specs.V2_max = 295
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
+    Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 20 + 1)
+    # Dab_Specs.V2_step = 4
+    Dab_Specs.P_min = 400
+    Dab_Specs.P_max = 2200
+    Dab_Specs.P_nom = 2000
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
+    Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 300 + 1)
+    # Dab_Specs.P_step = 5
+    Dab_Specs.n = 2.99
+    Dab_Specs.L_s = 84e-6
+    Dab_Specs.L_m = 599e-6
+    Dab_Specs.fs_nom = 200000
+
+    # Set file names
+    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
+                                                    int(Dab_Specs.V2_step),
+                                                    int(Dab_Specs.P_step))
+    if __debug__:
+        name = 'debug_' + name
+    comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
+        int(Dab_Specs.V1_step),
+        int(Dab_Specs.V2_step),
+        int(Dab_Specs.P_step))
+    if __debug__:
+        comment = 'Debug ' + comment
+
+    # Object to store all generated data
+    Dab_Results = ds.DAB_Results()
+    # Generate meshes
+    Dab_Results.gen_meshes(
+        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
+        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
+        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+
+    # Import Coss curves
+    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
+    import_Coss(Dab_Results, csv_file, 'C3M0120100J')
+    # debug(Dab_Results)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+                                     Dab_Specs.L_s,
+                                     Dab_Specs.fs_nom,
+                                     Dab_Results.mesh_V1,
+                                     Dab_Results.mesh_V2,
+                                     Dab_Results.mesh_P)
+
+    # Unpack the results
+    Dab_Results.append_result_dict(da_mod)
+
+
+    Plot_Dab = plot_dab.Plot_DAB()
+
+    # Plot SPS sim results
+    # Plot all modulation angles
+    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
+    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
+                             Dab_Results.mesh_P[:, v1_middle, :],
+                             Dab_Results.mesh_V2[:, v1_middle, :],
+                             Dab_Results.mod_zvs_phi[:, v1_middle, :],
+                             Dab_Results.mod_zvs_tau1[:, v1_middle, :],
+                             Dab_Results.mod_zvs_tau2[:, v1_middle, :],
+                             # mask1=Dab_Results.mod_sps_mask_tcm[:, v1_middle, :],
+                             # mask2=Dab_Results.mod_sps_mask_cpm[:, v1_middle, :]
+                             )
+
+
+@timeit
 def dab_mod_save():
     """
     Run the modulation optimization procedure and save the results in a file
@@ -438,6 +542,11 @@ def dab_mod_save():
         Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
         Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
         Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+
+    # Import Coss curves
+    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
+    import_Coss(Dab_Results, csv_file, 'C3M0120100J')
+    debug(Dab_Results)
 
     # Modulation Calculation
     # SPS Modulation
@@ -1393,7 +1502,8 @@ if __name__ == '__main__':
     main_init()
 
     # Only modulation calculation
-    dab_mod_save()
+    trail_mod()
+    # dab_mod_save()
 
     # Generate simulation data
     # dab_sim_save()
