@@ -197,7 +197,7 @@ def save_to_csv(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, ke
             i += 1
 
 
-def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
+def import_Coss(file: str()):
     """
     Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
     This may be generated with: https://apps.automeris.io/wpd/
@@ -208,9 +208,7 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
     # V_ds / V; C_oss / pF
     1,00; 900.00
     2,00; 800.00
-    :param dab_results:
     :param file: csv file path
-    :param name: Name of the Dataset e.g. the MOSFET name "C3M0120100J"
     """
     file = os.path.expanduser(file)
     file = os.path.expandvars(file)
@@ -223,7 +221,6 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
 
     # Read csv file
     csv_data = np.genfromtxt((conv(x) for x in open(file)), delimiter=';', dtype=float)
-    debug(csv_data, csv_data.shape)
 
     # Maybe check if data is monotonically
     # Check if voltage is monotonically rising
@@ -233,28 +230,39 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
     if not np.all(csv_data[1:, 1] <= csv_data[:-1, 1], axis=0):
         warning("The C_oss in csv file is not monotonically falling!")
 
-    # Add a first row with zero volt
-    # first_row = [0, csv_data[0, 1]]
-    # csv_data = np.vstack((first_row, csv_data))
+    # Rescale and interpolate the csv data to have a nice 1V step size from 0V to v_max
+    # A first value with zero volt will be added
+    v_max = int(np.round(csv_data[-1, 0]))
+    v_interp = np.arange(v_max + 1)
+    coss_interp = np.interp(v_interp, csv_data[:, 0], csv_data[:, 1])
+    # Since we now have a evenly spaced vector where x corespond to the element-number of the vector
+    # we dont have to store x (v_interp) with it.
+    # To get Coss(V) just get the array element coss_interp[V]
 
-    dab_results['coss_' + name] = csv_data
+    # np.savetxt('coss.csv', coss_interp, delimiter=';')
+    return coss_interp
 
 
-def integrate_Coss(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results):
-    # dab_results.coss_C3M0120100J
-    debug(np.trapz(dab_results.coss_C3M0120100J[:, 1], dab_results.coss_C3M0120100J[:, 0]))
+@timeit
+def integrate_Coss(coss):
+    # Integrate from 0 to v
+    def integrate(v):
+        v_interp = np.arange(v + 1)
+        coss_v = np.interp(v_interp, np.arange(coss.shape[0]), coss)
+        return np.trapz(coss_v)
 
-    v_max = int(np.round(dab_results.coss_C3M0120100J[-1, 0]))
-    debug(v_max)
-    v_interp = np.linspace(0, v_max, v_max + 1)
-    debug(v_interp)
-    coss_interp = np.interp(v_interp, dab_results.coss_C3M0120100J[:, 0], dab_results.coss_C3M0120100J[:, 1])
-    debug(coss_interp, coss_interp.shape, np.reshape(coss_interp, (-1, 1)))
-    coss_interp = np.hstack((np.reshape(v_interp, (-1, 1)), np.reshape(coss_interp, (-1, 1))))
-    debug(coss_interp)
-    # np.savetxt('coss_interp.csv', coss_interp, delimiter=';')
-    # sys.exit(1)
-    dab_results['qoss_C3M0120100J'] = coss_interp
+    coss_int = np.vectorize(integrate)
+    # get an qoss vector that has the resolution 1V from 0 to V_max
+    v_vec = np.arange(coss.shape[0])
+    # get an qoss vector that fits the mesh_V scale
+    # v_vec = np.linspace(V_min, V_max, int(V_step))
+    debug(v_vec)
+    qoss = coss_int(v_vec)
+    # Scale from pC to nC
+    qoss = qoss / 1000
+
+    # np.savetxt('qoss.csv', qoss, delimiter=';')
+    return qoss
 
 
 def main_init():
@@ -458,22 +466,22 @@ def trail_mod():
     # Set the basic DAB Specification
     Dab_Specs = ds.DAB_Specification()
     Dab_Specs.V1_nom = 700
-    Dab_Specs.V1_min = 700
-    Dab_Specs.V1_max = 700
-    # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
+    Dab_Specs.V1_min = 600
+    Dab_Specs.V1_max = 800
+    Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
     # Dab_Specs.V1_step = math.floor((Dab_Specs.V1_max - Dab_Specs.V1_min) / 10 + 1)
-    Dab_Specs.V1_step = 1
+    # Dab_Specs.V1_step = 1
     Dab_Specs.V2_nom = 235
     Dab_Specs.V2_min = 175
     Dab_Specs.V2_max = 295
-    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
-    Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 20 + 1)
+    Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
+    # Dab_Specs.V2_step = math.floor((Dab_Specs.V2_max - Dab_Specs.V2_min) / 20 + 1)
     # Dab_Specs.V2_step = 4
     Dab_Specs.P_min = 400
     Dab_Specs.P_max = 2200
     Dab_Specs.P_nom = 2000
-    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
-    Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 300 + 1)
+    Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
+    # Dab_Specs.P_step = math.floor((Dab_Specs.P_max - Dab_Specs.P_min) / 300 + 1)
     # Dab_Specs.P_step = 5
     Dab_Specs.n = 2.99
     Dab_Specs.L_s = 84e-6
@@ -504,9 +512,9 @@ def trail_mod():
 
     # Import Coss curves
     csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
-    import_Coss(Dab_Results, csv_file, 'C3M0120100J')
+    Dab_Results['coss_C3M0120100J'] = import_Coss(csv_file)
     # Generate Qoss matrix
-    integrate_Coss(Dab_Specs, Dab_Results)
+    Dab_Results['qoss_C3M0120100J'] = integrate_Coss(Dab_Results['coss_C3M0120100J'])
 
     # Modulation Calculation
     # ZVS Modulation
@@ -520,7 +528,7 @@ def trail_mod():
     # Unpack the results
     Dab_Results.append_result_dict(da_mod)
 
-    debug(Dab_Results)
+    # debug(Dab_Results)
 
     # Plotting
     info("\nStart Plotting\n")
@@ -532,17 +540,16 @@ def trail_mod():
     Plot_Dab = plot_dab.Plot_DAB()
 
     # Plot Coss
-    Plot_Dab.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J')
-    Plot_Dab.subplot(Dab_Results['coss_C3M0120100J'][:, 0],
-                     Dab_Results['coss_C3M0120100J'][:, 1],
+    Plot_Dab.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
+    Plot_Dab.subplot(np.arange(Dab_Results['coss_C3M0120100J'].shape[0]),
+                     Dab_Results['coss_C3M0120100J'],
                      ax=Plot_Dab.figs_axes[-1][1][0],
                      xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
                      yscale='log')
-    Plot_Dab.subplot(Dab_Results['qoss_C3M0120100J'][:, 0],
-                     Dab_Results['qoss_C3M0120100J'][:, 1],
+    Plot_Dab.subplot(np.arange(Dab_Results['qoss_C3M0120100J'].shape[0]),
+                     Dab_Results['qoss_C3M0120100J'],
                      ax=Plot_Dab.figs_axes[-1][1][1],
-                     xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J',
-                     yscale='log')
+                     xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
 
     # Plot OptZVS mod results
     # Plot all modulation angles

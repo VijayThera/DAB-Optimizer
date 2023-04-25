@@ -43,7 +43,7 @@ Q_AB_req1: Q_AB_req_p but with changed naming according to side 1 and 2 naming s
 
 ## Predefined Terms
 
-e1 = V2 * Q2_AB_req * ws
+e1 = V2 * Q_AB_req2 * ws
 
 e2 = n * V1 * np.pi * I1
 
