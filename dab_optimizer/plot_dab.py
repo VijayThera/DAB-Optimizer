@@ -41,7 +41,7 @@ class Plot_DAB:
             plt.rcParams.update({
                 "text.usetex": True,
                 "font.family": "serif",
-                "font.serif": ["Palatino"],
+                "font.serif":  ["Palatino"],
             })
 
     def new_fig(self, nrows: int = 1, ncols: int = 1, sharex: str = True, sharey: str = True,
@@ -102,7 +102,8 @@ class Plot_DAB:
         # Redraw the current figure
         plt.draw()
 
-    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3, title: str = '', mask1=None, mask2=None, mask3=None):
+    def plot_modulation(self, fig_axes: tuple, x, y, z1, z2, z3, title: str = '', mask1=None, mask2=None, mask3=None,
+                        maskZVS=None):
         """
         Plots three contourf plots with a shared colorbar.
 
@@ -132,14 +133,20 @@ class Plot_DAB:
         if not mask1 is None: axs[0].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
         if not mask2 is None: axs[0].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
         if not mask3 is None: axs[0].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
+        if not maskZVS is None: axs[0].contourf(x, y, np.ma.masked_where(maskZVS == 1, maskZVS), 1, alpha=0.5,
+                                                antialiased=True, cmap='Greys_r', vmin=0, vmax=1)
         axs[1].contourf(x, y, z2, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
         if not mask1 is None: axs[1].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
         if not mask2 is None: axs[1].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
         if not mask3 is None: axs[1].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
+        if not maskZVS is None: axs[1].contourf(x, y, np.ma.masked_where(maskZVS == 1, maskZVS), 1, alpha=0.5,
+                                                antialiased=True, cmap='Greys_r', vmin=0, vmax=1)
         axs[2].contourf(x, y, z3, num_cont_lines, alpha=1, antialiased=True, cmap=cmap, vmin=z_min, vmax=z_max)
         if not mask1 is None: axs[2].contour(x, y, mask1, levels=[0.5], colors=['red'], alpha=1)
         if not mask2 is None: axs[2].contour(x, y, mask2, levels=[0.5], colors=['blue'], alpha=1)
         if not mask3 is None: axs[2].contour(x, y, mask3, levels=[0.5], colors=['black'], alpha=1)
+        if not maskZVS is None: axs[2].contourf(x, y, np.ma.masked_where(maskZVS == 1, maskZVS), 1, alpha=0.5,
+                                                antialiased=True, cmap='Greys_r', vmin=0, vmax=1)
         # Set the labels
         if title: fig.suptitle(title)
         axs[0].set_title(r"$\varphi / \mathrm{rad}$" if self.latex else "phi in rad")
