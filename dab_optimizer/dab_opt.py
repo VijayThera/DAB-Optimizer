@@ -220,9 +220,10 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
     # Be careful if your csv is actually comma separated! ;)
     def conv(x):
         return x.replace(',', '.').encode()
+
     # Read csv file
     csv_data = np.genfromtxt((conv(x) for x in open(file)), delimiter=';', dtype=float)
-    debug(csv_data)
+    debug(csv_data, csv_data.shape)
 
     # Maybe check if data is monotonically
     # Check if voltage is monotonically rising
@@ -233,17 +234,27 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
         warning("The C_oss in csv file is not monotonically falling!")
 
     # Add a first row with zero volt
-    first_row = [0, csv_data[0, 1]]
-    csv_data = np.vstack((first_row, csv_data))
+    # first_row = [0, csv_data[0, 1]]
+    # csv_data = np.vstack((first_row, csv_data))
 
     dab_results['coss_' + name] = csv_data
 
-def integrate_Coss(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results):
 
-    #dab_results.coss_C3M0120100J
+def integrate_Coss(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results):
+    # dab_results.coss_C3M0120100J
     debug(np.trapz(dab_results.coss_C3M0120100J[:, 1], dab_results.coss_C3M0120100J[:, 0]))
 
-    sys.exit(1)
+    v_max = int(np.round(dab_results.coss_C3M0120100J[-1, 0]))
+    debug(v_max)
+    v_interp = np.linspace(0, v_max, v_max + 1)
+    debug(v_interp)
+    coss_interp = np.interp(v_interp, dab_results.coss_C3M0120100J[:, 0], dab_results.coss_C3M0120100J[:, 1])
+    debug(coss_interp, coss_interp.shape, np.reshape(coss_interp, (-1, 1)))
+    coss_interp = np.hstack((np.reshape(v_interp, (-1, 1)), np.reshape(coss_interp, (-1, 1))))
+    debug(coss_interp)
+    # np.savetxt('coss_interp.csv', coss_interp, delimiter=';')
+    # sys.exit(1)
+    dab_results['qoss_C3M0120100J'] = coss_interp
 
 
 def main_init():
@@ -520,7 +531,20 @@ def trail_mod():
 
     Plot_Dab = plot_dab.Plot_DAB()
 
-    # Plot SPS sim results
+    # Plot Coss
+    Plot_Dab.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J')
+    Plot_Dab.subplot(Dab_Results['coss_C3M0120100J'][:, 0],
+                     Dab_Results['coss_C3M0120100J'][:, 1],
+                     ax=Plot_Dab.figs_axes[-1][1][0],
+                     xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
+                     yscale='log')
+    Plot_Dab.subplot(Dab_Results['qoss_C3M0120100J'][:, 0],
+                     Dab_Results['qoss_C3M0120100J'][:, 1],
+                     ax=Plot_Dab.figs_axes[-1][1][1],
+                     xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J',
+                     yscale='log')
+
+    # Plot OptZVS mod results
     # Plot all modulation angles
     Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
