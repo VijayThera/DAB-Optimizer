@@ -6,9 +6,11 @@
 """
 Calculation of the Modulation for a DAB (Dual Active Bridge).
 
-This file lists all formulas for the **OptZVS (Optimal ZVS) Modulation** according to the Paper [IEEE][1] and PhD Thesis [2].
+This module calculates the **OptZVS (Optimal ZVS) Modulation** according to the Paper [IEEE][1] and PhD Thesis [2].
+It enables ZVS wherever possible and minimizes the inductor rms current I_L.
+A Matrix *mask_zvs* will be returned indicating where ZVS is possible or not.
 
-All names are converted in such way that they can be python variables.
+It was tried to be as close as possible to the depicted algorithm but a around formula (25) and (23) had been made.
 
 [1]: https://ieeexplore.ieee.org/document/7762886 (
 J. Everts, "Closed-Form Solution for Efficient ZVS Modulation of DAB Converters,"
@@ -28,7 +30,8 @@ import dab_datasets as ds
 from debug_tools import *
 
 # The dict keys this modulation will return
-MOD_KEYS = ['mod_zvs_phi', 'mod_zvs_tau1', 'mod_zvs_tau2', 'mod_zvs_mask_zvs', 'mod_zvs_mask_m1n', 'mod_zvs_mask_m1p', 'mod_zvs_mask_m2']
+MOD_KEYS = ['mod_zvs_phi', 'mod_zvs_tau1', 'mod_zvs_tau2', 'mod_zvs_mask_zvs', 'mod_zvs_mask_m1p', 'mod_zvs_mask_m1n',
+            'mod_zvs_mask_m2']
 
 
 @timeit
@@ -45,11 +48,14 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     :return: dict with phi, tau1, tau2, masks
     """
 
-
-
-
-
-
+    # TODO DUMMY
+    phi = np.full_like(mesh_V1, np.pi)
+    tau1 = np.full_like(mesh_V1, np.pi)
+    tau2 = np.full_like(mesh_V1, np.pi)
+    zvs = np.greater_equal(mesh_P, 1000)
+    _m1p_mask = np.full_like(mesh_V1, np.nan)
+    _m1n_mask = np.full_like(mesh_V1, np.nan)
+    _m2_mask = np.full_like(mesh_V1, np.nan)
 
     # Init return dict
     da_mod_results = dict()
@@ -65,7 +71,6 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
     da_mod_results[MOD_KEYS[6]] = _m2_mask
 
     return da_mod_results
-
 
 
 # ---------- MAIN ----------

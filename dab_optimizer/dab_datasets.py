@@ -74,7 +74,7 @@ class DAB_Results(DotMap):
     Add a useful name string after the prefix from "_allowed_keys" to identify your results later.
     """
 
-    _allowed_keys = ['_timestamp', '_comment', 'mesh_', 'mod_', 'sim_']
+    _allowed_keys = ['_timestamp', '_comment', 'mesh_', 'mod_', 'sim_', 'coss_']
 
     def __init__(self, *args, **kwargs):
         """

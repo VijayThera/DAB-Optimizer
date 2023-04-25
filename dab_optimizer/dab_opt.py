@@ -16,6 +16,7 @@ import dab_datasets as ds
 from debug_tools import *
 import mod_sps
 import mod_mcl
+import mod_zvs
 import sim_gecko
 import plot_dab
 
@@ -438,8 +439,8 @@ def trail_mod():
     # Set file names
     directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
     name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
-                                                    int(Dab_Specs.V2_step),
-                                                    int(Dab_Specs.P_step))
+                                            int(Dab_Specs.V2_step),
+                                            int(Dab_Specs.P_step))
     if __debug__:
         name = 'debug_' + name
     comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
@@ -460,11 +461,10 @@ def trail_mod():
     # Import Coss curves
     csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
     import_Coss(Dab_Results, csv_file, 'C3M0120100J')
-    # debug(Dab_Results)
 
     # Modulation Calculation
-    # SPS Modulation
-    da_mod = mod_sps.calc_modulation(Dab_Specs.n,
+    # ZVS Modulation
+    da_mod = mod_zvs.calc_modulation(Dab_Specs.n,
                                      Dab_Specs.L_s,
                                      Dab_Specs.fs_nom,
                                      Dab_Results.mesh_V1,
@@ -474,6 +474,14 @@ def trail_mod():
     # Unpack the results
     Dab_Results.append_result_dict(da_mod)
 
+    debug(Dab_Results)
+
+    # Plotting
+    info("\nStart Plotting\n")
+    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(Dab_Results.mesh_V1[0, v1_middle, 0])
 
     Plot_Dab = plot_dab.Plot_DAB()
 
@@ -486,9 +494,12 @@ def trail_mod():
                              Dab_Results.mod_zvs_phi[:, v1_middle, :],
                              Dab_Results.mod_zvs_tau1[:, v1_middle, :],
                              Dab_Results.mod_zvs_tau2[:, v1_middle, :],
-                             # mask1=Dab_Results.mod_sps_mask_tcm[:, v1_middle, :],
-                             # mask2=Dab_Results.mod_sps_mask_cpm[:, v1_middle, :]
+                             mask1=Dab_Results.mod_zvs_mask_m1p[:, v1_middle, :],
+                             mask2=Dab_Results.mod_zvs_mask_m2[:, v1_middle, :],
+                             maskZVS=Dab_Results.mod_zvs_mask_zvs[:, v1_middle, :]
                              )
+
+    Plot_Dab.show()
 
 
 @timeit
@@ -524,8 +535,8 @@ def dab_mod_save():
     # Set file names
     directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
     name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
-                                                    int(Dab_Specs.V2_step),
-                                                    int(Dab_Specs.P_step))
+                                            int(Dab_Specs.V2_step),
+                                            int(Dab_Specs.P_step))
     if __debug__:
         name = 'debug_' + name
     comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
@@ -582,7 +593,6 @@ def dab_mod_save():
     # Save data
     save_to_file(Dab_Specs, Dab_Results, directory=directory, name=name, timestamp=False, comment=comment)
 
-
     # Open existing file and export array to csv
     file = name
     # Loading
@@ -605,7 +615,6 @@ def dab_mod_save():
     name = os.path.splitext(file.split('_', 2)[2])[0]
     for key in keys:
         save_to_csv(dab_specs, dab_results, key, directory, name)
-
 
     # Plotting
     info("\nStart Plotting\n")
@@ -707,8 +716,8 @@ def dab_sim_save():
     # Set file names
     directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
     name = 'mod_sps_mcl_sim_Gv2_L84_v{}-v{}-p{}'.format(int(Dab_Specs.V1_step),
-                                                    int(Dab_Specs.V2_step),
-                                                    int(Dab_Specs.P_step))
+                                                        int(Dab_Specs.V2_step),
+                                                        int(Dab_Specs.P_step))
     if __debug__:
         name = 'debug_' + name
     comment = 'Simulation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
