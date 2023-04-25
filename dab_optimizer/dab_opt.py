@@ -4,6 +4,8 @@
 # python >= 3.10
 
 import os
+import sys
+
 # import sys
 
 import numpy as np
@@ -199,6 +201,13 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
     """
     Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
     This may be generated with: https://apps.automeris.io/wpd/
+
+    Note we assume V_ds in Volt and C_oss in pF. If this is not the case scale your data accordingly!
+
+    CSV File should look like this:
+    # V_ds / V; C_oss / pF
+    1,00; 900.00
+    2,00; 800.00
     :param dab_results:
     :param file: csv file path
     :param name: Name of the Dataset e.g. the MOSFET name "C3M0120100J"
@@ -207,10 +216,34 @@ def import_Coss(dab_results: ds.DAB_Results, file: str(), name=str()):
     file = os.path.expandvars(file)
     file = os.path.abspath(file)
 
-    csv_data = np.genfromtxt(file, delimiter=';', dtype=float)
+    # Conversion from decimal separator comma to point so that np can read floats
+    # Be careful if your csv is actually comma separated! ;)
+    def conv(x):
+        return x.replace(',', '.').encode()
+    # Read csv file
+    csv_data = np.genfromtxt((conv(x) for x in open(file)), delimiter=';', dtype=float)
     debug(csv_data)
 
+    # Maybe check if data is monotonically
+    # Check if voltage is monotonically rising
+    if not np.all(csv_data[1:, 0] >= csv_data[:-1, 0], axis=0):
+        warning("The voltage in csv file is not monotonically rising!")
+    # Check if Coss is monotonically falling
+    if not np.all(csv_data[1:, 1] <= csv_data[:-1, 1], axis=0):
+        warning("The C_oss in csv file is not monotonically falling!")
+
+    # Add a first row with zero volt
+    first_row = [0, csv_data[0, 1]]
+    csv_data = np.vstack((first_row, csv_data))
+
     dab_results['coss_' + name] = csv_data
+
+def integrate_Coss(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results):
+
+    #dab_results.coss_C3M0120100J
+    debug(np.trapz(dab_results.coss_C3M0120100J[:, 1], dab_results.coss_C3M0120100J[:, 0]))
+
+    sys.exit(1)
 
 
 def main_init():
@@ -461,6 +494,8 @@ def trail_mod():
     # Import Coss curves
     csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
     import_Coss(Dab_Results, csv_file, 'C3M0120100J')
+    # Generate Qoss matrix
+    integrate_Coss(Dab_Specs, Dab_Results)
 
     # Modulation Calculation
     # ZVS Modulation
