@@ -2,7 +2,7 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 # coding: utf-8
 # python >= 3.10
-
+import matplotlib.pyplot
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -361,6 +361,33 @@ class Plot_DAB:
             ax.axhline(wp_y, linewidth=axlinewidth, color=axlinecolor)
         if wp_x is not None and wp_y is not None and markerstyle.lower() == 'star':
             ax.plot(wp_x, wp_y, marker="*", color=axlinecolor)
+
+    def subplot(self, x, y, ax: str = None,
+                xlabel='x', ylabel: str = 'y', title: str = '',
+                xscale='linear', yscale='linear', fontsize_axis: int = 9, fontsize_title: int = 9) -> None:
+        """
+        Plot a simple line plot in a subplot
+        :param x:
+        :param y:
+        :param ax:
+        :param xlabel:
+        :param ylabel:
+        :param title:
+        :param xscale: {"linear", "log", "symlog", "logit", ...}
+        :param yscale: {"linear", "log", "symlog", "logit", ...}
+        """
+        # If no subplot axis was given find one
+        if ax is None:
+            ax = plt.gca()
+        # Simple line plot
+        ax.plot(x, y)
+
+        ax.set_xlabel(xlabel, fontsize=fontsize_axis)
+        ax.set_ylabel(ylabel, fontsize=fontsize_axis)
+        ax.set_title(title, fontsize=fontsize_title)
+        ax.set_xscale(xscale)
+        ax.set_yscale(yscale)
+        ax.grid()
 
     def show(self):
         # just to show the plots all at once
