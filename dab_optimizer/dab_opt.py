@@ -82,7 +82,6 @@ def integrate_Coss(coss):
     v_vec = np.arange(coss.shape[0])
     # get an qoss vector that fits the mesh_V scale
     # v_vec = np.linspace(V_min, V_max, int(V_step))
-    debug(v_vec)
     qoss = coss_int(v_vec)
     # Scale from pC to nC
     qoss = qoss / 1000
@@ -601,90 +600,84 @@ def trail_mod():
     Run the modulation optimization procedure and show the results
     """
     # Set the basic DAB Specification
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)  # 10V resolution gives 21 steps
-    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
-    # dab_specs.V1_step = 1
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)  # 5V resolution gives 25 steps
-    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 20 + 1)
-    # dab_specs.V2_step = 4
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)  # 100W resolution gives 19 steps
-    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 300 + 1)
-    # dab_specs.P_step = 5
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
+    dab = ds.DAB_Data()
+    dab.V1_nom = 700
+    dab.V1_min = 600
+    dab.V1_max = 800
+    dab.V1_step = math.floor((dab.V1_max - dab.V1_min) / 10 + 1)  # 10V resolution gives 21 steps
+    # dab.V1_step = math.floor((dab.V1_max - dab.V1_min) / 10 + 1)
+    # dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    dab.V2_max = 295
+    dab.V2_step = math.floor((dab.V2_max - dab.V2_min) / 5 + 1)  # 5V resolution gives 25 steps
+    # dab.V2_step = math.floor((dab.V2_max - dab.V2_min) / 20 + 1)
+    # dab.V2_step = 4
+    dab.P_min = 400
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = math.floor((dab.P_max - dab.P_min) / 100 + 1)  # 100W resolution gives 19 steps
+    # dab.P_step = math.floor((dab.P_max - dab.P_min) / 300 + 1)
+    # dab.P_step = 5
+    dab.n = 2.99
+    dab.L_s = 84e-6
+    dab.L_m = 599e-6
+    dab.fs_nom = 200000
+    # Generate meshes
+    dab.gen_meshes()
 
     # Set file names
     directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
-    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(dab_specs.V1_step),
-                                            int(dab_specs.V2_step),
-                                            int(dab_specs.P_step))
+    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(dab.V1_step),
+                                            int(dab.V2_step),
+                                            int(dab.P_step))
     if __debug__:
         name = 'debug_' + name
     comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
-        int(dab_specs.V1_step),
-        int(dab_specs.V2_step),
-        int(dab_specs.P_step))
+        int(dab.V1_step),
+        int(dab.V2_step),
+        int(dab.P_step))
     if __debug__:
         comment = 'Debug ' + comment
 
-    # Object to store all generated data
-    dab_results = ds.DAB_Results()
-    # Generate meshes
-    dab_results.gen_meshes(
-        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
-        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
-        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
-
     # Import Coss curves
     csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
-    dab_results['coss_C3M0120100J'] = import_Coss(csv_file)
+    dab['coss_C3M0120100J'] = import_Coss(csv_file)
     # Generate Qoss matrix
-    dab_results['qoss_C3M0120100J'] = integrate_Coss(dab_results['coss_C3M0120100J'])
+    dab['qoss_C3M0120100J'] = integrate_Coss(dab['coss_C3M0120100J'])
 
     # Modulation Calculation
     # ZVS Modulation
-    da_mod = mod_zvs.calc_modulation(dab_specs.n,
-                                     dab_specs.L_s,
-                                     dab_specs.fs_nom,
-                                     dab_results.mesh_V1,
-                                     dab_results.mesh_V2,
-                                     dab_results.mesh_P)
+    da_mod = mod_zvs.calc_modulation(dab.n,
+                                     dab.L_s,
+                                     dab.fs_nom,
+                                     dab.mesh_V1,
+                                     dab.mesh_V2,
+                                     dab.mesh_P)
 
     # Unpack the results
-    dab_results.append_result_dict(da_mod)
+    dab.append_result_dict(da_mod)
 
-    # debug(dab_results)
+    # debug(dab)
 
     # Plotting
     info("\nStart Plotting\n")
-    v1_middle = int(np.shape(dab_results.mesh_P)[1] / 2)
-    debug('View plane: U_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0]))
-    name += '_V1_{:.0f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
-    comment += ' View plane: V_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
+    v1_middle = int(np.shape(dab.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(dab.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0])
 
     plt = plot_dab.Plot_DAB()
 
     # Plot Coss
     plt.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
-    plt.subplot(np.arange(dab_results['coss_C3M0120100J'].shape[0]),
-                dab_results['coss_C3M0120100J'],
+    plt.subplot(np.arange(dab['coss_C3M0120100J'].shape[0]),
+                dab['coss_C3M0120100J'],
                 ax=plt.figs_axes[-1][1][0],
                 xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
                 yscale='log')
-    plt.subplot(np.arange(dab_results['qoss_C3M0120100J'].shape[0]),
-                dab_results['qoss_C3M0120100J'],
+    plt.subplot(np.arange(dab['qoss_C3M0120100J'].shape[0]),
+                dab['qoss_C3M0120100J'],
                 ax=plt.figs_axes[-1][1][1],
                 xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
 
@@ -692,14 +685,14 @@ def trail_mod():
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                        dab_results.mesh_P[:, v1_middle, :],
-                        dab_results.mesh_V2[:, v1_middle, :],
-                        dab_results.mod_zvs_phi[:, v1_middle, :],
-                        dab_results.mod_zvs_tau1[:, v1_middle, :],
-                        dab_results.mod_zvs_tau2[:, v1_middle, :],
-                        mask1=dab_results.mod_zvs_mask_m1p[:, v1_middle, :],
-                        mask2=dab_results.mod_zvs_mask_m2[:, v1_middle, :],
-                        maskZVS=dab_results.mod_zvs_mask_zvs[:, v1_middle, :]
+                        dab.mesh_P[:, v1_middle, :],
+                        dab.mesh_V2[:, v1_middle, :],
+                        dab.mod_zvs_phi[:, v1_middle, :],
+                        dab.mod_zvs_tau1[:, v1_middle, :],
+                        dab.mod_zvs_tau2[:, v1_middle, :],
+                        mask1=dab.mod_zvs_mask_m1p[:, v1_middle, :],
+                        mask2=dab.mod_zvs_mask_m2[:, v1_middle, :],
+                        maskZVS=dab.mod_zvs_mask_zvs[:, v1_middle, :]
                         )
 
     plt.show()

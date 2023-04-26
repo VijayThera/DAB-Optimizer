@@ -45,8 +45,7 @@ class DAB_Data(DotMap):
             else:
                 warning('None of the _allowed_keys are used! Nothing added! Used key: ' + str(k))
         else:
-            warning('Value is not an numpy ndarray! Nothing added! Used type: ' + str(type(v)))
-
+            # Value will be converted to a ndarray
             # Check for allowed key names
             if any(k.startswith(allowed_key) for allowed_key in (self._allowed_keys + self._allowed_spec_keys)):
                 super().__setitem__(k, np.asarray(v))
