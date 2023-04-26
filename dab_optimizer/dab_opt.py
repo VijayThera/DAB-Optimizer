@@ -23,180 +23,6 @@ import sim_gecko
 import plot_dab
 
 
-def save_to_file(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results,
-                 directory=str(), name=str(), timestamp=True, comment=str()):
-    """
-    Save everything (except plots) in one file.
-    WARNING: Existing files will be overwritten!
-
-    File is ZIP compressed and contains several named np.ndarray objects:
-        # Starting with "dab_specs_" are for the DAB_Specification
-        dab_specs_keys: containing the dict keys as strings
-        dab_specs_values: containing the dict values as float
-        # Starting with "dab_results_" are for the DAB_Results
-        # TODO shoud I store generated meshes? Maybe not but regenerate them after loading a file.
-        dab_results_mesh_V1: generated mesh
-        dab_results_mesh_V2: generated mesh
-        dab_results_mesh_P: generated mesh
-        # String is constructed as follows:
-        # "dab_results_" + used module (e.g. "mod_sps_") + value name (e.g. "phi")
-        dab_results_mod_sps_phi: mod_sps calculated values for phi
-        dab_results_mod_sps_tau1: mod_sps calculated values for tau1
-        dab_results_mod_sps_tau2: mod_sps calculated values for tau1
-        dab_results_sim_sps_iLs: simulation results with mod_sps for iLs
-        dab_results_sim_sps_S11_p_sw:
-
-    :param comment:
-    :param dab_specs:
-    :param dab_results:
-    :param directory: Folder where to save the files
-    :param name: String added to the filename. Without file extension. Datetime may prepend the final name.
-    :param timestamp: If the datetime should prepend the final name. default True
-    """
-    # Temporary Dict to hold the name/array (key/value) pairs to be stored by np.savez
-    # Arrays to save to the file. Each array will be saved to the output file with its corresponding keyword name.
-    kwds = dict()
-    kwds['dab_specs_keys'], kwds['dab_specs_values'] = dab_specs.export_to_array()
-
-    for k, v in dab_results.items():
-        # TODO filter for mesh here
-        kwds['dab_results_' + k] = v
-
-    # Add some descriptive data to the file
-    # Adding a timestamp, it may be useful
-    kwds['_timestamp'] = np.asarray(datetime.now().isoformat())
-    # Adding a comment to the file, hopefully a descriptive one
-    if comment:
-        kwds['_comment'] = np.asarray(comment)
-
-    # Adding a timestamp to the filename if requested
-    if timestamp:
-        if name:
-            filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
-        else:
-            filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    else:
-        if name:
-            filename = name
-        else:
-            # set some default non-empty filename
-            filename = "dab_opt_dataset"
-
-    if directory:
-        directory = os.path.expanduser(directory)
-        directory = os.path.expandvars(directory)
-        directory = os.path.abspath(directory)
-        if os.path.isdir(directory):
-            file = os.path.join(directory, filename)
-        else:
-            warning("Directory does not exist!")
-            file = os.path.join(filename)
-    else:
-        file = os.path.join(filename)
-
-    # numpy saves everything for us in a handy zip file
-    # np.savez(file=file, **kwds)
-    np.savez_compressed(file=file, **kwds)
-
-
-def load_from_file(file: str) -> tuple[ds.DAB_Specification, ds.DAB_Results]:
-    """
-    Load everything from the given .npz file.
-    :param file: a .nps filename or file-like object, string, or pathlib.Path
-    :return: two objects with type DAB_Specification and DAB_Results
-    """
-    dab_specs = ds.DAB_Specification()
-    dab_results = ds.DAB_Results()
-    # Open the file and parse the data
-    with np.load(file) as data:
-        spec_keys = None
-        spec_values = None
-        for k, v in data.items():
-            if k.startswith('dab_results_'):
-                dab_results[k.removeprefix('dab_results_')] = v
-            if str(k) == 'dab_specs_keys':
-                spec_keys = v
-            if str(k) == 'dab_specs_values':
-                spec_values = v
-            if str(k) == '_timestamp':
-                dab_results[k] = v
-            if str(k) == '_comment':
-                dab_results[k] = v
-        # We can not be sure if specs where in the file but hopefully there was
-        if not (spec_keys is None and spec_values is None):
-            dab_specs.import_from_array(spec_keys, spec_values)
-        # TODO regenerate meshes here
-    return dab_specs, dab_results
-
-
-def save_to_csv(dab_specs: ds.DAB_Specification, dab_results: ds.DAB_Results, key=str(), directory=str(), name=str(),
-                timestamp=True):
-    """
-    Save one array with name 'key' out of dab_results to a csv file
-    :param dab_specs:
-    :param dab_results:
-    :param key: name of the array in dab_results
-    :param directory:
-    :param name: filename without extension
-    :param timestamp: if the filename should prepended with a timestamp
-    """
-    if timestamp:
-        name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
-    filename = os.path.join(directory + '/' + name + '_' + key + '.csv')
-
-    if directory:
-        directory = os.path.expanduser(directory)
-        directory = os.path.expandvars(directory)
-        directory = os.path.abspath(directory)
-        if os.path.isdir(directory):
-            file = os.path.join(directory, filename)
-        else:
-            warning("Directory does not exist!")
-            file = os.path.join(filename)
-    else:
-        file = os.path.join(filename)
-
-    comment = key + ' with P: {}, V1: {} and V2: {} steps.'.format(
-        int(dab_specs.P_step),
-        int(dab_specs.V1_step),
-        int(dab_specs.V2_step)
-    )
-
-    # Write the array to disk
-    with open(file, 'w') as outfile:
-        # I'm writing a header here just for the sake of readability
-        # Any line starting with "#" will be ignored by numpy.loadtxt
-        outfile.write('# ' + comment + '\n')
-        outfile.write('# Array shape: {0}\n'.format(dab_results[key].shape))
-        # x: P, y: V1, z(slices): V2
-        outfile.write('# x: P ({}-{}), y: V1 ({}-{}), z(slices): V2 ({}-{})\n'.format(
-            int(dab_specs.P_min),
-            int(dab_specs.P_max),
-            int(dab_specs.V1_min),
-            int(dab_specs.V1_max),
-            int(dab_specs.V2_min),
-            int(dab_specs.V2_max)
-        ))
-        outfile.write('# z: V2 ' + np.array_str(dab_results.mesh_V2[:, 0, 0], max_line_width=10000) + '\n')
-        outfile.write('# y: V1 ' + np.array_str(dab_results.mesh_V1[0, :, 0], max_line_width=10000) + '\n')
-        outfile.write('# x: P ' + np.array_str(dab_results.mesh_P[0, 0, :], max_line_width=10000) + '\n')
-
-        # Iterating through a ndimensional array produces slices along
-        # the last axis. This is equivalent to data[i,:,:] in this case
-        i = 0
-        for array_slice in dab_results[key]:
-            # Writing out a break to indicate different slices...
-            outfile.write('# V2 slice {}V\n'.format(
-                (dab_specs.V2_min + i * (dab_specs.V2_max - dab_specs.V2_min) / (dab_specs.V2_step - 1))
-            ))
-            # The formatting string indicates that I'm writing out
-            # the values in left-justified columns 7 characters in width
-            # with 2 decimal places.
-            # np.savetxt(outfile, array_slice, fmt='%-7.2f')
-            np.savetxt(outfile, array_slice, delimiter=';')
-            i += 1
-
-
 def import_Coss(file: str()):
     """
     Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
@@ -421,7 +247,7 @@ def dab_mod_save():
     directory = os.path.abspath(directory)
     os.mkdir(directory)
     # Save data
-    save_to_file(dab_specs, dab_results, directory=directory, name=name, timestamp=False, comment=comment)
+    ds.old_save_to_file(dab_specs, dab_results, directory=directory, name=name, timestamp=False, comment=comment)
 
     # Open existing file and export array to csv
     file = name
@@ -431,7 +257,7 @@ def dab_mod_save():
     dab_file = os.path.expanduser(dab_file)
     dab_file = os.path.expandvars(dab_file)
     dab_file = os.path.abspath(dab_file)
-    dab_specs, dab_results = load_from_file(dab_file)
+    dab_specs, dab_results = ds.old_load_from_file(dab_file)
     # results key:
     keys = ['mod_sps_phi', 'mod_sps_tau1', 'mod_sps_tau2', 'mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
     # Convert phi, tau1/2 from rad to duty cycle * 10000
@@ -444,7 +270,7 @@ def dab_mod_save():
     file = os.path.basename(dab_file)
     name = os.path.splitext(file.split('_', 2)[2])[0]
     for key in keys:
-        save_to_csv(dab_specs, dab_results, key, directory, name)
+        ds.old_save_to_csv(dab_specs, dab_results, key, directory, name)
 
     # Plotting
     info("\nStart Plotting\n")
@@ -626,7 +452,7 @@ def dab_sim_save():
     directory = os.path.abspath(directory)
     os.mkdir(directory)
     # Save data
-    save_to_file(dab_specs, dab_results, directory=directory, name=name, comment=comment)
+    ds.old_save_to_file(dab_specs, dab_results, directory=directory, name=name, comment=comment)
 
     # Plotting
     info("\nStart Plotting\n")
@@ -1001,7 +827,7 @@ def trial_sim_save():
     # debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
 
     # Saving
-    # save_to_file(dab_specs, dab_results, name='mod_sps_sim_v21-v25-p19',
+    # ds.old_save_to_file(dab_specs, dab_results, name='mod_sps_sim_v21-v25-p19',
     #              comment='Simulation results for mod_sps with V1 10V res, V2 5V res and P 100W res.')
 
 
@@ -1126,12 +952,12 @@ def trial_dab():
     plt.show()
 
     # Saving
-    save_to_file(dab_specs, dab_results, directory='~/MA-LEA/LEA/Workdir/dab_optimizer_output', name='test-save',
+    ds.old_save_to_file(dab_specs, dab_results, directory='~/MA-LEA/LEA/Workdir/dab_optimizer_output', name='test-save',
                  comment='This is a saving test with random data!')
-    # save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
+    # ds.old_save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading
-    # dab_specs_loaded, dab_results_loaded = load_from_file('test-save.npz')
+    # dab_specs_loaded, dab_results_loaded = ds.old_load_from_file('test-save.npz')
     # dab_specs_loaded.pprint()
     # dab_results_loaded.pprint()
 
@@ -1278,7 +1104,7 @@ def trial_plot_modresults():
 
 def trial_plot_simresults():
     # Loading
-    dab_specs, dab_results = load_from_file('~/MA-LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
+    dab_specs, dab_results = ds.old_load_from_file('~/MA-LEA/LEA/Workdir/dab_optimizer_output/test-sps-save.npz')
     dab_specs.pprint()
     # dab_results.pprint()
 
@@ -1360,7 +1186,7 @@ def plot_simresults():
     dab_file = os.path.expanduser(dab_file)
     dab_file = os.path.expandvars(dab_file)
     dab_file = os.path.abspath(dab_file)
-    dab_specs, dab_results = load_from_file(dab_file)
+    dab_specs, dab_results = ds.old_load_from_file(dab_file)
     dab_specs.pprint()
     # dab_results.pprint()
 
@@ -1600,7 +1426,7 @@ if __name__ == '__main__':
     # dab_file = os.path.expanduser(dab_file)
     # dab_file = os.path.expandvars(dab_file)
     # dab_file = os.path.abspath(dab_file)
-    # dab_specs, dab_results = load_from_file(dab_file)
+    # dab_specs, dab_results = ds.old_load_from_file(dab_file)
     # # results key:
     # keys = ['mod_sps_phi', 'mod_sps_tau1', 'mod_sps_tau2', 'mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2']
     # # Convert phi, tau1/2 from rad to duty cycle * 10000
@@ -1613,6 +1439,6 @@ if __name__ == '__main__':
     # file = os.path.basename(dab_file)
     # name = os.path.splitext(file.split('_', 2)[2])[0]
     # for key in keys:
-    #     save_to_csv(dab_specs, dab_results, key, directory, name)
+    #     ds.old_save_to_csv(dab_specs, dab_results, key, directory, name)
 
     # sys.exit(0)
