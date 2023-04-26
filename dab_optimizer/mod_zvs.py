@@ -77,70 +77,70 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
 if __name__ == '__main__':
     print("Start of Module CPM ...")
 
-    Dab_Specs = ds.DAB_Specification()
-    Dab_Specs.V1_nom = 700
-    Dab_Specs.V1_min = 600
-    Dab_Specs.V1_max = 800
-    Dab_Specs.V1_step = 21 * 3
-    Dab_Specs.V2_nom = 235
-    Dab_Specs.V2_min = 175
-    Dab_Specs.V2_max = 295
-    Dab_Specs.V2_step = 25 * 3
-    Dab_Specs.P_min = 400
-    Dab_Specs.P_max = 2200
-    Dab_Specs.P_nom = 2000
-    Dab_Specs.P_step = 19 * 3
-    Dab_Specs.n = 2.99
-    Dab_Specs.L_s = 84e-6
-    Dab_Specs.L_m = 599e-6
-    Dab_Specs.fs_nom = 200000
+    dab_specs = ds.DAB_Specification()
+    dab_specs.V1_nom = 700
+    dab_specs.V1_min = 600
+    dab_specs.V1_max = 800
+    dab_specs.V1_step = 21 * 3
+    dab_specs.V2_nom = 235
+    dab_specs.V2_min = 175
+    dab_specs.V2_max = 295
+    dab_specs.V2_step = 25 * 3
+    dab_specs.P_min = 400
+    dab_specs.P_max = 2200
+    dab_specs.P_nom = 2000
+    dab_specs.P_step = 19 * 3
+    dab_specs.n = 2.99
+    dab_specs.L_s = 84e-6
+    dab_specs.L_m = 599e-6
+    dab_specs.fs_nom = 200000
 
     # Object to store all generated data
-    Dab_Results = ds.DAB_Results()
+    dab_results = ds.DAB_Results()
     # gen meshes
-    Dab_Results.gen_meshes(
-        Dab_Specs.V1_min, Dab_Specs.V1_max, Dab_Specs.V1_step,
-        Dab_Specs.V2_min, Dab_Specs.V2_max, Dab_Specs.V2_step,
-        Dab_Specs.P_min, Dab_Specs.P_max, Dab_Specs.P_step)
+    dab_results.gen_meshes(
+        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
+        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
+        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
 
     # Modulation Calculation
-    da_mod = calc_modulation(Dab_Specs.n,
-                             Dab_Specs.L_s,
-                             Dab_Specs.fs_nom,
-                             Dab_Results.mesh_V1,
-                             Dab_Results.mesh_V2,
-                             Dab_Results.mesh_P)
+    da_mod = calc_modulation(dab_specs.n,
+                             dab_specs.L_s,
+                             dab_specs.fs_nom,
+                             dab_results.mesh_V1,
+                             dab_results.mesh_V2,
+                             dab_results.mesh_P)
 
     # Unpack the results
-    Dab_Results.append_result_dict(da_mod)
+    dab_results.append_result_dict(da_mod)
 
     info("\nStart Plotting\n")
     import plot_dab
 
-    v1_middle = int(np.shape(Dab_Results.mesh_P)[1] / 2)
+    v1_middle = int(np.shape(dab_results.mesh_P)[1] / 2)
 
-    Plot_Dab = plot_dab.Plot_DAB()
+    plt = plot_dab.Plot_DAB()
     # Plot all modulation angles
-    Plot_Dab.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
-    Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
-                             Dab_Results.mesh_P[:, v1_middle, :],
-                             Dab_Results.mesh_V2[:, v1_middle, :],
-                             Dab_Results.mod_zvs_phi[:, v1_middle, :],
-                             Dab_Results.mod_zvs_tau1[:, v1_middle, :],
-                             Dab_Results.mod_zvs_tau2[:, v1_middle, :],
-                             mask1=Dab_Results.mod_zvs_mask_tcm[:, v1_middle, :],
-                             mask2=Dab_Results.mod_zvs_mask_cpm[:, v1_middle, :])
+    plt.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
+    plt.plot_modulation(plt.figs_axes[-1],
+                             dab_results.mesh_P[:, v1_middle, :],
+                             dab_results.mesh_V2[:, v1_middle, :],
+                             dab_results.mod_zvs_phi[:, v1_middle, :],
+                             dab_results.mod_zvs_tau1[:, v1_middle, :],
+                             dab_results.mod_zvs_tau2[:, v1_middle, :],
+                             mask1=dab_results.mod_zvs_mask_tcm[:, v1_middle, :],
+                             mask2=dab_results.mod_zvs_mask_cpm[:, v1_middle, :])
 
     # Plot animation for every V1 cross-section
-    # for v1 in range(0, np.shape(Dab_Results.mesh_P)[1] - 1):
+    # for v1 in range(0, np.shape(dab_results.mesh_P)[1] - 1):
     #     print(v1)
-    #     Plot_Dab.plot_modulation(Plot_Dab.figs_axes[-1],
-    #                              Dab_Results.mesh_P[:, v1, :],
-    #                              Dab_Results.mesh_V2[:, v1, :],
-    #                              Dab_Results.mod_zvs_phi[:, v1, :],
-    #                              Dab_Results.mod_zvs_tau1[:, v1, :],
-    #                              Dab_Results.mod_zvs_tau2[:, v1, :],
-    #                              mask1=Dab_Results.mod_zvs_mask_tcm[:, v1, :],
-    #                              mask2=Dab_Results.mod_zvs_mask_cpm[:, v1, :])
+    #     plt.plot_modulation(plt.figs_axes[-1],
+    #                              dab_results.mesh_P[:, v1, :],
+    #                              dab_results.mesh_V2[:, v1, :],
+    #                              dab_results.mod_zvs_phi[:, v1, :],
+    #                              dab_results.mod_zvs_tau1[:, v1, :],
+    #                              dab_results.mod_zvs_tau2[:, v1, :],
+    #                              mask1=dab_results.mod_zvs_mask_tcm[:, v1, :],
+    #                              mask2=dab_results.mod_zvs_mask_cpm[:, v1, :])
 
-    Plot_Dab.show()
+    plt.show()
