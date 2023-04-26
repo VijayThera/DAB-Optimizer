@@ -333,242 +333,6 @@ def main_init():
 
 
 @timeit
-def trial_sim_save():
-    """
-    Run the complete optimization procedure and save the results in a file
-    """
-    # Set the basic DAB Specification
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
-    dab_specs.V1_step = 3
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
-    dab_specs.V2_step = 4
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
-    dab_specs.P_step = 5
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
-
-    # Object to store all generated data
-    dab_results = ds.DAB_Results()
-    # Generate meshes
-    dab_results.gen_meshes(
-        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
-        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
-        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
-
-    # Modulation Calculation
-    # SPS Modulation
-    da_mod = mod_sps.calc_modulation(dab_specs.n,
-                                     dab_specs.L_s,
-                                     dab_specs.fs_nom,
-                                     dab_results.mesh_V1,
-                                     dab_results.mesh_V2,
-                                     dab_results.mesh_P)
-
-    # Unpack the results
-    dab_results.append_result_dict(da_mod)
-
-    # TODO where to save??? spec only float...
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC_v2.ipes'
-    timestep = 100e-12
-    simtime = 15e-6
-
-    # Simulation
-    da_sim = sim_gecko.start_sim(dab_results.mesh_V1,
-                                 dab_results.mesh_V2,
-                                 dab_results.mod_sps_phi,
-                                 dab_results.mod_sps_tau1,
-                                 dab_results.mod_sps_tau2,
-                                 simfilepath, timestep, simtime)
-
-    # Simulation
-    # Dab_Sim = sim_gecko.Sim_Gecko()
-    # da_sim = Dab_Sim.start_sim_threads(dab_results.mesh_V1,
-    #                                    dab_results.mesh_V2,
-    #                                    dab_results.mod_sps_phi,
-    #                                    dab_results.mod_sps_tau1,
-    #                                    dab_results.mod_sps_tau2,
-    #                                    simfilepath, timestep, simtime)
-
-    # da_sim = Dab_Sim.start_sim_multi(dab_results.mesh_V1,
-    #                                  dab_results.mesh_V2,
-    #                                  dab_results.mod_sps_phi,
-    #                                  dab_results.mod_sps_tau1,
-    #                                  dab_results.mod_sps_tau2,
-    #                                  simfilepath, timestep, simtime)
-
-    # Unpack the results
-    dab_results.append_result_dict(da_sim)
-
-    debug("sim_i_Ls: \n", dab_results.sim_i_Ls)
-    debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
-
-    # Plotting
-    info("\nStart Plotting\n")
-    plt = plot_dab.Plot_DAB()
-    plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
-    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.mod_sps_phi[:, 1, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
-    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_i_Ls[:, 1, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
-    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_sw[:, 1, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
-
-    plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
-    plt.plot_3by1(plt.figs_axes[-1],
-                       dab_results.mesh_P[:, 1, :],
-                       dab_results.mesh_V2[:, 1, :],
-                       dab_results.sim_p_dc1[:, 1, :],
-                       dab_results.sim_S11_p_sw[:, 1, :],
-                       dab_results.sim_S11_p_cond[:, 1, :],
-                       'P / W',
-                       'U2 / V',
-                       'p_dc1',
-                       'S11_p_sw',
-                       'S11_p_cond')
-
-    plt.show()
-
-    # Calc power deviation from expected power target
-    # power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
-    # debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
-
-    # Saving
-    # save_to_file(dab_specs, dab_results, name='mod_sps_sim_v21-v25-p19',
-    #              comment='Simulation results for mod_sps with V1 10V res, V2 5V res and P 100W res.')
-
-
-@timeit
-def trail_mod():
-    """
-    Run the modulation optimization procedure and show the results
-    """
-    # Set the basic DAB Specification
-    dab_specs = ds.DAB_Specification()
-    dab_specs.V1_nom = 700
-    dab_specs.V1_min = 600
-    dab_specs.V1_max = 800
-    dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1) # 10V resolution gives 21 steps
-    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
-    # dab_specs.V1_step = 1
-    dab_specs.V2_nom = 235
-    dab_specs.V2_min = 175
-    dab_specs.V2_max = 295
-    dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1) # 5V resolution gives 25 steps
-    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 20 + 1)
-    # dab_specs.V2_step = 4
-    dab_specs.P_min = 400
-    dab_specs.P_max = 2200
-    dab_specs.P_nom = 2000
-    dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1) # 100W resolution gives 19 steps
-    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 300 + 1)
-    # dab_specs.P_step = 5
-    dab_specs.n = 2.99
-    dab_specs.L_s = 84e-6
-    dab_specs.L_m = 599e-6
-    dab_specs.fs_nom = 200000
-
-    # Set file names
-    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
-    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(dab_specs.V1_step),
-                                            int(dab_specs.V2_step),
-                                            int(dab_specs.P_step))
-    if __debug__:
-        name = 'debug_' + name
-    comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
-        int(dab_specs.V1_step),
-        int(dab_specs.V2_step),
-        int(dab_specs.P_step))
-    if __debug__:
-        comment = 'Debug ' + comment
-
-    # Object to store all generated data
-    dab_results = ds.DAB_Results()
-    # Generate meshes
-    dab_results.gen_meshes(
-        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
-        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
-        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
-
-    # Import Coss curves
-    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
-    dab_results['coss_C3M0120100J'] = import_Coss(csv_file)
-    # Generate Qoss matrix
-    dab_results['qoss_C3M0120100J'] = integrate_Coss(dab_results['coss_C3M0120100J'])
-
-    # Modulation Calculation
-    # ZVS Modulation
-    da_mod = mod_zvs.calc_modulation(dab_specs.n,
-                                     dab_specs.L_s,
-                                     dab_specs.fs_nom,
-                                     dab_results.mesh_V1,
-                                     dab_results.mesh_V2,
-                                     dab_results.mesh_P)
-
-    # Unpack the results
-    dab_results.append_result_dict(da_mod)
-
-    # debug(dab_results)
-
-    # Plotting
-    info("\nStart Plotting\n")
-    v1_middle = int(np.shape(dab_results.mesh_P)[1] / 2)
-    debug('View plane: U_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0]))
-    name += '_V1_{:.0f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
-    comment += ' View plane: V_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
-
-    plt = plot_dab.Plot_DAB()
-
-    # Plot Coss
-    plt.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
-    plt.subplot(np.arange(dab_results['coss_C3M0120100J'].shape[0]),
-                     dab_results['coss_C3M0120100J'],
-                     ax=plt.figs_axes[-1][1][0],
-                     xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
-                     yscale='log')
-    plt.subplot(np.arange(dab_results['qoss_C3M0120100J'].shape[0]),
-                     dab_results['qoss_C3M0120100J'],
-                     ax=plt.figs_axes[-1][1][1],
-                     xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
-
-    # Plot OptZVS mod results
-    # Plot all modulation angles
-    plt.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
-    plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_zvs_phi[:, v1_middle, :],
-                             dab_results.mod_zvs_tau1[:, v1_middle, :],
-                             dab_results.mod_zvs_tau2[:, v1_middle, :],
-                             mask1=dab_results.mod_zvs_mask_m1p[:, v1_middle, :],
-                             mask2=dab_results.mod_zvs_mask_m2[:, v1_middle, :],
-                             maskZVS=dab_results.mod_zvs_mask_zvs[:, v1_middle, :]
-                             )
-
-    plt.show()
-
-
-@timeit
 def dab_mod_save():
     """
     Run the modulation optimization procedure and save the results in a file
@@ -695,27 +459,27 @@ def dab_mod_save():
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_sps_phi[:, v1_middle, :],
-                             dab_results.mod_sps_tau1[:, v1_middle, :],
-                             dab_results.mod_sps_tau2[:, v1_middle, :],
-                             # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
-                             # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_sps_phi[:, v1_middle, :],
+                        dab_results.mod_sps_tau1[:, v1_middle, :],
+                        dab_results.mod_sps_tau2[:, v1_middle, :],
+                        # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
+                        # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
+                        )
 
     # Plot MCL sim results
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_mcl_phi[:, v1_middle, :],
-                             dab_results.mod_mcl_tau1[:, v1_middle, :],
-                             dab_results.mod_mcl_tau2[:, v1_middle, :],
-                             mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
-                             mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_mcl_phi[:, v1_middle, :],
+                        dab_results.mod_mcl_tau1[:, v1_middle, :],
+                        dab_results.mod_mcl_tau2[:, v1_middle, :],
+                        mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
+                        mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
+                        )
 
     # Save plots
     metadata = {'Title':       name,
@@ -876,20 +640,20 @@ def dab_sim_save():
     # Plot SPS sim results
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_sps_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_sps_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_i_Ls[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_i_Ls[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
@@ -899,50 +663,50 @@ def dab_sim_save():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_sps_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_sps_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_sps_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_cond[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_cond[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_sps_phi[:, v1_middle, :],
-                             dab_results.mod_sps_tau1[:, v1_middle, :],
-                             dab_results.mod_sps_tau2[:, v1_middle, :],
-                             # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
-                             # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_sps_phi[:, v1_middle, :],
+                        dab_results.mod_sps_tau1[:, v1_middle, :],
+                        dab_results.mod_sps_tau2[:, v1_middle, :],
+                        # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
+                        # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
+                        )
 
     # Plot MCL sim results
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_mcl_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_mcl_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_i_Ls[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_i_Ls[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Power')
@@ -952,32 +716,32 @@ def dab_sim_save():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_mcl_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_mcl_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_mcl_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_cond[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_cond[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_mcl_phi[:, v1_middle, :],
-                             dab_results.mod_mcl_tau1[:, v1_middle, :],
-                             dab_results.mod_mcl_tau2[:, v1_middle, :],
-                             mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
-                             mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_mcl_phi[:, v1_middle, :],
+                        dab_results.mod_mcl_tau1[:, v1_middle, :],
+                        dab_results.mod_mcl_tau2[:, v1_middle, :],
+                        mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
+                        mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
+                        )
 
     # Save plots
     metadata = {'Title':       name,
@@ -1003,6 +767,242 @@ def dab_sim_save():
     # TODO Fix that the first and following image sizes differ. First is window size, following are 1000x500px.
 
     plt.show()
+
+
+@timeit
+def trail_mod():
+    """
+    Run the modulation optimization procedure and show the results
+    """
+    # Set the basic DAB Specification
+    dab_specs = ds.DAB_Specification()
+    dab_specs.V1_nom = 700
+    dab_specs.V1_min = 600
+    dab_specs.V1_max = 800
+    dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)  # 10V resolution gives 21 steps
+    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
+    # dab_specs.V1_step = 1
+    dab_specs.V2_nom = 235
+    dab_specs.V2_min = 175
+    dab_specs.V2_max = 295
+    dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)  # 5V resolution gives 25 steps
+    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 20 + 1)
+    # dab_specs.V2_step = 4
+    dab_specs.P_min = 400
+    dab_specs.P_max = 2200
+    dab_specs.P_nom = 2000
+    dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)  # 100W resolution gives 19 steps
+    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 300 + 1)
+    # dab_specs.P_step = 5
+    dab_specs.n = 2.99
+    dab_specs.L_s = 84e-6
+    dab_specs.L_m = 599e-6
+    dab_specs.fs_nom = 200000
+
+    # Set file names
+    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(dab_specs.V1_step),
+                                            int(dab_specs.V2_step),
+                                            int(dab_specs.P_step))
+    if __debug__:
+        name = 'debug_' + name
+    comment = 'Only modulation calculation results for mod_sps and mod_mcl with V1 {}, V2 {} and P {} steps.'.format(
+        int(dab_specs.V1_step),
+        int(dab_specs.V2_step),
+        int(dab_specs.P_step))
+    if __debug__:
+        comment = 'Debug ' + comment
+
+    # Object to store all generated data
+    dab_results = ds.DAB_Results()
+    # Generate meshes
+    dab_results.gen_meshes(
+        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
+        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
+        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
+
+    # Import Coss curves
+    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
+    dab_results['coss_C3M0120100J'] = import_Coss(csv_file)
+    # Generate Qoss matrix
+    dab_results['qoss_C3M0120100J'] = integrate_Coss(dab_results['coss_C3M0120100J'])
+
+    # Modulation Calculation
+    # ZVS Modulation
+    da_mod = mod_zvs.calc_modulation(dab_specs.n,
+                                     dab_specs.L_s,
+                                     dab_specs.fs_nom,
+                                     dab_results.mesh_V1,
+                                     dab_results.mesh_V2,
+                                     dab_results.mesh_P)
+
+    # Unpack the results
+    dab_results.append_result_dict(da_mod)
+
+    # debug(dab_results)
+
+    # Plotting
+    info("\nStart Plotting\n")
+    v1_middle = int(np.shape(dab_results.mesh_P)[1] / 2)
+    debug('View plane: U_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0]))
+    name += '_V1_{:.0f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
+    comment += ' View plane: V_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1_middle, 0])
+
+    plt = plot_dab.Plot_DAB()
+
+    # Plot Coss
+    plt.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
+    plt.subplot(np.arange(dab_results['coss_C3M0120100J'].shape[0]),
+                dab_results['coss_C3M0120100J'],
+                ax=plt.figs_axes[-1][1][0],
+                xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
+                yscale='log')
+    plt.subplot(np.arange(dab_results['qoss_C3M0120100J'].shape[0]),
+                dab_results['qoss_C3M0120100J'],
+                ax=plt.figs_axes[-1][1][1],
+                xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
+
+    # Plot OptZVS mod results
+    # Plot all modulation angles
+    plt.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
+    plt.plot_modulation(plt.figs_axes[-1],
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_zvs_phi[:, v1_middle, :],
+                        dab_results.mod_zvs_tau1[:, v1_middle, :],
+                        dab_results.mod_zvs_tau2[:, v1_middle, :],
+                        mask1=dab_results.mod_zvs_mask_m1p[:, v1_middle, :],
+                        mask2=dab_results.mod_zvs_mask_m2[:, v1_middle, :],
+                        maskZVS=dab_results.mod_zvs_mask_zvs[:, v1_middle, :]
+                        )
+
+    plt.show()
+
+
+@timeit
+def trial_sim_save():
+    """
+    Run the complete optimization procedure and save the results in a file
+    """
+    # Set the basic DAB Specification
+    dab_specs = ds.DAB_Specification()
+    dab_specs.V1_nom = 700
+    dab_specs.V1_min = 600
+    dab_specs.V1_max = 800
+    # dab_specs.V1_step = math.floor((dab_specs.V1_max - dab_specs.V1_min) / 10 + 1)
+    dab_specs.V1_step = 3
+    dab_specs.V2_nom = 235
+    dab_specs.V2_min = 175
+    dab_specs.V2_max = 295
+    # dab_specs.V2_step = math.floor((dab_specs.V2_max - dab_specs.V2_min) / 5 + 1)
+    dab_specs.V2_step = 4
+    dab_specs.P_min = 400
+    dab_specs.P_max = 2200
+    dab_specs.P_nom = 2000
+    # dab_specs.P_step = math.floor((dab_specs.P_max - dab_specs.P_min) / 100 + 1)
+    dab_specs.P_step = 5
+    dab_specs.n = 2.99
+    dab_specs.L_s = 84e-6
+    dab_specs.L_m = 599e-6
+    dab_specs.fs_nom = 200000
+
+    # Object to store all generated data
+    dab_results = ds.DAB_Results()
+    # Generate meshes
+    dab_results.gen_meshes(
+        dab_specs.V1_min, dab_specs.V1_max, dab_specs.V1_step,
+        dab_specs.V2_min, dab_specs.V2_max, dab_specs.V2_step,
+        dab_specs.P_min, dab_specs.P_max, dab_specs.P_step)
+
+    # Modulation Calculation
+    # SPS Modulation
+    da_mod = mod_sps.calc_modulation(dab_specs.n,
+                                     dab_specs.L_s,
+                                     dab_specs.fs_nom,
+                                     dab_results.mesh_V1,
+                                     dab_results.mesh_V2,
+                                     dab_results.mesh_P)
+
+    # Unpack the results
+    dab_results.append_result_dict(da_mod)
+
+    # TODO where to save??? spec only float...
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_Lm_nlC_v2.ipes'
+    timestep = 100e-12
+    simtime = 15e-6
+
+    # Simulation
+    da_sim = sim_gecko.start_sim(dab_results.mesh_V1,
+                                 dab_results.mesh_V2,
+                                 dab_results.mod_sps_phi,
+                                 dab_results.mod_sps_tau1,
+                                 dab_results.mod_sps_tau2,
+                                 simfilepath, timestep, simtime)
+
+    # Simulation
+    # Dab_Sim = sim_gecko.Sim_Gecko()
+    # da_sim = Dab_Sim.start_sim_threads(dab_results.mesh_V1,
+    #                                    dab_results.mesh_V2,
+    #                                    dab_results.mod_sps_phi,
+    #                                    dab_results.mod_sps_tau1,
+    #                                    dab_results.mod_sps_tau2,
+    #                                    simfilepath, timestep, simtime)
+
+    # da_sim = Dab_Sim.start_sim_multi(dab_results.mesh_V1,
+    #                                  dab_results.mesh_V2,
+    #                                  dab_results.mod_sps_phi,
+    #                                  dab_results.mod_sps_tau1,
+    #                                  dab_results.mod_sps_tau2,
+    #                                  simfilepath, timestep, simtime)
+
+    # Unpack the results
+    dab_results.append_result_dict(da_sim)
+
+    debug("sim_i_Ls: \n", dab_results.sim_i_Ls)
+    debug("sim_S11_p_sw: \n", dab_results.sim_S11_p_sw)
+
+    # Plotting
+    info("\nStart Plotting\n")
+    plt = plot_dab.Plot_DAB()
+    plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
+    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.mod_sps_phi[:, 1, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_i_Ls[:, 1, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+    plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_sw[:, 1, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+
+    plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
+    plt.plot_3by1(plt.figs_axes[-1],
+                  dab_results.mesh_P[:, 1, :],
+                  dab_results.mesh_V2[:, 1, :],
+                  dab_results.sim_p_dc1[:, 1, :],
+                  dab_results.sim_S11_p_sw[:, 1, :],
+                  dab_results.sim_S11_p_cond[:, 1, :],
+                  'P / W',
+                  'U2 / V',
+                  'p_dc1',
+                  'S11_p_sw',
+                  'S11_p_cond')
+
+    plt.show()
+
+    # Calc power deviation from expected power target
+    # power_deviation = mesh_P[vec_vvp].item() and values_mean['mean']['p_dc1'] / mesh_P[vec_vvp].item()
+    # debug("power_sim: %f / power_target: %f -> power_deviation: %f" % (values_mean['mean']['p_dc1'], mesh_P[vec_vvp].item(), power_deviation))
+
+    # Saving
+    # save_to_file(dab_specs, dab_results, name='mod_sps_sim_v21-v25-p19',
+    #              comment='Simulation results for mod_sps with V1 10V res, V2 5V res and P 100W res.')
 
 
 @timeit
@@ -1082,46 +1082,46 @@ def trial_dab():
     # Mod SPS
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.mod_sps_phi[:, 1, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.mod_sps_phi[:, 1, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_i_Ls[:, 1, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_i_Ls[:, 1, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_sw[:, 1, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_sw[:, 1, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_p_dc1[:, 1, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_p_dc1[:, 1, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_sw[:, 1, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_sw[:, 1, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_cond[:, 1, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_cond[:, 1, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
     # Mod MCL
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.sim_p_dc1[:, 1, :],
-                             dab_results.sim_S11_p_sw[:, 1, :],
-                             dab_results.sim_S11_p_cond[:, 1, :])
+                        dab_results.mesh_P[:, 1, :],
+                        dab_results.mesh_V2[:, 1, :],
+                        dab_results.sim_p_dc1[:, 1, :],
+                        dab_results.sim_S11_p_sw[:, 1, :],
+                        dab_results.sim_S11_p_cond[:, 1, :])
 
     plt.show()
 
@@ -1234,14 +1234,14 @@ def trial_plot_modresults():
         else:
             title = 'U_1 = {:.1f}V'.format(dab_results.mesh_V1[0, v1, 0])
         plt.plot_modulation(fig_axes,
-                                 x[:, v1, :],
-                                 y[:, v1, :],
-                                 z1[:, v1, :],
-                                 z2[:, v1, :],
-                                 z3[:, v1, :],
-                                 title,
-                                 mask1[:, v1, :],
-                                 mask2[:, v1, :])
+                            x[:, v1, :],
+                            y[:, v1, :],
+                            z1[:, v1, :],
+                            z2[:, v1, :],
+                            z3[:, v1, :],
+                            title,
+                            mask1[:, v1, :],
+                            mask2[:, v1, :])
         return fig_axes[1]
 
     args = (plt.figs_axes[-1],
@@ -1267,11 +1267,11 @@ def trial_plot_modresults():
     # Plot SPS modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_sps_phi[:, v1_middle, :],
-                             dab_results.mod_sps_tau1[:, v1_middle, :],
-                             dab_results.mod_sps_tau2[:, v1_middle, :])
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_sps_phi[:, v1_middle, :],
+                        dab_results.mod_sps_tau1[:, v1_middle, :],
+                        dab_results.mod_sps_tau2[:, v1_middle, :])
 
     plt.show()
 
@@ -1286,37 +1286,37 @@ def trial_plot_simresults():
     plt = plot_dab.Plot_DAB()
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.mod_sps_phi[:, 1, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.mod_sps_phi[:, 1, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_i_Ls[:, 1, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_i_Ls[:, 1, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_sw[:, 1, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_sw[:, 1, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_p_dc1[:, 1, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='sim_p_dc1 / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_p_dc1[:, 1, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='sim_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_sw[:, 1, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_sw[:, 1, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, 1, :],
-                              dab_results.mesh_V2[:, 1, :],
-                              dab_results.sim_S11_p_cond[:, 1, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, 1, :],
+                         dab_results.sim_S11_p_cond[:, 1, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
     # plt.plot_3by1(plt.figs_axes[-1],
     #                   dab_results.mesh_P[:, 1, :],
     #                   dab_results.mesh_V2[:, 1, :],
@@ -1331,11 +1331,11 @@ def trial_plot_simresults():
 
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, 1, :],
-                             dab_results.mesh_V2[:, 1, :],
-                             dab_results.mod_sps_phi[:, 1, :],
-                             dab_results.mod_sps_tau1[:, 1, :],
-                             dab_results.mod_sps_tau2[:, 1, :])
+                        dab_results.mesh_P[:, 1, :],
+                        dab_results.mesh_V2[:, 1, :],
+                        dab_results.mod_sps_phi[:, 1, :],
+                        dab_results.mod_sps_tau1[:, 1, :],
+                        dab_results.mod_sps_tau2[:, 1, :])
 
     # now redraw the previous fig
     # plt.plot_modulation(plt.figs_axes[-1],
@@ -1387,20 +1387,20 @@ def plot_simresults():
     # Plot SPS sim results
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_sps_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_sps_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_i_Ls[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_i_Ls[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power')
@@ -1410,20 +1410,20 @@ def plot_simresults():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_sps_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_sps_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_sps_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_S11_p_cond[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_S11_p_cond[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Power2')
@@ -1433,50 +1433,50 @@ def plot_simresults():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_sps_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_sps_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_sps_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_sps_p_dc1[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_sps_p_dc1[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_sps_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='phi / rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_sps_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='phi / rad')
 
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='SPS Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_sps_phi[:, v1_middle, :],
-                             dab_results.mod_sps_tau1[:, v1_middle, :],
-                             dab_results.mod_sps_tau2[:, v1_middle, :],
-                             # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
-                             # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_sps_phi[:, v1_middle, :],
+                        dab_results.mod_sps_tau1[:, v1_middle, :],
+                        dab_results.mod_sps_tau2[:, v1_middle, :],
+                        # mask1=dab_results.mod_sps_mask_tcm[:, v1_middle, :],
+                        # mask2=dab_results.mod_sps_mask_cpm[:, v1_middle, :]
+                        )
 
     # Plot MCL sim results
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Overview')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_mcl_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_mcl_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_i_Ls[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_i_Ls[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='i_Ls / A')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Power')
@@ -1486,20 +1486,20 @@ def plot_simresults():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_mcl_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_mcl_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_mcl_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_sw[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_sw / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_S11_p_cond[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_S11_p_cond[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='S11_p_cond / W')
 
     # Plot power loss
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Power2')
@@ -1509,32 +1509,32 @@ def plot_simresults():
     #                           ax=plt.figs_axes[-1][1][0],
     #                           xlabel='P / W', ylabel='U2 / V', title='sim_mcl_p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              sim_mcl_power_deviation[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][0],
-                              xlabel='P / W', ylabel='U2 / V', title='power deviation')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         sim_mcl_power_deviation[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='power deviation')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.sim_mcl_p_dc1[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][1],
-                              xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.sim_mcl_p_dc1[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='p_dc1 / W')
     plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
-                              dab_results.mesh_V2[:, v1_middle, :],
-                              dab_results.mod_mcl_phi[:, v1_middle, :],
-                              ax=plt.figs_axes[-1][1][2],
-                              xlabel='P / W', ylabel='U2 / V', title='phi / rad')
+                         dab_results.mesh_V2[:, v1_middle, :],
+                         dab_results.mod_mcl_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='phi / rad')
 
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
     plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_mcl_phi[:, v1_middle, :],
-                             dab_results.mod_mcl_tau1[:, v1_middle, :],
-                             dab_results.mod_mcl_tau2[:, v1_middle, :],
-                             mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
-                             mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
-                             )
+                        dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_mcl_phi[:, v1_middle, :],
+                        dab_results.mod_mcl_tau1[:, v1_middle, :],
+                        dab_results.mod_mcl_tau2[:, v1_middle, :],
+                        mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
+                        mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :]
+                        )
 
     # Save plots
     name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
