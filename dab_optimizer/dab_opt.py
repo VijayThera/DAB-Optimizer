@@ -75,6 +75,7 @@ def integrate_Coss(coss):
     :param coss: MOSFET Coss(Vds) curve from Vds=0V to >= V1_max. Just one row with Coss data and index = Vds.
     :return: Qoss(Vds) as one row of data and index = Vds.
     """
+
     # Integrate from 0 to v
     def integrate(v):
         v_interp = np.arange(v + 1)
@@ -626,7 +627,9 @@ def trail_mod():
     dab.n = 2.99
     dab.Ls = 83e-6
     dab.Lm = 595e-6
-    dab.Lc1 = 25.62e-3
+    # dab.Lc1 = 25.62e-3
+    # Assumption for tests
+    dab.Lc1 = 611e-6
     dab.Lc2 = 611e-6
     dab.fs = 200000
     # Generate meshes
@@ -681,18 +684,6 @@ def trail_mod():
 
     plt = plot_dab.Plot_DAB()
 
-    # Plot Coss
-    plt.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
-    plt.subplot(np.arange(dab['coss_C3M0120100J'].shape[0]),
-                dab['coss_C3M0120100J'],
-                ax=plt.figs_axes[-1][1][0],
-                xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
-                yscale='log')
-    plt.subplot(np.arange(dab['qoss_C3M0120100J'].shape[0]),
-                dab['qoss_C3M0120100J'],
-                ax=plt.figs_axes[-1][1][1],
-                xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
-
     # Plot OptZVS mod results
     # Plot all modulation angles
     plt.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles')
@@ -706,6 +697,36 @@ def trail_mod():
                         mask2=dab.mod_zvs_mask_m2[:, v1_middle, :],
                         maskZVS=dab.mod_zvs_mask_zvs[:, v1_middle, :]
                         )
+
+    # Plot all modulation angles but separately with autoscale
+    plt.new_fig(nrows=1, ncols=3, tab_title='OptZVS Modulation Angles (autoscale)')
+    plt.subplot_contourf(dab.mesh_P[:, v1_middle, :],
+                         dab.mesh_V2[:, v1_middle, :],
+                         dab.mod_zvs_phi[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][0],
+                         xlabel='P / W', ylabel='U2 / V', title='phi in rad')
+    plt.subplot_contourf(dab.mesh_P[:, v1_middle, :],
+                         dab.mesh_V2[:, v1_middle, :],
+                         dab.mod_zvs_tau1[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][1],
+                         xlabel='P / W', ylabel='U2 / V', title='tau1 in rad')
+    plt.subplot_contourf(dab.mesh_P[:, v1_middle, :],
+                         dab.mesh_V2[:, v1_middle, :],
+                         dab.mod_zvs_tau2[:, v1_middle, :],
+                         ax=plt.figs_axes[-1][1][2],
+                         xlabel='P / W', ylabel='U2 / V', title='tau2 in rad')
+
+    # Plot Coss
+    plt.new_fig(nrows=1, ncols=2, tab_title='Coss C3M0120100J', sharex=False, sharey=False)
+    plt.subplot(np.arange(dab['coss_C3M0120100J'].shape[0]),
+                dab['coss_C3M0120100J'],
+                ax=plt.figs_axes[-1][1][0],
+                xlabel='U_DS / V', ylabel='C_oss / pF', title='Coss C3M0120100J',
+                yscale='log')
+    plt.subplot(np.arange(dab['qoss_C3M0120100J'].shape[0]),
+                dab['qoss_C3M0120100J'],
+                ax=plt.figs_axes[-1][1][1],
+                xlabel='U_DS / V', ylabel='Q_oss / nC', title='Qoss C3M0120100J')
 
     plt.show()
 
@@ -958,7 +979,7 @@ def trial_dab():
 
     # Saving
     ds.old_save_to_file(dab_specs, dab_results, directory='~/MA-LEA/LEA/Workdir/dab_optimizer_output', name='test-save',
-                 comment='This is a saving test with random data!')
+                        comment='This is a saving test with random data!')
     # ds.old_save_to_file(dab_specs, dab_results, name='test-save', timestamp=False, comment='This is a saving test with random data!')
 
     # Loading

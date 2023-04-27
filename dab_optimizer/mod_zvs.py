@@ -29,7 +29,7 @@ Modeling and Optimization of Bidirectional Dual Active Bridge AC-DC Converter To
 Modulation names "mode 1", "mode 2" and "mode 5" are not the same in different papers!
 Names used here are:
 High Power Flow: mode 1+ : -tau1 + pi <= phi <= tau2
-High Power Flow: mode 1- : not derived here
+High Power Flow: mode 1- : -tau1 <= phi <= tau2 - pi
 Low  Power Flow: mode 2  : tau2 - tau1 <= phi <= 0
 
 ## Definitions
@@ -84,7 +84,7 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     _m1n_mask = np.full_like(V1, np.nan)
     _m2_mask = np.full_like(V1, np.nan)
 
-    Lc2_ = Lc2 * n
+    Lc2_ = Lc2 * n ** 2
     ws = 2 * np.pi * fs
     # TODO make Q_AB like a V mesh
     Q_AB_req1 = _integrate_Coss(Coss1) * 1.05

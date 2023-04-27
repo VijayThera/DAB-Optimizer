@@ -18,7 +18,7 @@ Modeling and Optimization of Bidirectional Dual Active Bridge AC-DC Converter To
 Modulation names "mode 1", "mode 2" and "mode 5" are not the same in different papers!
 Names used here are:
 High Power Flow: mode 1+ : -tau1 + pi <= phi <= tau2
-High Power Flow: mode 1- : not derived here
+High Power Flow: mode 1- : -tau1 <= phi <= tau2 - pi
 Low  Power Flow: mode 2  : tau2 - tau1 <= phi <= 0
 
 ## Mode 1-
