@@ -43,29 +43,29 @@ Q_AB_req1: Q_AB_req_p but with changed naming according to side 1 and 2 naming s
 
 ## Predefined Terms
 
-e1 = V2 * Q_AB_req2 * ws
+e1 = V2_ * Q_AB_req2 * ws
 
 e2 = n * V1 * np.pi * I1
 
-e3 = n * (V2_ * (Lc2_ + L) - V1 * Lc2_)
+e3 = n * (V2_ * (Lc2_ + Ls) - V1 * Lc2_)
 
-e4 = 2 * n * np.sqrt(Q_AB_req1 * L * ws^2 * V1 * Lc1 * (Lc1 + L))
+e4 = 2 * n * np.sqrt(Q_AB_req1 * Ls * np.power(ws, 2) * V1 * Lc1 * (Lc1 + Ls))
 
-e5 = L * Lc2_ * ws * (e2 + 2 * e1 + 2 * np.sqrt(e1 * (e1 + e2)))
+e5 = Ls * Lc2_ * ws * (e2 + 2 * e1 + 2 * np.sqrt(e1 * (e1 + e2)))
 
 
 ## Solution for interval I (mode 2)
 
-tau1 = (np.sqrt(2) * (Lc1 * np.sqrt(V2_ * e3 * e5) + e4 * e3 * 1/n)) / (V1 * e3 * (Lc1 + L))
+tau1 = (np.sqrt(2) * (Lc1 * np.sqrt(V2_ * e3 * e5) + e4 * e3 * 1/n)) / (V1 * e3 * (Lc1 + Ls))
 
 tau2 = np.sqrt((2 * e5) / (V2_ * e3))
 
-phi = (tau2 - tau1) / 2 + (I1 * ws * L * np.pi) / (tau2 * V2_)
+phi = (tau2 - tau1) / 2 + (I1 * ws * Ls * np.pi) / (tau2 * V2_)
 
 
 ## Solution for interval II (mode 2)
 
-tau1 = (np.sqrt(2) * (e5 + ws * L * Lc2_ * e2 * (V2_ / V1 * (L / Lc2_ + 1) - 1))) / (np.sqrt(V2_ * e3 * e5))
+tau1 = (np.sqrt(2) * (e5 + ws * Ls * Lc2_ * e2 * (V2_ / V1 * (Ls / Lc2_ + 1) - 1))) / (np.sqrt(V2_ * e3 * e5))
 
 tau2 = np.sqrt((2 * e5) / (V2_ * e3))
 
@@ -78,7 +78,7 @@ tau1 = np.pi
 
 tau2 = np.sqrt((2 * e5) / (V2_ * e3))
 
-phi = (- tau1 + tau2 + np.pi) / 2 - np.sqrt((- (tau2 - np.pi)^2 + tau1 * (2 * np.pi - tau1)) / 4 - (I1 * ws * L * np.pi) / V2_)
+phi = (- tau1 + tau2 + np.pi) / 2 - np.sqrt((- np.power((tau2 - np.pi), 2) + tau1 * (2 * np.pi - tau1)) / 4 - (I1 * ws * Ls * np.pi) / V2_)
 
 
 ## Negative Power Flow

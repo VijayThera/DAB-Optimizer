@@ -57,7 +57,7 @@ def timeit(func):
 # @timeit
 
 
-def error(*args, sep=' ', **kwargs):
+def error(*args, sep='\n', **kwargs):
     """
     Log error output like print does.
     :param args:
@@ -69,7 +69,7 @@ def error(*args, sep=' ', **kwargs):
           ' ' + sep.join(map(str, args)), **kwargs)
 
 
-def warning(*args, sep=' ', **kwargs):
+def warning(*args, sep='\n', **kwargs):
     """
     Log warning output like print does.
     :param args:
@@ -81,7 +81,7 @@ def warning(*args, sep=' ', **kwargs):
           ' ' + sep.join(map(str, args)), **kwargs)
 
 
-def info(*args, sep=' ', **kwargs):
+def info(*args, sep='\n', **kwargs):
     """
     Log normal info output like print does.
     :param args:
@@ -94,7 +94,7 @@ def info(*args, sep=' ', **kwargs):
     #       ' ' + sep.join(map(str, args)), **kwargs)
 
 
-def debug(*args, sep=' ', **kwargs):
+def debug(*args, sep='\n', **kwargs):
     """
     Log debug output like print does.
     :param args:

@@ -69,8 +69,12 @@ def import_Coss(file: str()):
     return coss_interp
 
 
-@timeit
 def integrate_Coss(coss):
+    """
+    Integrate Coss for each voltage from 0 to V_max
+    :param coss: MOSFET Coss(Vds) curve from Vds=0V to >= V1_max. Just one row with Coss data and index = Vds.
+    :return: Qoss(Vds) as one row of data and index = Vds.
+    """
     # Integrate from 0 to v
     def integrate(v):
         v_interp = np.arange(v + 1)
@@ -620,9 +624,11 @@ def trail_mod():
     # dab.P_step = math.floor((dab.P_max - dab.P_min) / 300 + 1)
     # dab.P_step = 5
     dab.n = 2.99
-    dab.L_s = 84e-6
-    dab.L_m = 599e-6
-    dab.fs_nom = 200000
+    dab.Ls = 83e-6
+    dab.Lm = 595e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6
+    dab.fs = 200000
     # Generate meshes
     dab.gen_meshes()
 
@@ -648,9 +654,15 @@ def trail_mod():
 
     # Modulation Calculation
     # ZVS Modulation
+    # calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.ndarray, Coss2: np.ndarray,
+    #                 V1: np.ndarray, V2: np.ndarray, P: np.ndarray)
     da_mod = mod_zvs.calc_modulation(dab.n,
-                                     dab.L_s,
-                                     dab.fs_nom,
+                                     dab.Ls,
+                                     dab.Lc1,
+                                     dab.Lc2,
+                                     dab.fs,
+                                     dab.coss_C3M0120100J,
+                                     dab.coss_C3M0120100J,
                                      dab.mesh_V1,
                                      dab.mesh_V2,
                                      dab.mesh_P)
@@ -658,7 +670,7 @@ def trail_mod():
     # Unpack the results
     dab.append_result_dict(da_mod)
 
-    # debug(dab)
+    debug(dab)
 
     # Plotting
     info("\nStart Plotting\n")

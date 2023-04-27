@@ -22,7 +22,7 @@ class DAB_Data(DotMap):
 
     _allowed_keys = ['_timestamp', '_comment', 'spec_', 'mesh_', 'mod_', 'sim_', 'coss_', 'qoss_']
     _allowed_spec_keys = ['V1_nom', 'V1_min', 'V1_max', 'V1_step', 'V2_nom', 'V2_min', 'V2_max', 'V2_step', 'P_min',
-                          'P_max', 'P_nom', 'P_step', 'n', 'L_s', 'L_m', 'L_c1', 'L_c2', 'fs_nom']
+                          'P_max', 'P_nom', 'P_step', 'n', 'L_s', 'Ls', 'L_m', 'Lm', 'Lc1', 'Lc2', 'fs_nom', 'fs']
 
     def __init__(self, *args, **kwargs):
         """
