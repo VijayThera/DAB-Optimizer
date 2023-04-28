@@ -101,6 +101,38 @@ def load_dab():
     # dab.pprint()
     debug(dab._comment)
 
+
+def serial_control_manual():
+    state = 0xAA
+    # Some mod mcl data point for test:
+    # phi = 1035
+    # tau1 = 3065
+    # tau2 = 4100
+    phi_l = [787, 1041, 1245, 692, 894, 1124, 1402, 0]
+    tau1_l = [2331, 3083, 3685, 5000, 5000, 5000, 5000, 5000]
+    tau2_l = [3118, 4124, 4930, 5000, 5000, 5000, 5000, 5000]
+    dt1 = 50
+    dt2 = 50
+
+    # Serial Port Settings
+    # port = '/dev/ttyACM0'
+    port = '/dev/ttyUSB0'
+    baud = 115200
+
+    ser = serial.Serial(port, baud, timeout=1)
+
+    for phi, tau1, tau2 in zip(phi_l, tau1_l, tau2_l):
+        input('Apply next data point? ({}, {}, {})'.format(phi, tau1, tau2))
+        dab_params = struct.pack('>HhHHHH', state, phi, tau1, tau2, dt1, dt2)
+        len = ser.write(dab_params)
+        dab_params_rx = ser.read(len)
+        msg = ser.readline()
+        debug(msg)
+
+        if (dab_params_rx == dab_params):
+            info('DAB Params send successfully')
+
+
 def trail_serial():
     state = 0xAA
     # Some mod mcl data point for test:
@@ -115,8 +147,8 @@ def trail_serial():
     dt2 = 50
 
     # Serial Port Settings
-    port = '/dev/ttyACM0'
-    # port = '/dev/ttyUSB0'
+    # port = '/dev/ttyACM0'
+    port = '/dev/ttyUSB0'
     baud = 115200
 
     ser = serial.Serial(port, baud, timeout=1)
@@ -153,6 +185,7 @@ if __name__ == '__main__':
 
     # Load and then do something
     load_dab()
+    serial_control_manual()
 
     # Serial test
-    trail_serial()
+    # trail_serial()
