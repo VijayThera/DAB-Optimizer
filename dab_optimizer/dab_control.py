@@ -88,7 +88,7 @@ def main_init():
 def load_dab():
     # Select File Folder and Path
     dir = '2023-04-28_01:34:11_mod_sps_mcl_v1-v7-p7'
-    path = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    path = ''
 
     # Extract name
     name = os.path.splitext(dir.split('_', 2)[2])[0]
