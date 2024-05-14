@@ -9,7 +9,7 @@ import pathlib
 # import argparse
 # import sys
 
-import leapythontoolbox as lpt
+import pygeckocircuits2 as pgc
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
@@ -42,9 +42,9 @@ if __name__ == '__main__':
 
     # sys.exit(0)
 
-    print("lpt.GeckoSimulation(simfilepath)")
+    print("pgc.GeckoSimulation(simfilepath)")
     # this opens the GUI
-    dab_converter = lpt.GeckoSimulation(simfilepath)
+    dab_converter = pgc.GeckoSimulation(simfilepath)
 
     params = dab_converter.get_global_parameters(['phi', 'tau1_inv', 'tau2_inv', 'v_dc1', 'v_dc2', 'f_s'])
     print(params)

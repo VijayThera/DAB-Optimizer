@@ -18,7 +18,7 @@ import multiprocessing as mp
 from tqdm import tqdm
 # from time import sleep
 
-import leapythontoolbox as lpt
+import pygeckocircuits2 as pgc
 from debug_tools import *
 
 
@@ -161,7 +161,7 @@ class Sim_Gecko:
 
             if not __debug__:
                 # Gecko Basics
-                dab_converter = lpt.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
+                dab_converter = pgc.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
 
             for vec_vvp in np.ndindex(mod_phi.shape):
                 # debug(vec_vvp, mod_phi[vec_vvp], mod_tau1[vec_vvp], mod_tau2[vec_vvp], sep='\n')
@@ -208,9 +208,9 @@ class Sim_Gecko:
                     # values_rms = {'rms': {'i_Ls': np.random.uniform(0.0, 10)}}
                     values_mean = defaultdict(dict)
                     values_rms = defaultdict(dict)
-                    for k in l_means_keys:
+                    for k in self.l_means_keys:
                         values_mean['mean'][k] = np.random.uniform(0.0, 1)
-                    for k in l_rms_keys:
+                    for k in self.l_rms_keys:
                         values_rms['rms'][k] = np.random.uniform(0.0, 1)
 
                 # ***** LOCK Start *****
@@ -259,7 +259,7 @@ def start_sim(mesh_V1: np.ndarray, mesh_V2: np.ndarray,
     # ************ Gecko Start **********
     if not __debug__:
         # Gecko Basics
-        dab_converter = lpt.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
+        dab_converter = pgc.GeckoSimulation(simfilepath=simfilepath, geckoport=geckoport, debug=gdebug)
 
     for vec_vvp in np.ndindex(mod_phi.shape):
         # debug(vec_vvp, mod_phi[vec_vvp], mod_tau1[vec_vvp], mod_tau2[vec_vvp], sep='\n')

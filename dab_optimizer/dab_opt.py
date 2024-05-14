@@ -23,7 +23,7 @@ import sim_gecko
 import plot_dab
 
 
-def import_Coss(file: str()):
+def import_Coss(file: str):
     """
     Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
     This may be generated with: https://apps.automeris.io/wpd/
@@ -204,13 +204,13 @@ def dab_mod_save():
     dab.gen_meshes()
 
     # Import Coss curves
-    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
+    csv_file = os.path.join(os.path.abspath(os.path.join(__file__, os.pardir)), 'data', 'Coss_C3M0120100J.csv')
     dab['coss_C3M0120100J'] = import_Coss(csv_file)
     # Generate Qoss matrix
     dab['qoss_C3M0120100J'] = integrate_Coss(dab['coss_C3M0120100J'])
 
     # Set file names
-    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    directory = os.path.join(os.path.abspath(os.path.join(__file__, os.pardir)), 'output')
     name = 'mod_sps_mcl_v{}-v{}-p{}'.format(int(dab.V1_step),
                                             int(dab.V2_step),
                                             int(dab.P_step))
@@ -368,7 +368,7 @@ def dab_sim_save():
     simtime = 15e-6
     geckoport = 43036
     # Set file names
-    directory = '~/MA-LEA/LEA/Workdir/dab_optimizer_output/'
+    directory = os.path.join(os.path.abspath(os.path.join(__file__, os.pardir)), 'output')
     name = 'mod_sps_mcl_sim_Gv2_L84_v{}-v{}-p{}'.format(int(dab_specs.V1_step),
                                                         int(dab_specs.V2_step),
                                                         int(dab_specs.P_step))
@@ -644,7 +644,7 @@ def trail_mod():
         comment = 'Debug ' + comment
 
     # Import Coss curves
-    csv_file = '~/MA-LEA/LEA/Files/Datasheets/Coss_C3M0120100J.csv'
+    csv_file = os.path.join(os.path.abspath(os.path.join(__file__, os.pardir)), 'data', 'Coss_C3M0120100J.csv')
     dab['coss_C3M0120100J'] = import_Coss(csv_file)
     # Generate Qoss matrix
     dab['qoss_C3M0120100J'] = integrate_Coss(dab['coss_C3M0120100J'])
