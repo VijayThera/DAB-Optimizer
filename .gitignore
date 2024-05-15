@@ -2,4 +2,8 @@
 .eggs/
 __pycache__
 *.npz
-.idea/
+config.json
+venv/
+.idea
+results/
+dist/

@@ -3,7 +3,26 @@
 # coding: utf-8
 # python >= 3.10
 
+"""
+        DAB Modulation Toolbox
+        Copyright (C) 2023  strayedelectron
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as
+        published by the Free Software Foundation, either version 3 of the
+        License, or (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import os
+import pprint
 import numpy as np
 from dotmap import DotMap
 
@@ -20,13 +39,16 @@ class DAB_Data(DotMap):
     Add a useful name string after the prefix from "_allowed_keys" to identify your results later.
     """
 
-    _allowed_keys = ['_timestamp', '_comment', 'spec_', 'mesh_', 'mod_', 'sim_', 'coss_', 'qoss_']
+    _allowed_keys = ['_timestamp', '_comment', 'spec_', 'mesh_', 'mod_', 'sim_', 'meas_', 'coss_', 'qoss_', 'iter_']
     _allowed_spec_keys = ['V1_nom', 'V1_min', 'V1_max', 'V1_step', 'V2_nom', 'V2_min', 'V2_max', 'V2_step', 'P_min',
-                          'P_max', 'P_nom', 'P_step', 'n', 'Ls', 'Lm', 'Lc1', 'Lc2', 'fs', 'L_s', 'L_m', 'fs_nom']
+                          'P_max', 'P_nom', 'P_step', 'n', 'Ls', 'Lm', 'Lc1', 'Lc2', 'Lc2_', 'fs', 't_dead1', 't_dead2',
+                          'temp', 'C_HB11', 'C_HB12', 'C_HB21', 'C_HB22',
+                          # deprecated:
+                          'C_PCB_leg', 'L_s', 'L_m', 'fs_nom']
 
     def __init__(self, *args, **kwargs):
         """
-        Initialisation with an other Dict is not handled and type converted yet!
+        Initialisation with another Dict is not handled and type converted yet!
         :param args:
         :param kwargs:
         """
@@ -52,6 +74,76 @@ class DAB_Data(DotMap):
             else:
                 warning('None of the _allowed_keys are used! Nothing added! Used key: ' + str(k))
 
+    def pprint_to_file(self, filename):
+        """
+        Prints the DAB in nice human-readable form into a text file.
+        WARNING: This file can not be loaded again! It is only for documentation.
+        :param filename:
+        """
+        filename = os.path.expanduser(filename)
+        filename = os.path.expandvars(filename)
+        filename = os.path.abspath(filename)
+        if os.path.isfile(filename):
+            warning("File already exists!")
+        else:
+            with open(filename, 'w') as file:
+                pprint.pprint(self.toDict(), file)
+
+    def save_to_file(self, directory=str(), name=str(), timestamp=True, comment=str()):
+        """
+        Save everything (except plots) in one file.
+        WARNING: Existing files will be overwritten!
+
+        File is ZIP compressed and contains several named np.ndarray objects:
+            # String is constructed as follows:
+            # used module (e.g. "mod_sps_") + value name (e.g. "phi")
+            mod_sps_phi: mod_sps calculated values for phi
+            mod_sps_tau1: mod_sps calculated values for tau1
+            mod_sps_tau2: mod_sps calculated values for tau1
+            sim_sps_iLs: simulation results with mod_sps for iLs
+            sim_sps_S11_p_sw:
+
+        :param directory: Folder where to save the files
+        :param name: String added to the filename. Without file extension. Datetime may prepend the final name.
+        :param timestamp: If the datetime should prepend the final name. default True
+        :param comment:
+        """
+
+        # Add some descriptive data to the file
+        # Adding a timestamp, it may be useful
+        self['_timestamp'] = np.asarray(datetime.now().isoformat())
+        # Adding a comment to the file, hopefully a descriptive one
+        if comment:
+            self['_comment'] = np.asarray(comment)
+
+        # Adding a timestamp to the filename if requested
+        if timestamp:
+            if name:
+                filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+            else:
+                filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        else:
+            if name:
+                filename = name
+            else:
+                # set some default non-empty filename
+                filename = "dab_dataset"
+
+        if directory:
+            directory = os.path.expanduser(directory)
+            directory = os.path.expandvars(directory)
+            directory = os.path.abspath(directory)
+            if os.path.isdir(directory):
+                file = os.path.join(directory, filename)
+            else:
+                warning("Directory does not exist!")
+                file = os.path.join(filename)
+        else:
+            file = os.path.join(filename)
+
+        # numpy saves everything for us in a handy zip file
+        np.savez_compressed(file=file, **self)
+
     def gen_meshes(self):
         """
         Generates the default meshgrids for V1, V2 and P.
@@ -70,6 +162,79 @@ class DAB_Data(DotMap):
         # Unpack the results
         for k, v in result.items():
             self[name_pre + k + name_post] = v
+
+    def import_Coss(self, file: str(), name: str()):
+        """
+        Import a csv file containing the Coss(Vds) capacitance from the MOSFET datasheet.
+        This may be generated with: https://apps.automeris.io/wpd/
+
+        Note we assume V_ds in Volt and C_oss in F. If this is not the case scale your data accordingly!
+
+        CSV File should look like this:
+        # V_ds / V; C_oss / F
+        1,00; 900,00e-12
+        2,00; 800,00e-12
+        :param file: csv file path
+        """
+        file = os.path.expanduser(file)
+        file = os.path.expandvars(file)
+        file = os.path.abspath(file)
+
+        # Conversion from decimal separator comma to point so that np can read floats
+        # Be careful if your csv is actually comma separated! ;)
+        def conv(x):
+            return x.replace(',', '.').encode()
+
+        # Read csv file
+        csv_data = np.genfromtxt((conv(x) for x in open(file)), delimiter=';', dtype=float)
+
+        # Maybe check if data is monotonically
+        # Check if voltage is monotonically rising
+        if not np.all(csv_data[1:, 0] >= csv_data[:-1, 0], axis=0):
+            warning("The voltage in csv file is not monotonically rising!")
+        # Check if Coss is monotonically falling
+        if not np.all(csv_data[1:, 1] <= csv_data[:-1, 1], axis=0):
+            warning("The C_oss in csv file is not monotonically falling!")
+
+        # Rescale and interpolate the csv data to have a nice 1V step size from 0V to v_max
+        # A first value with zero volt will be added
+        v_max = int(np.round(csv_data[-1, 0]))
+        v_interp = np.arange(v_max + 1)
+        coss_interp = np.interp(v_interp, csv_data[:, 0], csv_data[:, 1])
+        # Since we now have a evenly spaced vector where x corespond to the element-number of the vector
+        # we dont have to store x (v_interp) with it.
+        # To get Coss(V) just get the array element coss_interp[V]
+
+        # np.savetxt('coss_' + name + '.csv', coss_interp, delimiter=';')
+
+        # return coss_interp
+        self['coss_' + name] = coss_interp
+        self['qoss_' + name] = self._integrate_Coss(coss_interp)
+
+    def _integrate_Coss(self, coss):
+        """
+        Integrate Coss for each voltage from 0 to V_max
+        :param coss: MOSFET Coss(Vds) curve from Vds=0V to >= V1_max. Just one row with Coss data and index = Vds.
+        :return: Qoss(Vds) as one row of data and index = Vds.
+        """
+
+        # Integrate from 0 to v
+        def integrate(v):
+            v_interp = np.arange(v + 1)
+            coss_v = np.interp(v_interp, np.arange(coss.shape[0]), coss)
+            return np.trapz(coss_v)
+
+        coss_int = np.vectorize(integrate)
+        # get an qoss vector that has the resolution 1V from 0 to V_max
+        v_vec = np.arange(coss.shape[0])
+        # get an qoss vector that fits the mesh_V scale
+        # v_vec = np.linspace(V_min, V_max, int(V_step))
+        qoss = coss_int(v_vec)
+        # Scale from pC to nC
+        # qoss = qoss / 1000
+
+        # np.savetxt('qoss.csv', qoss, delimiter=';')
+        return qoss
 
 
 def save_to_file(dab: DAB_Data, directory=str(), name=str(), timestamp=True, comment=str()):
@@ -145,8 +310,6 @@ def load_from_file(file: str) -> DAB_Data:
     file = os.path.abspath(file)
     # Open the file and parse the data
     with np.load(file) as data:
-        spec_keys = None
-        spec_values = None
         for k, v in data.items():
             dab[k] = v
     return dab
@@ -163,7 +326,7 @@ def save_to_csv(dab: DAB_Data, key=str(), directory=str(), name=str(), timestamp
     """
     if timestamp:
         name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
-    filename = os.path.join(directory, name + '_' + key + '.csv')
+    filename = key + '_' + name + '.csv'
 
     if directory:
         directory = os.path.expanduser(directory)
@@ -216,6 +379,423 @@ def save_to_csv(dab: DAB_Data, key=str(), directory=str(), name=str(), timestamp
             # np.savetxt(outfile, array_slice, fmt='%-7.2f')
             np.savetxt(outfile, array_slice, delimiter=';')
             i += 1
+
+
+def dab_ds_default() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # dab.V1_min = 600
+    # dab.V1_max = 800
+    # dab.V1_step = 21
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    dab.V2_max = 295
+    dab.V2_step = 25
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 0
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = 19
+    dab.n = 2.99
+    # ESB type not used in Gv5
+    # dab.Ls = 83e-6
+    # dab.Lm = 595e-6
+    # Pi-ESB used in Gv5
+    dab.Ls = 85e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6
+    dab.fs = 200000
+    # Switch dead time, must be >= t_sh_delay >= timestep_pre (equal is in both cases best)
+    dab.t_dead1 = 50e-9
+    dab.t_dead2 = 50e-9
+    # Capacitance at Bridge Terminals assuming Side 1 and 2 are equal
+    dab.C_PCB_leg = 5e-12
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_default_Gv6() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # dab.V1_min = 600
+    # dab.V1_max = 800
+    # dab.V1_step = 21
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    dab.V2_max = 295
+    dab.V2_step = 25
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 0
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = 19
+    dab.n = 2.99
+    # Pi-ESB used in Gv6
+    dab.Ls = 110e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6 / (dab.n ** 2)
+    dab.fs = 200000
+    # Switch dead time, must be >= t_sh_delay >= timestep_pre (equal is in both cases best)
+    dab.t_dead1 = 50e-9
+    dab.t_dead2 = 50e-9
+    # Capacitance parallel to MOSFETs
+    dab.C_HB11 = 14.9e-12
+    dab.C_HB12 = 22.9e-12
+    dab.C_HB21 = 16.2e-12
+    dab.C_HB22 = 13.7e-12
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_default_Gv7() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # dab.V1_min = 600
+    # dab.V1_max = 800
+    # dab.V1_step = 21
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    dab.V2_max = 295
+    dab.V2_step = 25
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 0
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = 19
+    dab.n = 2.99
+    # Pi-ESB used in Gv6
+    # dab.Ls = 95e-6
+    dab.Ls = 85e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6 / (dab.n ** 2)
+    dab.fs = 200000
+    # Switch dead time, must be >= t_sh_delay >= timestep_pre (equal is in both cases best)
+    dab.t_dead1 = 50e-9
+    dab.t_dead2 = 50e-9
+    # Capacitance parallel to MOSFETs
+    C_HB = 16e-12
+    dab.C_HB11 = C_HB
+    dab.C_HB12 = C_HB
+    dab.C_HB21 = C_HB
+    dab.C_HB22 = C_HB
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_default_Gv8() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # dab.V1_min = 600
+    # dab.V1_max = 800
+    # dab.V1_step = 21
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    # dab.V2_min = 235
+    dab.V2_max = 295
+    dab.V2_step = 25
+    # dab.V2_step = 7
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 0
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = 19
+    # dab.P_step = 7
+    dab.n = 2.99
+    # Pi-ESB used in Gv6
+    dab.Ls = 85e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6 / (dab.n ** 2)
+    # dab.Lc1 = 500e-6
+    # dab.Lc2 = 55e-6  # / (dab.n ** 2)
+    dab.fs = 200000
+    # Switch dead time, must be >= timestep_pre (equal is best)
+    dab.t_dead1 = 100e-9
+    dab.t_dead2 = 100e-9
+    # Capacitance parallel to MOSFETs
+    C_HB = 16e-12
+    dab.C_HB11 = C_HB
+    dab.C_HB12 = C_HB
+    dab.C_HB21 = C_HB
+    dab.C_HB22 = C_HB
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_default_Gv8_sim() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # dab.V1_min = 600
+    # dab.V1_max = 800
+    # dab.V1_step = 21
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    # dab.V2_min = 175
+    dab.V2_min = 235
+    dab.V2_max = 295
+    # dab.V2_step = 25
+    dab.V2_step = 7
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 400
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    # dab.P_step = 19
+    dab.P_step = 7
+    dab.n = 2.99
+    # Pi-ESB used in Gv6
+    dab.Ls = 85e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6 / (dab.n ** 2)
+    # dab.Lc1 = 500e-6
+    # dab.Lc2 = 55e-6  # / (dab.n ** 2)
+    dab.fs = 200000
+    # Switch dead time, must be >= timestep_pre (equal is best)
+    dab.t_dead1 = 100e-9
+    dab.t_dead2 = 100e-9
+    # Capacitance parallel to MOSFETs
+    C_HB = 16e-12
+    dab.C_HB11 = C_HB
+    dab.C_HB12 = C_HB
+    dab.C_HB21 = C_HB
+    dab.C_HB22 = C_HB
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_default_Gv8_sim_n4() -> DAB_Data():
+    ## Normal DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 700
+    # As requested only fixed V1
+    dab.V1_min = 700
+    dab.V1_max = 700
+    dab.V1_step = 1
+    dab.V2_nom = 235
+    dab.V2_min = 175
+    dab.V2_max = 295
+    # dab.V2_step = 25
+    dab.V2_step = 7
+    # dab.P_min = -2200
+    # As requested only positive power transfer
+    dab.P_min = 400
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    # dab.P_step = 19
+    dab.P_step = 7
+    dab.n = 4
+    # Pi-ESB used in Gv6
+    dab.Ls = 85e-6
+    dab.Lc1 = 25.62e-3
+    dab.Lc2 = 611e-6 / (dab.n ** 2)
+    # dab.Lc1 = 500e-6
+    # dab.Lc2 = 55e-6  # / (dab.n ** 2)
+    dab.fs = 200000
+    # Switch dead time, must be >= timestep_pre (equal is best)
+    dab.t_dead1 = 100e-9
+    dab.t_dead2 = 100e-9
+    # Capacitance parallel to MOSFETs
+    C_HB = 16e-12
+    dab.C_HB11 = C_HB
+    dab.C_HB12 = C_HB
+    dab.C_HB21 = C_HB
+    dab.C_HB22 = C_HB
+    # Junction Temperature of MOSFETs
+    dab.temp = 150
+    # Generate meshes
+    dab.gen_meshes()
+
+    # Import Coss curves
+    # mosfet1 = 'C3M0120100J'
+    mosfet1 = 'C3M0065100J'
+    csv_file = '../Coss_files/Coss_' + mosfet1 + '.csv'
+    dab.mosfet1 = mosfet1
+    dab.import_Coss(csv_file, '1')
+    # mosfet2 = 'C3M0120100J'
+    mosfet2 = 'C3M0060065J'
+    csv_file = '../Coss_files/Coss_' + mosfet2 + '.csv'
+    dab.mosfet2 = mosfet2
+    dab.import_Coss(csv_file, '2')
+
+    return dab
+
+
+def dab_ds_reversed() -> DAB_Data():
+    ## Reversed DAB
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V2_nom = 700
+    dab.V2_min = 600
+    dab.V2_max = 800
+    dab.V2_step = 21
+    dab.V1_nom = 235
+    dab.V1_min = 175
+    dab.V1_max = 295
+    dab.V1_step = 25
+    dab.P_min = -2200
+    dab.P_max = 2200
+    dab.P_nom = 2000
+    dab.P_step = 19
+    dab.n = 1 / 2.99
+    dab.Ls = 83e-6 * dab.n ** 2
+    dab.Lm = 595e-6 * dab.n ** 2
+    # dab.Lc1 = 25.62e-3
+    # dab.Lc1 = 800e-6
+    # Assumption for tests
+    dab.Lc1 = 611e-6 * dab.n ** 2
+    dab.Lc2 = 611e-6 * dab.n ** 2
+    # dab.Lc2 = 25e-3 * dab.n ** 2
+    dab.fs = 200000
+    dab.t_dead1 = 50e-9
+    dab.t_dead2 = 50e-9
+    # Generate meshes
+    dab.gen_meshes()
+    return dab
+
+
+def dab_ds_everts() -> DAB_Data():
+    ## DAB Everts
+    # Set the basic DAB Specification
+    dab = DAB_Data()
+    dab.V1_nom = 250
+    # dab.V1_min = 30
+    dab.V1_min = 125
+    dab.V1_max = 325
+    # dab.V1_step = math.floor((dab.V1_max - dab.V1_min) / 10 + 1)  # 10V resolution gives 21 steps
+    dab.V1_step = 21
+    dab.V2_nom = 400
+    dab.V2_min = 370
+    dab.V2_max = 470
+    # dab.V2_step = math.floor((dab.V2_max - dab.V2_min) / 10 + 1)  # 5V resolution gives 25 steps
+    dab.V2_step = 21
+    dab.P_min = -3700
+    dab.P_max = 3700
+    dab.P_nom = 2000
+    # dab.P_step = math.floor((dab.P_max - dab.P_min) / 100 + 1)  # 100W resolution gives 19 steps
+    dab.P_step = 38
+    dab.n = 1
+    dab.Ls = 13e-6
+    dab.Lc1 = 62.1e-6
+    dab.Lc2 = 62.1e-6
+    dab.fs = 120e3
+    dab.t_dead1 = 100e-9
+    dab.t_dead2 = 100e-9
+    # Generate meshes
+    dab.gen_meshes()
+    return dab
 
 
 # FIXME These classes are deprecated and only for backward compability.

@@ -2,7 +2,25 @@
 # coding: utf-8
 # python >= 3.10
 
+"""
+        DAB Modulation Toolbox
+        Copyright (C) 2023  strayedelectron
 
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as
+        published by the Free Software Foundation, either version 3 of the
+        License, or (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import os
 from datetime import datetime
 # Decorator to print function args
 import inspect
@@ -13,6 +31,73 @@ import time
 # Set a global DEBUG variable to switch some debugging code.
 # This is evaluated a runtime, not like the Python __debug__ that is evaluated in preprocess.
 DEBUG = False
+
+
+class log:
+    """
+    Class to print logging text to stdout and to a log file.
+    """
+    logfile = None
+
+    def __init__(self, filename=str()):
+        if filename:
+            filename = os.path.expanduser(filename)
+            filename = os.path.expandvars(filename)
+            filename = os.path.abspath(filename)
+            self.logfile = open(filename, 'a', buffering=1)
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        if self.logfile:
+            self.logfile.close()
+
+    def error(self, *args, sep='\n', **kwargs):
+        """
+        Log error output like print does.
+        """
+        # print(*args, **kwargs)
+        print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(
+            inspect.stack()[1][0]).__name__ + ' ' + sep.join(map(str, args)), **kwargs)
+        if self.logfile:
+            print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(
+                inspect.stack()[1][0]).__name__ + ' ' + sep.join(map(str, args)), **kwargs, file=self.logfile)
+
+    def warning(self, *args, sep='\n', **kwargs):
+        """
+        Log warning output like print does.
+        """
+        # print(*args, **kwargs)
+        print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(
+            inspect.stack()[1][0]).__name__ + ' ' + sep.join(map(str, args)), **kwargs)
+        if self.logfile:
+            print(datetime.now().isoformat(timespec='milliseconds') + ' ' + inspect.getmodule(
+                inspect.stack()[1][0]).__name__ + ' ' + sep.join(map(str, args)), **kwargs, file=self.logfile)
+
+    def info(self, *args, sep='\n', **kwargs):
+        """
+        Log normal info output like print does.
+        """
+        print(*args, **kwargs, sep=sep)
+        if self.logfile:
+            print(*args, **kwargs, sep=sep, file=self.logfile)
+
+    def debug(self, *args, sep='\n', **kwargs):
+        """
+        Log debug output like print does.
+        """
+        if DEBUG or __debug__:
+            # highly detailed output
+            print(datetime.now().isoformat(timespec='milliseconds') + ' '
+                  + inspect.getmodule(inspect.stack()[1][0]).__name__ + ' '
+                  + inspect.currentframe().f_back.f_code.co_name + '\n'
+                  + sep.join(map(str, args)), **kwargs)
+            if self.logfile:
+                print(datetime.now().isoformat(timespec='milliseconds') + ' '
+                      + inspect.getmodule(inspect.stack()[1][0]).__name__ + ' '
+                      + inspect.currentframe().f_back.f_code.co_name + '\n'
+                      + sep.join(map(str, args)), **kwargs, file=self.logfile)
 
 
 def dump_args(func):

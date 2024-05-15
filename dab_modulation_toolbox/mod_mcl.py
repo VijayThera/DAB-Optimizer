@@ -4,6 +4,24 @@
 # python >= 3.10
 
 """
+        DAB Modulation Toolbox
+        Copyright (C) 2023  strayedelectron
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as
+        published by the Free Software Foundation, either version 3 of the
+        License, or (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
+
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Calculation of the Modulation for a DAB (Dual Active Bridge).
 
 This module calculates the **MCL (Minimum Conduction Loss) Modulation** according to the Paper [IEEE][1].
@@ -23,7 +41,8 @@ import dab_datasets as ds
 from debug_tools import *
 
 # The dict keys this modulation will return
-MOD_KEYS = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2', 'mod_mcl_mask_tcm', 'mod_mcl_mask_otm', 'mod_mcl_mask_cpm']
+# MOD_KEYS = ['mod_mcl_phi', 'mod_mcl_tau1', 'mod_mcl_tau2', 'mod_mcl_mask_tcm', 'mod_mcl_mask_otm', 'mod_mcl_mask_cpm']
+MOD_KEYS = ['phi', 'tau1', 'tau2', 'mask_tcm', 'mask_otm', 'mask_cpm']
 
 
 @timeit
@@ -72,7 +91,7 @@ def calc_modulation(n, L_s, fs_nom, mesh_V1, mesh_V2, mesh_P) -> dict:
 
     # ***** Change in contrast to paper *****
     # Instead of fist checking the power limits for each modulation and only calculate each mod. partly,
-    # all the modulations are calculated first even for useless areas and we decide later which part is useful.
+    # all the modulations are calculated first even for useless areas, and we decide later which part is useful.
     # This should be faster and easier.
 
     # TCM: calculate phi, Da and Db with (21)
@@ -210,7 +229,6 @@ def _limit_Pn(Pn: np.ndarray, Pn_max: np.ndarray) -> np.ndarray:
     return Pn_limit
 
 
-@timeit
 def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     TCM (Triangle Conduction Mode) Modulation calculation, which will return phi, tau1 and tau2
@@ -237,7 +255,6 @@ def _calc_TCM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     return phi, Da, Db
 
 
-@timeit
 def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     OTM (Optimal Transition Mode) Modulation calculation, which will return phi, tau1 and tau2
@@ -310,7 +327,6 @@ def _calc_OTM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, 
     return phi, Da, Db
 
 
-@timeit
 def _calc_CPM(Van: np.ndarray, Vbn: np.ndarray, Pn: np.ndarray) -> [np.ndarray, np.ndarray, np.ndarray]:
     """
     CPM (Conventional Phaseshift Modulation) (egal to SPS Modulation) calculation, which will return phi, tau1 and tau2
@@ -366,7 +382,7 @@ def convert_phiF_to_phiM(phi, tau1, tau2):
 
 # ---------- MAIN ----------
 if __name__ == '__main__':
-    print("Start of Module CPM ...")
+    print("Start of Module MCL ...")
 
     dab_specs = ds.DAB_Specification()
     dab_specs.V1_nom = 700
@@ -403,7 +419,7 @@ if __name__ == '__main__':
                              dab_results.mesh_P)
 
     # Unpack the results
-    dab_results.append_result_dict(da_mod)
+    dab_results.append_result_dict(da_mod, name_pre='mod_mcl_')
 
     # print("mod_mcl_phi:", dab_results.mod_mcl_phi, sep='\n')
     # print("mod_mcl_tau1:", dab_results.mod_mcl_tau1, sep='\n')
@@ -419,15 +435,32 @@ if __name__ == '__main__':
 
     plt = plot_dab.Plot_DAB()
     # Plot all modulation angles
-    plt.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
-    plt.plot_modulation(plt.figs_axes[-1],
-                             dab_results.mesh_P[:, v1_middle, :],
-                             dab_results.mesh_V2[:, v1_middle, :],
-                             dab_results.mod_mcl_phi[:, v1_middle, :],
-                             dab_results.mod_mcl_tau1[:, v1_middle, :],
-                             dab_results.mod_mcl_tau2[:, v1_middle, :],
-                             mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
-                             mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :])
+    # plt.new_fig(nrows=1, ncols=3, tab_title='DAB Modulation Angles')
+    plt.plot_modulation(dab_results.mesh_P[:, v1_middle, :],
+                        dab_results.mesh_V2[:, v1_middle, :],
+                        dab_results.mod_mcl_phi[:, v1_middle, :],
+                        dab_results.mod_mcl_tau1[:, v1_middle, :],
+                        dab_results.mod_mcl_tau2[:, v1_middle, :],
+                        mask1=dab_results.mod_mcl_mask_tcm[:, v1_middle, :],
+                        mask2=dab_results.mod_mcl_mask_cpm[:, v1_middle, :],
+                        tab_title='DAB Modulation Angles')
+
+    # plt.new_fig(nrows=1, ncols=3, tab_title='MCL Modulation Angles')
+    # plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
+    #                      dab_results.mesh_V2[:, v1_middle, :],
+    #                      dab_results.mod_mcl_phi[:, v1_middle, :] / np.pi * 180,
+    #                      ax=plt.figs_axes[-1][1][0],
+    #                      xlabel=r'$P / \mathrm{W}$', ylabel=r'$U_2 / \mathrm{V}$', title=r'$\varphi / \mathrm{rad}$')
+    # plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
+    #                      dab_results.mesh_V2[:, v1_middle, :],
+    #                      dab_results.mod_mcl_tau1[:, v1_middle, :] / np.pi * 180,
+    #                      ax=plt.figs_axes[-1][1][1],
+    #                      xlabel=r'$P / \mathrm{W}$', ylabel=r'$U_2 / \mathrm{V}$', title=r'$\tau_1 / \mathrm{rad}$')
+    # plt.subplot_contourf(dab_results.mesh_P[:, v1_middle, :],
+    #                      dab_results.mesh_V2[:, v1_middle, :],
+    #                      dab_results.mod_mcl_tau2[:, v1_middle, :] / np.pi * 180,
+    #                      ax=plt.figs_axes[-1][1][2],
+    #                      xlabel=r'$P / \mathrm{W}$', ylabel=r'$U_2 / \mathrm{V}$', title=r'$\tau_2 / \mathrm{rad}$')
 
     # Plot animation for every V1 cross-section
     # for v1 in range(0, np.shape(dab_results.mesh_P)[1] - 1):
