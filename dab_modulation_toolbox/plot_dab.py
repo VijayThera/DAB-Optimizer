@@ -129,7 +129,7 @@ class Plot_DAB:
         if self.show_pw:
             self.pw.addPlot(title=tab_title, figure=fig)
 
-    def save_fig(self, fig, directory='~/MA-LEA/LEA/Workdir/dab_optimizer_output/', name='', comment='',
+    def save_fig(self, fig, directory=None, name='', comment='',
                  timestamp=True):
         """
         Saves the given fig as PNG and PDF
@@ -144,12 +144,21 @@ class Plot_DAB:
         if __debug__:
             comment = 'Debug ' + comment
 
+        if directory is None:
+            directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+            directory = os.path.join(directory, 'results')
+            if not os.path.exists(directory):
+                os.mkdir(directory)
+            directory = os.path.join(directory, 'zvs_mod')
+            if not os.path.exists(directory):
+                os.mkdir(directory)
+
         # Adding a timestamp to the filename if requested
         if timestamp:
             if name:
-                filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name
+                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name
             else:
-                filename = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         else:
             if name:
                 filename = name

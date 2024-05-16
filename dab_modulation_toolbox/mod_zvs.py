@@ -503,7 +503,7 @@ if __name__ == '__main__':
         int(dab.V2_step),
         int(dab.P_step))
 
-    plt = plot_dab.Plot_DAB(latex=True)
+    plt = plot_dab.Plot_DAB(latex=False)
 
     # Plot OptZVS mod results
     # Plot a cross-section through the V1 plane
