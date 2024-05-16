@@ -146,7 +146,7 @@ def plot_mod(dab, name, comment, directory, mod_keys, show_plot=True, logfile=st
     name += '_V1_{:.0f}V'.format(dab.mesh_V1[0, v1_middle, 0])
     comment += ' View plane: V_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0])
 
-    plt = plot_dab.Plot_DAB(latex=True, show=show_plot, figsize=(15, 5), fontsize=22)
+    plt = plot_dab.Plot_DAB(latex=False, show=show_plot, figsize=(15, 5), fontsize=22)
 
     for m in mod_keys:
         log.info('Plotting modulation: ' + m)
@@ -222,7 +222,7 @@ def plot_mod_sim(dab, name, comment, directory, mod_keys, show_plot=True, logfil
     name += '_V1_{:.0f}V'.format(dab.mesh_V1[0, v1_middle, 0])
     comment += ' View plane: V_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0])
 
-    plt = plot_dab.Plot_DAB(latex=True, show=show_plot, figsize=(15, 5), fontsize=22)
+    plt = plot_dab.Plot_DAB(latex=False, show=show_plot, figsize=(15, 5), fontsize=22)
 
     for m in mod_keys:
         log.info('Plotting modulation: ' + m)
@@ -480,7 +480,8 @@ def dab_mod_save():
 
     # Set file names
     directory = '../dab_modulation_output/'
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     name_extra = 'original-setup'
     name_L = 'Ls_{}uH__Lc1_{}uH__Lc2_{}uH'.format(int(dab.Ls * 1e6),
                                                   int(dab.Lc1 * 1e6),
@@ -504,7 +505,8 @@ def dab_mod_save():
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     # Logging
     log = db.log(filename=os.path.join(directory, 'dab_opt.log'))
 
@@ -650,7 +652,8 @@ def dab_sim_save():
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     # Logging
     log = db.log(filename=os.path.join(directory, 'dab_opt.log'))
 
@@ -889,7 +892,8 @@ def dab_sim_save_zvs():
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
     # Logging
     log = db.log(filename=os.path.join(directory, 'dab_opt.log'))
 
@@ -1073,7 +1077,8 @@ def dab_iterate_2D(sim=False, save_all=False, zvs_plot_limit=1, iter='Lc'):
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
     if not __debug__:
-        os.mkdir(directory)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
 
     ## Set sim defaults
     simfilepath = '../circuits/DAB_MOSFET_Modulation_v8.ipes'
@@ -1275,7 +1280,7 @@ def dab_iterate_2D(sim=False, save_all=False, zvs_plot_limit=1, iter='Lc'):
         ylabel = r'$t_\mathrm{dead2} \:/\: \mathrm{ns}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 4))
+    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 4))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot_contourf(x,
                          y,
@@ -1539,7 +1544,8 @@ def dab_iterate_1D(mod='zvs', sim=False, save_all=False, zvs_plot_limit=1, iter=
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
     if not __debug__:
-        os.mkdir(directory)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
 
     ## Set sim defaults
     simfilepath = '../circuits/DAB_MOSFET_Modulation_v8.ipes'
@@ -1762,7 +1768,7 @@ def dab_iterate_1D(mod='zvs', sim=False, save_all=False, zvs_plot_limit=1, iter=
         ylabel = r'$C_\mathrm{par} \:/\: \mathrm{pF}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 5))
+    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 5))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot(x,
                 results.iter_mod_zvs_coverage,
@@ -1868,7 +1874,8 @@ def post_iter_plot(dab_file, iter_file):
     directory = os.path.dirname(dab_file)
     # Create new dir for all files
     directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + 'Replot')
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
 
     # Retrieve some values
     if str(results.mesh_x_name) == 'Lc1':
@@ -1924,7 +1931,7 @@ def post_iter_plot(dab_file, iter_file):
         ylabel = r'$t_\mathrm{dead2} \:/\: \mathrm{ns}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 5))
+    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 5))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot_contourf(x,
                          y,
@@ -2057,7 +2064,8 @@ def post_simresults_plot(dab_file, mod_keys=('sps', 'mcl', 'zvs')):
 
     # Create new dir for all files
     directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + 'Replot')
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
 
     comment = str(dab._comment)
     plot_mod_sim(dab, name, comment, directory, mod_keys, False, 'dab_replot.log')
