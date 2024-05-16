@@ -480,6 +480,7 @@ def dab_mod_save():
 
     # Set file names
     directory = '../dab_modulation_output/'
+    os.mkdir(directory)
     name_extra = 'original-setup'
     name_L = 'Ls_{}uH__Lc1_{}uH__Lc2_{}uH'.format(int(dab.Ls * 1e6),
                                                   int(dab.Lc1 * 1e6),
@@ -499,7 +500,7 @@ def dab_mod_save():
 
     ## Saving
     # Create new dir for all files
-    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name_pre + name
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name_pre + name
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
@@ -645,7 +646,7 @@ def dab_sim_save():
 
     ## Saving
     # Create new dir for all files
-    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name_pre + name
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name_pre + name
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
@@ -884,7 +885,7 @@ def dab_sim_save_zvs():
 
     ## Saving
     # Create new dir for all files
-    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name_pre + name
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name_pre + name
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
@@ -1067,7 +1068,7 @@ def dab_iterate_2D(sim=False, save_all=False, zvs_plot_limit=1, iter='Lc'):
     fname = name_pre + name + '_ZVS-Coverage'
 
     # Create new dir for all files
-    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name_pre + name
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name_pre + name
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
@@ -1533,7 +1534,7 @@ def dab_iterate_1D(mod='zvs', sim=False, save_all=False, zvs_plot_limit=1, iter=
     fname = name_pre + name + '_ZVS-Coverage'
 
     # Create new dir for all files
-    directory = directory + datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + name_pre + name
+    directory = directory + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + name_pre + name
     directory = os.path.expanduser(directory)
     directory = os.path.expandvars(directory)
     directory = os.path.abspath(directory)
@@ -1866,7 +1867,7 @@ def post_iter_plot(dab_file, iter_file):
     # Set file/dir names
     directory = os.path.dirname(dab_file)
     # Create new dir for all files
-    directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + 'Replot')
+    directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + 'Replot')
     os.mkdir(directory)
 
     # Retrieve some values
@@ -2055,7 +2056,7 @@ def post_simresults_plot(dab_file, mod_keys=('sps', 'mcl', 'zvs')):
     name = file.split('_', 1)[1].split('_v', 1)[0]
 
     # Create new dir for all files
-    directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_" + 'Replot')
+    directory = os.path.join(directory, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + 'Replot')
     os.mkdir(directory)
 
     comment = str(dab._comment)
