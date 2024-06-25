@@ -1,0 +1,12 @@
+Starting SPS Modulation...
+Simulation ZVS coverage (Bridge 1, Bridge 2): 1.0 (1.0, 1.0)
+Simulation I_1-total-mean: 0.4932475254526905
+Starting MCL Modulation...
+Simulation ZVS coverage (Bridge 1, Bridge 2): 1.0 (1.0, 1.0)
+Simulation I_1-total-mean: 0.4986348716802748
+Starting ZVS Modulation...
+Calculation ZVS coverage: 0.74
+Simulation ZVS coverage (Bridge 1, Bridge 2): 0.74 (0.74, 0.74)
+Calculation ZVS coverage (non NaN): 1.0
+Simulation ZVS coverage (Bridge 1, Bridge 2) (non NaN): 1.0 (1.0, 1.0)
+Simulation I_1-total-mean: 0.4858252101951778

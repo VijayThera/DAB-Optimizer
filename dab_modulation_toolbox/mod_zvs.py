@@ -115,6 +115,10 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # FIXME Check if factor 2 is right here!
     Q_AB_req1 = _integrate_Coss(Coss1 * 2, V1)
     Q_AB_req2 = _integrate_Coss(Coss2 * 2, V2)
+    # print("============")
+    # debug(Coss1)
+    # print("============")
+
 
     # FIXME HACK for testing V1, V2 interchangeability
     # _V1 = V1
@@ -267,9 +271,9 @@ def _calc_interval_I(n, Ls, Lc1, Lc2_, ws: np.ndarray | int | float, Q_AB_req1: 
     # FIXME e3 gets negative for all values n*V2 < V1, why? Formula is checked against PhD.
     # TODO Maybe Ls is too small? Is that even possible? Error in Formula?
     e3 = n * (V2_ * (Lc2_ + Ls) - V1 * Lc2_)
-    if np.any(np.less(e3, 0)):
-        warning('Something is wrong. Formula e3 is negative and it should not!')
-        warning('Please check your DAB Params, probably you must check n or iterate L, Lc1, Lc2.')
+    # if np.any(np.less(e3, 0)):
+        # warning('Something is wrong. Formula e3 is negative and it should not!')
+        # warning('Please check your DAB Params, probably you must check n or iterate L, Lc1, Lc2.')
         # warning(V2_, Lc2_, V1, Ls)
 
     e4 = 2 * n * np.sqrt(Q_AB_req1 * Ls * np.power(ws, 2) * V1 * Lc1 * (Lc1 + Ls))
@@ -378,16 +382,17 @@ if __name__ == '__main__':
     dab.P_nom = 2000
     dab.P_step = 19 * 3
     # dab.P_step = 5
-    dab.n = 2.99
-    dab.Ls = 83e-6
+    dab.n = 4.2
+    dab.Ls = 85e-6
     # dab.Ls = 42e-6
     dab.Lm = 595e-6
     # dab.Lc1 = 25.62e-3
-    # dab.Lc1 = 800e-6
+    # dab.Lc2 = 800e-6
     # Assumption for tests
-    dab.Lc1 = 611e-6
-    dab.Lc2 = 611e-6
+    dab.Lc1 = 1*85e-6
+    dab.Lc2 = 1*85e-6
     dab.fs = 200000
+    # C_Par_flag = 1
     # Generate meshes
     dab.gen_meshes()
 
@@ -481,9 +486,14 @@ if __name__ == '__main__':
 
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
-    debug(da_mod)
-    debug('phi min:', np.nanmin(dab.mod_zvs_phi), 'phi max:', np.nanmax(dab.mod_zvs_phi))
+    # debug(da_mod)
+    print(np.size(dab.mod_zvs_phi), '-----------------------------------(dab.mod_zvs_phi)', dab.mod_zvs_phi)
+    # print(np.size(dab.mod_zvs_tau1),'-----------------------------------(dab.mod_zvs_tau1)', dab.mod_zvs_tau1)
+    # print(np.size(dab.mod_zvs_tau2),'-----------------------------------(dab.mod_zvs_tau2)', dab.mod_zvs_tau2)
+
+    # debug('phi min:', np.nanmin(dab.mod_zvs_phi), 'phi max:', np.nanmax(dab.mod_zvs_phi))
     zvs_coverage = np.count_nonzero(dab.mod_zvs_mask_zvs) / np.size(dab.mod_zvs_mask_zvs)
+    # print(dab.mod_zvs_mask_zvs)
     debug('zvs coverage:', zvs_coverage)
 
     ## Plotting
@@ -508,6 +518,7 @@ if __name__ == '__main__':
     # Plot OptZVS mod results
     # Plot a cross-section through the V1 plane
     v1_middle = int(np.shape(dab.mesh_P)[1] / 2)
+
     debug('View plane: U_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0]))
     # Plot all modulation angles
     # plt.new_fig(nrows=1, ncols=3,

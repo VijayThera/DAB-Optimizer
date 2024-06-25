@@ -2216,6 +2216,7 @@ def _main_dummy():
 # ---------- MAIN ----------
 if __name__ == '__main__':
     info("Start of DAB Optimizer ...")
+
     # Do some basic init like logging, args, etc.
     main_init()
 
@@ -2223,5 +2224,5 @@ if __name__ == '__main__':
     dab_mod_save()
 
     # Generate simulation data
-    # dab_sim_save()
+    dab_sim_save()
     # dab_sim_save_zvs()
