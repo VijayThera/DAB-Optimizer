@@ -561,7 +561,7 @@ def proceed_study(study_name: str, number_trials: int) -> None:
     :type number_trials: int
     """
     # Define the storage path based on the storage type
-    storage_path = f"sqlite:///study_{study_name}.sqlite3"
+    storage_path = f"sqlite:///../results/study_{study_name}.sqlite3"
 
     # Set logging verbosity to show only errors
     optuna.logging.set_verbosity(optuna.logging.ERROR)
@@ -623,7 +623,8 @@ def proceed_study(study_name: str, number_trials: int) -> None:
 # ---------- MAIN ----------
 if __name__ == '__main__':
     print("Start.........")
-    proceed_study(study_name="example_study", number_trials=5000)
+    studyname = datetime.now().strftime("%d%m")
+    proceed_study(study_name=studyname, number_trials=5)
 
     # optimal_zvs_coverage()
     # find_optimal_zvs_coverage(690, 175, 2200)
