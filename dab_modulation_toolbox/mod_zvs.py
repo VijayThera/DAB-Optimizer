@@ -363,8 +363,6 @@ def _calc_interval_III(n, Ls, Lc1, Lc2_, ws: np.ndarray | int | float, Q_AB_req1
 if __name__ == '__main__':
     print("Start of Module ZVS ...")
 
-    import math
-
     ## Normal DAB
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
@@ -376,23 +374,16 @@ if __name__ == '__main__':
     dab.V2_min = 175
     dab.V2_max = 295
     dab.V2_step = 25 * 3
-    # dab.V2_step = 4
-    dab.P_min = -2200
+    dab.P_min = -2000
     dab.P_max = 2200
     dab.P_nom = 2000
     dab.P_step = 19 * 3
-    # dab.P_step = 5
     dab.n = 4.2
-    dab.Ls = 85e-6
-    # dab.Ls = 42e-6
+    dab.Ls = 124.7e-6
     dab.Lm = 595e-6
-    # dab.Lc1 = 25.62e-3
-    # dab.Lc2 = 800e-6
-    # Assumption for tests
-    dab.Lc1 = 1*85e-6
-    dab.Lc2 = 1*85e-6
+    dab.Lc1 = 674.8e-6
+    dab.Lc2 = 37.9e-6
     dab.fs = 200000
-    # C_Par_flag = 1
     # Generate meshes
     dab.gen_meshes()
 
@@ -487,7 +478,7 @@ if __name__ == '__main__':
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
     # debug(da_mod)
-    print(np.size(dab.mod_zvs_phi), '-----------------------------------(dab.mod_zvs_phi)', dab.mod_zvs_phi)
+    # print(np.size(dab.mod_zvs_phi), '-----------------------------------(dab.mod_zvs_phi)', dab.mod_zvs_phi)
     # print(np.size(dab.mod_zvs_tau1),'-----------------------------------(dab.mod_zvs_tau1)', dab.mod_zvs_tau1)
     # print(np.size(dab.mod_zvs_tau2),'-----------------------------------(dab.mod_zvs_tau2)', dab.mod_zvs_tau2)
 
