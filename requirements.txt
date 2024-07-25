@@ -1,4 +1,4 @@
-numpy
+numpy~=1.26.4
 #leapythontoolbox~=0.1.0
 # have to do manually: pip install -e ~/git/lea_python_toolbox/
 PyQt5~=5.15.7
@@ -6,6 +6,8 @@ matplotlib~=3.6.2
 dotmap~=1.3.30
 setuptools~=63.2.0
 tqdm~=4.64.1
-serial
-pandas
-pygeckocircuits2
+serial~=0.0.97
+pandas~=2.2.2
+pygeckocircuits2~=0.0.2
+optuna~=3.6.1
+plotly~=5.22.0
