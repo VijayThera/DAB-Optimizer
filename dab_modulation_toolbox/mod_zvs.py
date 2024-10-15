@@ -131,6 +131,8 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # all the modulations are calculated first even for useless areas, and we decide later which part is useful.
     # This should be faster and easier.
 
+    print(f'{n=}\n{Ls=}\n{Lc1=}\n{Lc2_=}\n{ws=}\n{Q_AB_req1=}\n{Q_AB_req2=}\n{V1=}\n{V2_=}\n{I1=}')
+
     # Int. I (mode 2): calculate phi, tau1 and tau2
     phi_I, tau1_I, tau2_I = _calc_interval_I(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
 
@@ -204,6 +206,9 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     ## Recalculate phi for negative power
     phi_nP = - (tau1 + phi - tau2)
     phi[_negative_power_mask] = phi_nP[_negative_power_mask]
+
+    print(f'{phi_I=}\n{tau1_I=}\n{tau2_I=}\n{phi_II=}\n{tau1_II=}\n{tau2_II=}\n{phi_III=}\n{tau1_III=}\n{tau2_III=}')
+    print(f'{phi=}\n{tau1=}\n{tau2=}')
 
     # Init return dict
     da_mod_results = dict()
@@ -367,22 +372,22 @@ if __name__ == '__main__':
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
     dab.V1_nom = 700
-    dab.V1_min = 600
-    dab.V1_max = 800
-    dab.V1_step = 3
+    dab.V1_min = 690
+    dab.V1_max = 710
+    dab.V1_step = 4#3
     dab.V2_nom = 235
     dab.V2_min = 175
     dab.V2_max = 295
-    dab.V2_step = 25 * 3
-    dab.P_min = -2000
+    dab.V2_step = 4#25 * 3
+    dab.P_min = 0#-2000
     dab.P_max = 2200
     dab.P_nom = 2000
-    dab.P_step = 19 * 3
+    dab.P_step = 4#19 * 3
     dab.n = 4.2
-    dab.Ls = 124.7e-6
+    dab.Ls = 120e-6#122e-6
     dab.Lm = 595e-6
-    dab.Lc1 = 674.8e-6
-    dab.Lc2 = 37.9e-6
+    dab.Lc1 = 1e10#674.8e-6
+    dab.Lc2 = 1e10#37.9e-6
     dab.fs = 200000
     # Generate meshes
     dab.gen_meshes()
@@ -504,7 +509,7 @@ if __name__ == '__main__':
         int(dab.V2_step),
         int(dab.P_step))
 
-    plt = plot_dab.Plot_DAB(latex=False)
+    plt = plot_dab.Plot_DAB(latex=True)
 
     # Plot OptZVS mod results
     # Plot a cross-section through the V1 plane

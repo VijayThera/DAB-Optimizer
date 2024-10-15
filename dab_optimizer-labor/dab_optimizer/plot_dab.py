@@ -18,7 +18,7 @@ class Plot_DAB:
     pw: plotWindow
     figs_axes: list
 
-    def __init__(self, latex=False, window_title: str = 'DAB Plots', figsize=(10, 5)):
+    def __init__(self, latex=True, window_title: str = 'DAB Plots', figsize=(10, 5)):
         """
         Create the object with default settings for all further plots
 

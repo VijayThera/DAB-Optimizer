@@ -14,7 +14,7 @@ MOD_KEYS = ['phi', 'tau1', 'tau2', 'mask_zvs', 'mask_Im2', 'mask_IIm2',
 
 
 def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.ndarray, Coss2: np.ndarray,
-                    V1: np.ndarray, V2: np.ndarray, P: np.ndarray) -> dict:
+                    V1: np.ndarray, V2: np.ndarray, P: np.ndarray, Gecko_validation) -> dict:
     """
     OptZVS (Optimal ZVS) Modulation calculation, which will return phi, tau1 and tau2
 
@@ -74,7 +74,6 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # Instead of fist checking the limits for each modulation and only calculate each mod. partly,
     # all the modulations are calculated first even for useless areas, and we decide later which part is useful.
     # This should be faster and easier.
-
     # Int. I (mode 2): calculate phi, tau1 and tau2
     phi_I, tau1_I, tau2_I = mod_zvs._calc_interval_I(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
 
@@ -273,39 +272,82 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # # mode = 1
     # # mode 1
     # debug('Ls', Ls, 'Lc1', Lc1, 'Lc2', Lc2, V1, V2)
-    if tau2_m1 >= phi_m1 >= (np.pi - tau1_m1):
-        #     if P < 0:
-        #         mode = -1
-        #     if P >= 0:
-        mode = 1
-        # debug('phi_m1:', phi_m1, 'tau1_m1:', tau1_m1, 'tau2_m1:', tau2_m1)
-        # IL_rms calculation
-        I_L_rms_m1p, x_L_m1p, y_L_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m1, tau1_m1, tau2_m1)
-        # debug('y_L_m1p', y_L_m1p)
-        # ILc1_rms calculation
-        I_Lc1_rms_m1p, x_Lc1_m1p, y_Lc1_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m1, tau1_m1, tau2_m1)
-        # debug('y_Lc1_m1p', y_Lc1_m1p)
-        # ILc2_rms calculation
-        I_Lc2_rms_m1p, x_Lc2_m1p, y_Lc2_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m1, tau1_m1, tau2_m1)
-        # debug('y_Lc2_m1p', y_Lc2_m1p)
-        # Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m1.item(), tau1_m1.item(), tau2_m1.item(), y_L_m1p.flatten()[0])
-        Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1.item(), V2.item(), P.item(), mode)
 
-    # # mode 2
-    if 0 >= phi_m2 >= (tau2_m2 - tau1_m2):
-        mode = 2
-        # debug('phi_m2:', phi_m2, 'tau1_m2:', tau1_m2, 'tau2_m2:', tau2_m2)
-        # IL_rms calculation
-        I_L_rms_m2, x_L_m2, y_L_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m2, tau1_m2, tau2_m2)
-        # debug('y_L_m2', y_L_m2)
-        # ILc1_rms calculation
-        I_Lc1_rms_m2, x_Lc1_m2, y_Lc1_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m2, tau1_m2, tau2_m2)
-        # debug('y_Lc1_m2', y_Lc1_m2)
-        # ILc2_rms calculation
-        I_Lc2_rms_m2, x_Lc2_m2, y_Lc2_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m2, tau1_m2, tau2_m2)
-        # debug('y_Lc2_m2', y_Lc2_m2)
-        # Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m2.item(), tau1_m2.item(), tau2_m2.item(), y_L_m2.flatten()[0])
-        Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1.item(), V2.item(), P.item(), mode)
+    # # IL_rms calculation
+    # I_L_rms_m1n, x_L_m1n, y_L_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, -1, V1, V2,
+    #                                                 phi_m1_n, tau1_m1_n, tau2_m1_n)
+    #
+    # # ILc1_rms calculation
+    # I_Lc1_rms_m1n, x_Lc1_m1n, y_Lc1_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, -1, V1, V2,
+    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
+    #
+    # # ILc2_rms calculation
+    # I_Lc2_rms_m1n, x_Lc2_m1n, y_Lc2_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, -1, V1, V2,
+    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
+
+    # Ilstart = np.nan_to_num(y_L_m1p, 0) + np.nan_to_num(y_L_m2, 0) #+ np.nan_to_num(y_L_m1n, 0)
+    # Irms_Calc.Irms_validation_Gecko(V1[0][0][0], V2[0][0][0], n, Ls, Lc1, Lc2, phi[0][0][0], tau1[0][0][0], tau2[0][0][0], Ilstart[0][0][0][0])
+
+    # if mode == -1:
+    #     print('mode:', mode)
+    #     Irms_Calc.plot_Irms(x_L_m1n, y_L_m1n, x_Lc1_m1n, y_Lc1_m1n, x_Lc2_m1n, y_Lc2_m1n, V1[0][0][0], V2[0][0][0],
+    #                         P[0][0][0], mode)
+    # if mode == 1:
+    #     print('mode:', mode)
+    #     Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1[0][0][0], V2[0][0][0],
+    #                         P[0][0][0], mode)
+    # if mode == 2:
+    #     print('mode:', mode)
+    #     Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1[0][0][0], V2[0][0][0],
+    #                         P[0][0][0], mode)
+    #===================================================
+    # if()
+    # I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
+    # print(f'I_cost:{I_cost}')
+    if Gecko_validation:
+        if tau2 >= phi >= (np.pi - tau1):
+            #     if P < 0:
+            #         mode = -1
+            #     if P >= 0:
+            mode = 1
+            # debug('phi_m1:', phi_m1, 'tau1_m1:', tau1_m1, 'tau2_m1:', tau2_m1)
+            # IL_rms calculation
+            I_L_rms_m1p, x_L_m1p, y_L_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m1, tau1_m1,
+                                                            tau2_m1)
+            # debug('y_L_m1p', y_L_m1p)
+            # ILc1_rms calculation
+            I_Lc1_rms_m1p, x_Lc1_m1p, y_Lc1_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m1, tau1_m1,
+                                                                  tau2_m1)
+            # debug('y_Lc1_m1p', y_Lc1_m1p)
+            # ILc2_rms calculation
+            I_Lc2_rms_m1p, x_Lc2_m1p, y_Lc2_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m1, tau1_m1,
+                                                                  tau2_m1)
+            # debug('y_Lc2_m1p', y_Lc2_m1p)
+            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m1.item(), tau1_m1.item(),
+                                            tau2_m1.item(), y_L_m1p.flatten()[0])
+            Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1.item(), V2.item(),
+                                P.item(), mode)
+
+        # # mode 2
+        if 0 >= phi >= (tau2 - tau1):
+            mode = 2
+            # debug('phi_m2:', phi_m2, 'tau1_m2:', tau1_m2, 'tau2_m2:', tau2_m2)
+            # IL_rms calculation
+            I_L_rms_m2, x_L_m2, y_L_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m2, tau1_m2, tau2_m2)
+            # debug('y_L_m2', y_L_m2)
+            # ILc1_rms calculation
+            I_Lc1_rms_m2, x_Lc1_m2, y_Lc1_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m2, tau1_m2,
+                                                               tau2_m2)
+            # debug('y_Lc1_m2', y_Lc1_m2)
+            # ILc2_rms calculation
+            I_Lc2_rms_m2, x_Lc2_m2, y_Lc2_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m2, tau1_m2,
+                                                               tau2_m2)
+            # debug('y_Lc2_m2', y_Lc2_m2)
+            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m2.item(), tau1_m2.item(),
+                                            tau2_m2.item(), y_L_m2.flatten()[0])
+            Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1.item(), V2.item(), P.item(),
+                                mode)
+
 
     # # IL_rms calculation
     # I_L_rms_m1n, x_L_m1n, y_L_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, -1, V1, V2,
@@ -339,6 +381,9 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # cost function I_HF1^2 + I_HF2^2
 
     I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
+    print(f'{I_cost=}')
+
+    # print(f'{V1}\n{V2}\n{P}\n{phi=}\n{tau1=}\n{tau2=}')
 
     # Init return dict
     da_mod_results = dict()
@@ -366,19 +411,19 @@ def objective(trial):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
 
-    dab.V1_min = 690
-    dab.V1_nom = 700
-    dab.V1_max = 710
-    dab.V1_step = 5
+    dab.V1_min = 60
+    dab.V1_nom = 60
+    dab.V1_max = 60
+    dab.V1_step = 1
 
-    dab.V2_min = 175
-    dab.V2_nom = 235
-    dab.V2_max = 295
-    dab.V2_step = 5
+    dab.V2_min = 15
+    dab.V2_nom = 15
+    dab.V2_max = 15
+    dab.V2_step = 1
 
     dab.P_min = 0
-    dab.P_nom = 2000
-    dab.P_max = 2200
+    dab.P_nom = 30
+    dab.P_max = 60
     dab.P_step = 5
 
     dab.fs = 200000
@@ -395,10 +440,22 @@ def objective(trial):
     csv_file = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     csv_file = os.path.join(csv_file, 'Coss_files', f'Coss_{mosfet2}.csv')
     dab.import_Coss(csv_file, mosfet2)
-    dab.Ls = trial.suggest_float("dab.Ls", 120e-6, 125e-6)
-    dab.n = trial.suggest_float("dab.n", 4.2, 4.2)
-    dab.Lc1 = trial.suggest_float("dab.Lc1", 120e-7, 120e-4)
-    dab.Lc2 = trial.suggest_float("dab.Lc2", 120e-7, 120e-4)
+
+    # dab.Ls = trial.suggest_float("dab.Ls", 120e-6, 125e-6)
+    # dab.n = trial.suggest_float("dab.n", 4.2, 4.2)
+    # dab.Lc1 = trial.suggest_float("dab.Lc1", 120e-7, 120e-4)
+    # dab.Lc2 = trial.suggest_float("dab.Lc2", 120e-7, 120e-4)
+
+    # dab.n = 4.178
+    # dab.Ls = 115.6e-6
+    # dab.Lc1 = 619e-6
+    # dab.Lc2 = 639.4e-6 / (dab.n ** 2)
+
+    dab.n = 4.2
+    dab.Ls = 120e-6
+    dab.Lc1 = 593e-6
+    dab.Lc2 = 680e-6 / (dab.n ** 2)
+
     da_mod = calc_modulation(dab.n,
                              dab.Ls,
                              dab.Lc1,
@@ -408,7 +465,7 @@ def objective(trial):
                              dab['coss_' + mosfet2],
                              dab.mesh_V1,
                              dab.mesh_V2,
-                             dab.mesh_P)
+                             dab.mesh_P, False)
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
     zvs_coverage = np.count_nonzero(dab.mod_zvs_mask_zvs) / np.size(dab.mod_zvs_mask_zvs)
@@ -420,6 +477,8 @@ def objective(trial):
     factored_zvs_coverage = 100 * zvs_coverage
     factored_I_cost = 1 * I_cost
 
+    print(f'{factored_I_cost=}')
+
     # # Store the original zvs_coverage as a user attribute
     # trial.set_user_attr("original_zvs_coverage", zvs_coverage)
     # # Convert I_Mean to list before setting it as a user attribute
@@ -428,7 +487,7 @@ def objective(trial):
     return factored_zvs_coverage, factored_I_cost
 
 
-def find_optimal_zvs_coverage(x, y, z):
+def Single_point_validation(x, y, z):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
     dab.V1_nom = x
@@ -439,7 +498,6 @@ def find_optimal_zvs_coverage(x, y, z):
     dab.V2_min = y
     dab.V2_max = y
     dab.V2_step = 1
-    # dab.V2_step = 4
     dab.P_min = z
     dab.P_max = z
     dab.P_nom = z
@@ -447,10 +505,15 @@ def find_optimal_zvs_coverage(x, y, z):
     dab.fs = 200000
     dab.Lm = 595e-6
 
-    dab.Ls = 125e-6
-    dab.n = 4.2
-    dab.Lc1 = 675e-6
-    dab.Lc2 = 38e-6
+    dab.n = 4.178
+    dab.Ls = 115.6e-6
+    dab.Lc1 = 619e-6
+    dab.Lc2 = 639.4e-6 / (dab.n ** 2)
+
+    # dab.Ls = 125.40e-6
+    # dab.n = 4.2
+    # dab.Lc1 = 657.1e-6
+    # dab.Lc2 = 648.57e-6 / (4.2 ** 2)
 
     # Generate meshes
     dab.gen_meshes()
@@ -479,14 +542,15 @@ def find_optimal_zvs_coverage(x, y, z):
                              dab['coss_' + mosfet2],
                              dab.mesh_V1,
                              dab.mesh_V2,
-                             dab.mesh_P)
+                             dab.mesh_P,
+                             True)
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
     # debug(dab.mod_zvs_phi)
     zvs_coverage = np.count_nonzero(dab.mod_zvs_mask_zvs) / np.size(dab.mod_zvs_mask_zvs)
-    # print(f'n: {dab.n}, Lc1: {dab.Lc1}, Lc2: {dab.Lc2}, zvs_coverage: {zvs_coverage}')
-    Mean = dab.mod_zvs_I_rms_cost
-    print(f'I_cost: {Mean}')
+    print(f'zvs_coverage: {zvs_coverage}')
+    # Mean = dab.mod_zvs_I_rms_cost
+    # print(f'I_cost: {Mean}')
     # return dab.mod_zvs_error
 
 
@@ -621,24 +685,36 @@ def proceed_study(study_name: str, number_trials: int) -> None:
 # result of 200k trails:
 # Ls = 124.7e-6 / Lc1 = 674.8e-6 / Lc2 = 37.9e-6 -> Lc2_ = 668.5e-6
 # at trail number: 93393 / ZVS coverage = 100 / I_cost = 79.6
+
+# final FEM results
+# Lc1 = 657.1e-6
+# Ls = 125.40e-6
+# Lc2_ = 648.57e-6
 #===================================
 # ---------- MAIN ----------
 if __name__ == '__main__':
     print("Start.........")
+    Single_point_validation(690, 295, 2200)
+    # objective(1)
+
     # studyname = datetime.now().strftime("%d%m")
     # proceed_study(study_name=studyname, number_trials=500)
 
     # optimal_zvs_coverage()
-    # find_optimal_zvs_coverage(690, 175, 2200)
 
     # Fixed value for v1
     #Irms_Calc.Irms_validation_Gecko(710, 250, 4, 120e-6, 670e-6, 40e-6, 1.6, 0.7, 0.5, 1.5)
-    find_optimal_zvs_coverage(700, 235, 2200)
+    # Single_point_validation(700, 235, 2200)
     # v1 = 700  # [690, 700, 710]
     # v2_values = [175, 235, 295]
     # for v2 in v2_values:
     #     for p in range(200, 2201, 500):
-    #         find_optimal_zvs_coverage(v1, v2, p)
+    #         Single_point_validation(v1, v2, p)
+    # database_url = 'file:///C:/Users/vijay/Desktop/UPB/Thesis/dab_optimizer/results/optuna/Pareto_Front__Trials-5000__07-18__07-13.html'
+    # loaded_study = optuna.create_study(study_name=studyname, storage=database_url, load_if_exists=True)
+    # df = loaded_study.trials_dataframe()
+    # df.to_csv(f'{studyname}.csv')
+
     #=========================================================================
     # # Number of trials to run
     # number_of_trials = 3000
@@ -799,7 +875,7 @@ if __name__ == '__main__':
     #     # Iterate over different power values
     #     for p in range(200, 2201, 500):
     #         # Calculate error for the current combination of v1, v2, and p
-    #         error = find_optimal_zvs_coverage(v1, v2, p)
+    #         error = Single_point_validation(v1, v2, p)
     #         errors.append(error)
     #         powers.append(p)
     #

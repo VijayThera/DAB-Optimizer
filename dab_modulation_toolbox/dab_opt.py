@@ -146,7 +146,7 @@ def plot_mod(dab, name, comment, directory, mod_keys, show_plot=True, logfile=st
     name += '_V1_{:.0f}V'.format(dab.mesh_V1[0, v1_middle, 0])
     comment += ' View plane: V_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0])
 
-    plt = plot_dab.Plot_DAB(latex=False, show=show_plot, figsize=(15, 5), fontsize=22)
+    plt = plot_dab.Plot_DAB(latex=True, show=show_plot, figsize=(15, 5), fontsize=22)
 
     for m in mod_keys:
         log.info('Plotting modulation: ' + m)
@@ -222,7 +222,7 @@ def plot_mod_sim(dab, name, comment, directory, mod_keys, show_plot=True, logfil
     name += '_V1_{:.0f}V'.format(dab.mesh_V1[0, v1_middle, 0])
     comment += ' View plane: V_1 = {:.1f}V'.format(dab.mesh_V1[0, v1_middle, 0])
 
-    plt = plot_dab.Plot_DAB(latex=False, show=show_plot, figsize=(15, 5), fontsize=22)
+    plt = plot_dab.Plot_DAB(latex=True, show=show_plot, figsize=(15, 5), fontsize=22)
 
     for m in mod_keys:
         log.info('Plotting modulation: ' + m)
@@ -1280,7 +1280,7 @@ def dab_iterate_2D(sim=False, save_all=False, zvs_plot_limit=1, iter='Lc'):
         ylabel = r'$t_\mathrm{dead2} \:/\: \mathrm{ns}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 4))
+    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 4))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot_contourf(x,
                          y,
@@ -1768,7 +1768,7 @@ def dab_iterate_1D(mod='zvs', sim=False, save_all=False, zvs_plot_limit=1, iter=
         ylabel = r'$C_\mathrm{par} \:/\: \mathrm{pF}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 5))
+    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 5))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot(x,
                 results.iter_mod_zvs_coverage,
@@ -1931,7 +1931,7 @@ def post_iter_plot(dab_file, iter_file):
         ylabel = r'$t_\mathrm{dead2} \:/\: \mathrm{ns}$'
 
     ## Plotting the zvs coverage
-    plt = plot_dab.Plot_DAB(latex=False, figsize=(5, 5))
+    plt = plot_dab.Plot_DAB(latex=True, figsize=(5, 5))
     plt.new_fig(nrows=1, ncols=1, sharex=False, sharey=False, tab_title='ZVS Coverage')
     plt.subplot_contourf(x,
                          y,

@@ -41,7 +41,7 @@ class Plot_DAB:
     pw: plotWindow
     figs_axes: list
 
-    def __init__(self, latex=False, window_title: str = 'DAB Plots', figsize=(12, 5), fontsize=16, show=True):
+    def __init__(self, latex=True, window_title: str = 'DAB Plots', figsize=(12, 5), fontsize=16, show=True):
         """
         Create the object with default settings for all further plots
 
@@ -799,7 +799,7 @@ class Plot_DAB:
 
 @timeit
 def plot_modulation(x, y, z1, z2, z3, title: str = '', mask1=None, mask2=None, mask3=None,
-                    maskZVS=None, Vnum=2, filename='Plot_title', latex=False):
+                    maskZVS=None, Vnum=2, filename='Plot_title', latex=True):
     """
     Plots three contourf plots with a shared colorbar.
 
