@@ -14,7 +14,7 @@ MOD_KEYS = ['phi', 'tau1', 'tau2', 'mask_zvs', 'mask_Im2', 'mask_IIm2',
 
 
 def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.ndarray, Coss2: np.ndarray,
-                    V1: np.ndarray, V2: np.ndarray, P: np.ndarray, Gecko_validation) -> dict:
+                    V1: np.ndarray, V2: np.ndarray, P: np.ndarray, Gecko_validation: bool) -> dict:
     """
     OptZVS (Optimal ZVS) Modulation calculation, which will return phi, tau1 and tau2
 
@@ -53,8 +53,8 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # Convert fs into omega_s
     ws = 2 * np.pi * fs
     # parasitic capacitance with copper blocks, TIM, and heatsink
-    C_Par1 = 6e-12
-    C_Par2 = 6e-12
+    C_Par1 = 42e-12 # 6e-12
+    C_Par2 = 42e-12 # 6e-12
     # 20% higher for safety margin
     C_total_1 = 1.2 * (Coss1 + C_Par1)
     C_total_2 = 1.2 * (Coss2 + C_Par2)
@@ -306,9 +306,6 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # print(f'I_cost:{I_cost}')
     if Gecko_validation:
         if tau2 >= phi >= (np.pi - tau1):
-            #     if P < 0:
-            #         mode = -1
-            #     if P >= 0:
             mode = 1
             # debug('phi_m1:', phi_m1, 'tau1_m1:', tau1_m1, 'tau2_m1:', tau2_m1)
             # IL_rms calculation
@@ -348,7 +345,6 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
             Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1.item(), V2.item(), P.item(),
                                 mode)
 
-
     # # IL_rms calculation
     # I_L_rms_m1n, x_L_m1n, y_L_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, -1, V1, V2,
     #                                                 phi_m1_n, tau1_m1_n, tau2_m1_n)
@@ -380,10 +376,19 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
 
     # cost function I_HF1^2 + I_HF2^2
 
-    I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
-    print(f'{I_cost=}')
+    # I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
+    # # print(f'{I_cost=}')
 
-    # print(f'{V1}\n{V2}\n{P}\n{phi=}\n{tau1=}\n{tau2=}')
+    # print(f'{phi*57.29}{tau1*57.29}{tau2*57.29}')
+
+    if tau2 >= phi >= (np.pi - tau1):
+        mode = 1
+    if 0 >= phi >= (tau2 - tau1):
+        mode = 2
+
+    if not (np.isnan(phi.flatten()[0]) or np.isnan(tau1.flatten()[0]) or np.isnan(tau2.flatten()[0])):
+        print(f'------------\nV1={V1.flatten()[0]} V, V2={V2.flatten()[0]} V, P={P.flatten()[0]} W, {mode=}')
+        print(f'{(phi.flatten()[0] * 57.29):.5f}    {(tau1.flatten()[0] * 57.29):.5f}    {(tau2.flatten()[0] * 57.29):.5f}')
 
     # Init return dict
     da_mod_results = dict()
@@ -397,13 +402,13 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     da_mod_results[MOD_KEYS[4]] = _Im2_mask
     da_mod_results[MOD_KEYS[5]] = _IIm2_mask
     da_mod_results[MOD_KEYS[6]] = _IIIm1_mask
-    ## ZVS coverage based on calculation
-    da_mod_results[MOD_KEYS[7]] = np.count_nonzero(zvs) / np.size(zvs)
-    ## ZVS coverage based on calculation
-    da_mod_results[MOD_KEYS[8]] = np.count_nonzero(zvs[~np.isnan(tau1)]) / np.size(zvs[~np.isnan(tau1)])
-    ## Irms
-    da_mod_results[MOD_KEYS[9]] = I_cost
-    # da_mod_results[MOD_KEYS[10]]= error
+    # ## ZVS coverage based on calculation
+    # da_mod_results[MOD_KEYS[7]] = np.count_nonzero(zvs) / np.size(zvs)
+    # ## ZVS coverage based on calculation
+    # da_mod_results[MOD_KEYS[8]] = np.count_nonzero(zvs[~np.isnan(tau1)]) / np.size(zvs[~np.isnan(tau1)])
+    # ## Irms
+    # da_mod_results[MOD_KEYS[9]] = I_cost
+    # # da_mod_results[MOD_KEYS[10]]= error
     return da_mod_results
 
 
@@ -411,20 +416,20 @@ def objective(trial):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
 
-    dab.V1_min = 60
-    dab.V1_nom = 60
-    dab.V1_max = 60
+    dab.V1_min = 70
+    dab.V1_nom = 70
+    dab.V1_max = 70
     dab.V1_step = 1
 
     dab.V2_min = 15
-    dab.V2_nom = 15
-    dab.V2_max = 15
-    dab.V2_step = 1
+    dab.V2_nom = 20
+    dab.V2_max = 30
+    dab.V2_step = 3
 
     dab.P_min = 0
-    dab.P_nom = 30
-    dab.P_max = 60
-    dab.P_step = 5
+    dab.P_nom = 15
+    dab.P_max = 30
+    dab.P_step = 3
 
     dab.fs = 200000
     # Generate meshes
@@ -487,7 +492,7 @@ def objective(trial):
     return factored_zvs_coverage, factored_I_cost
 
 
-def Single_point_validation(x, y, z):
+def Single_point_validation(x, y, z, gecko: bool):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
     dab.V1_nom = x
@@ -505,10 +510,10 @@ def Single_point_validation(x, y, z):
     dab.fs = 200000
     dab.Lm = 595e-6
 
-    dab.n = 4.178
-    dab.Ls = 115.6e-6
+    dab.n = 4.238
+    dab.Ls = 132.8e-6
     dab.Lc1 = 619e-6
-    dab.Lc2 = 639.4e-6 / (dab.n ** 2)
+    dab.Lc2 = 660.1e-6 / (dab.n ** 2)
 
     # dab.Ls = 125.40e-6
     # dab.n = 4.2
@@ -543,15 +548,15 @@ def Single_point_validation(x, y, z):
                              dab.mesh_V1,
                              dab.mesh_V2,
                              dab.mesh_P,
-                             True)
+                             gecko)
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
     # debug(dab.mod_zvs_phi)
     zvs_coverage = np.count_nonzero(dab.mod_zvs_mask_zvs) / np.size(dab.mod_zvs_mask_zvs)
-    print(f'zvs_coverage: {zvs_coverage}')
+    # print(f'zvs_coverage: {zvs_coverage}')
     # Mean = dab.mod_zvs_I_rms_cost
     # print(f'I_cost: {Mean}')
-    # return dab.mod_zvs_error
+    return zvs_coverage
 
 
 def optimal_zvs_coverage():
@@ -690,11 +695,29 @@ def proceed_study(study_name: str, number_trials: int) -> None:
 # Lc1 = 657.1e-6
 # Ls = 125.40e-6
 # Lc2_ = 648.57e-6
+
+# old transformer -- measurement results
+# n = 4.178
+# Ls = 115.6e-6
+# Lc1 = 619e-6
+# Lc2 = 639.4e-6
+
+# new transformer -- measurement results
+# n = 4.238
+# Ls = 132.8e-6
+# Lc1 = 619e-6
+# Lc2 = 660.1e-6
+
 #===================================
 # ---------- MAIN ----------
 if __name__ == '__main__':
     print("Start.........")
-    Single_point_validation(690, 295, 2200)
+
+    # # for v2 in range(20, 120, 10):
+    for p in range(900, 2000, 200):
+        Single_point_validation(700, 200, p, False)
+
+    # Single_point_validation(700, 200, 900, True)
     # objective(1)
 
     # studyname = datetime.now().strftime("%d%m")

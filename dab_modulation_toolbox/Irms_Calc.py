@@ -127,7 +127,7 @@ def IrmsU(n, Ls, Lc1, Lc2, fs, IL, mode, V1, V2, phi, tau1, tau2) -> [np.ndarray
 
 
 def Irms_validation_Gecko(v1, v2, n, Ls, Lc1, Lc2, phi, tau1, tau2, i_Ls_start):  # -> float
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_v3 - Copy.ipes'
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_v8.ipes'
     timestep = 1e-9
     simtime = 10e-6
     timestep_pre = 10e-9
@@ -143,8 +143,8 @@ def Irms_validation_Gecko(v1, v2, n, Ls, Lc1, Lc2, phi, tau1, tau2, i_Ls_start):
                                         timestep_pre=timestep_pre)
     dab_converter.get_global_parameters(
         ['phi', 'tau1', 'tau2', 'v_dc1', 'v_dc2', 'f_s', 'Lc1', 'Lc2', 'Ls', 'i_Ls_start'])
-    params = {'n': 4.178, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 100e-9, 't_dead2': 100e-9,
-              'Ls': 115.6e-6, 'i_Ls_start': i_Ls_start, 'Lc1': 619e-6, 'Lc2': 639.4e-6 / (4.178 ** 2),
+    params = {'n': 4.238, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 100e-9, 't_dead2': 100e-9,
+              'Ls': 132.8e-6, 'i_Ls_start': i_Ls_start, 'Lc1': 619e-6, 'Lc2': 660.1e-6 / (4.238 ** 2),
               'phi': phi, 'tau1': tau1, 'tau2': tau2}
     # print(params)
     dab_converter.set_global_parameters(params)
@@ -381,14 +381,14 @@ def plot_Irms(x0: np.ndarray, y0: np.ndarray, x1: np.ndarray, y1: np.ndarray, x2
     fig.text(0.5, 0.95, textstr, fontsize=12, horizontalalignment='center', verticalalignment='top',
              family='STIXGeneral')
 
-    # Maximize the window to fullscreen
-    figManager = plt.get_current_fig_manager()
-    figManager.window.showMaximized()
-    plt.savefig(image_path_, bbox_inches='tight')
-    plt.show()
-    plt.close()
-    print(f"Plot saved as {image_path_}")
-    # # print(f'times:{x0}\ni_Ls: {y0}\ni_HF2: {y0 * 4.2 + y2}')
+    # # Maximize the window to fullscreen
+    # figManager = plt.get_current_fig_manager()
+    # figManager.window.showMaximized()
+    # plt.savefig(image_path_, bbox_inches='tight')
+    # plt.show()
+    # plt.close()
+    # print(f"Plot saved as {image_path_}")
+    # # # print(f'times:{x0}\ni_Ls: {y0}\ni_HF2: {y0 * 4.2 + y2}')
 
 
 # noinspection PyTypeChecker
@@ -586,9 +586,9 @@ def I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m
     # print(f'{np.nan_to_num(i_HF2_m1, 0)=}')
     # print(f'{np.nan_to_num(i_HF2_m2, 0)=}')
     i_HF1_rms_mat = np.nan_to_num(i_HF1_m1, 0) + np.nan_to_num(i_HF1_m2, 0)
-    print(f'{i_HF1_rms_mat=}')
+    # print(f'{i_HF1_rms_mat=}')
     i_HF2_rms_mat = n * (np.nan_to_num(i_HF2_m1, 0) + np.nan_to_num(i_HF2_m2, 0))
-    print(f'{i_HF2_rms_mat=}')
+    # print(f'{i_HF2_rms_mat=}')
 
     # i_HF1_rms_mat = np.nanmean(np.nan_to_num(i_HF1_m1, 0)+ np.nan_to_num(i_HF1_m2, 0))
     # i_HF2_rms_mat = n * np.nanmean(np.nan_to_num(i_HF2_m1, 0)+ np.nan_to_num(i_HF2_m2, 0))

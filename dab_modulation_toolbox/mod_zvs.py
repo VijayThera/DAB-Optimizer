@@ -111,14 +111,21 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     I1 = np.abs(P) / V1
     # Convert fs into omega_s
     ws = 2 * np.pi * fs
+
+    # parasitic capacitance with copper blocks, TIM, and heatsink
+    C_Par1 = 42e-12 # 6e-12
+    C_Par2 = 42e-12 # 6e-12
+    # 20% higher for safety margin
+    C_total_1 = 1.2 * (Coss1 + C_Par1)
+    C_total_2 = 1.2 * (Coss2 + C_Par2)
+
     # Calculate required Q for each voltage
     # FIXME Check if factor 2 is right here!
-    Q_AB_req1 = _integrate_Coss(Coss1 * 2, V1)
-    Q_AB_req2 = _integrate_Coss(Coss2 * 2, V2)
+    Q_AB_req1 = _integrate_Coss(C_total_1 * 2, V1)
+    Q_AB_req2 = _integrate_Coss(C_total_2 * 2, V2)
     # print("============")
     # debug(Coss1)
     # print("============")
-
 
     # FIXME HACK for testing V1, V2 interchangeability
     # _V1 = V1
@@ -277,9 +284,9 @@ def _calc_interval_I(n, Ls, Lc1, Lc2_, ws: np.ndarray | int | float, Q_AB_req1: 
     # TODO Maybe Ls is too small? Is that even possible? Error in Formula?
     e3 = n * (V2_ * (Lc2_ + Ls) - V1 * Lc2_)
     # if np.any(np.less(e3, 0)):
-        # warning('Something is wrong. Formula e3 is negative and it should not!')
-        # warning('Please check your DAB Params, probably you must check n or iterate L, Lc1, Lc2.')
-        # warning(V2_, Lc2_, V1, Ls)
+    # warning('Something is wrong. Formula e3 is negative and it should not!')
+    # warning('Please check your DAB Params, probably you must check n or iterate L, Lc1, Lc2.')
+    # warning(V2_, Lc2_, V1, Ls)
 
     e4 = 2 * n * np.sqrt(Q_AB_req1 * Ls * np.power(ws, 2) * V1 * Lc1 * (Lc1 + Ls))
 
@@ -374,20 +381,20 @@ if __name__ == '__main__':
     dab.V1_nom = 700
     dab.V1_min = 690
     dab.V1_max = 710
-    dab.V1_step = 4#3
+    dab.V1_step = 20
     dab.V2_nom = 235
     dab.V2_min = 175
     dab.V2_max = 295
-    dab.V2_step = 4#25 * 3
-    dab.P_min = 0#-2000
+    dab.V2_step = 25 * 3
+    dab.P_min = 0
     dab.P_max = 2200
     dab.P_nom = 2000
-    dab.P_step = 4#19 * 3
-    dab.n = 4.2
-    dab.Ls = 120e-6#122e-6
+    dab.P_step = 19 * 3
+    dab.n = 4.238
+    dab.Ls = 132.8e-6
+    dab.Lc1 = 619e-6
+    dab.Lc2 = 660.1e-6 / (dab.n ** 2)
     dab.Lm = 595e-6
-    dab.Lc1 = 1e10#674.8e-6
-    dab.Lc2 = 1e10#37.9e-6
     dab.fs = 200000
     # Generate meshes
     dab.gen_meshes()
