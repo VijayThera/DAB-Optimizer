@@ -143,7 +143,7 @@ def Irms_validation_Gecko(v1, v2, n, Ls, Lc1, Lc2, phi, tau1, tau2, i_Ls_start):
                                         timestep_pre=timestep_pre)
     dab_converter.get_global_parameters(
         ['phi', 'tau1', 'tau2', 'v_dc1', 'v_dc2', 'f_s', 'Lc1', 'Lc2', 'Ls', 'i_Ls_start'])
-    params = {'n': 4.238, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 100e-9, 't_dead2': 100e-9,
+    params = {'n': 4.238, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 150e-9, 't_dead2': 100e-9,
               'Ls': 132.8e-6, 'i_Ls_start': i_Ls_start, 'Lc1': 619e-6, 'Lc2': 660.1e-6 / (4.238 ** 2),
               'phi': phi, 'tau1': tau1, 'tau2': tau2}
     # print(params)

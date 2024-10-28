@@ -714,10 +714,10 @@ if __name__ == '__main__':
     print("Start.........")
 
     # # for v2 in range(20, 120, 10):
-    for p in range(900, 2000, 200):
-        Single_point_validation(700, 200, p, False)
+    for p in range(50, 200, 10):
+        Single_point_validation(120, 100, p, False)
 
-    # Single_point_validation(700, 200, 900, True)
+    Single_point_validation(120, 100, 130, True)
     # objective(1)
 
     # studyname = datetime.now().strftime("%d%m")
