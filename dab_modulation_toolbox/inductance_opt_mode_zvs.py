@@ -167,161 +167,24 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     tau1_m1 = np.where(tau1_m1 == 0, np.nan, tau1_m1)
     tau2_m1 = np.where(tau2_m1 == 0, np.nan, tau2_m1)
 
-    # # Masks for positive and negative powers
-    # _positive_power_mask = np.greater(phi, 0)
-    # _negative_power_mask = np.less_equal(phi, 0)
-
-    # # Mode 1 positive and negative powers
-    # phi_m1_p = np.where(_positive_power_mask, phi_m1, 0)
-    # tau1_m1_p = np.where(_positive_power_mask, tau1_m1, 0)
-    # tau2_m1_p = np.where(_positive_power_mask, tau2_m1, 0)
-    #
-    # phi_m1_n = np.where(_negative_power_mask, phi_m1, 0)
-    # tau1_m1_n = np.where(_negative_power_mask, tau1_m1, 0)
-    # tau2_m1_n = np.where(_negative_power_mask, tau2_m1, 0)
-
-    # # Mode 2 positive and negative powers
-    # phi_m2_p = np.where(_positive_power_mask, phi_m2, 0)
-    # tau1_m2_p = np.where(_positive_power_mask, tau1_m2, 0)
-    # tau2_m2_p = np.where(_positive_power_mask, tau2_m2, 0)
-    #
-    # phi_m2_n = np.where(_negative_power_mask, phi_m2, 0)
-    # tau1_m2_n = np.where(_negative_power_mask, tau1_m2, 0)
-    # tau2_m2_n = np.where(_negative_power_mask, tau2_m2, 0)
-
-    # Ensure phi < 0 for mode1 and mode2 (negative power only)
-    # phi_m1_p = np.where(phi_m1_p < 0, phi_m1_p, 0)
-    # phi_m1_n = np.where(phi_m1_n < 0, phi_m1_n, 0)
-    # phi_m2_p = np.where(phi_m2_p < 0, phi_m2_p, 0)
-    # phi_m2_n = np.where(phi_m2_n < 0, phi_m2_n, 0)
-
-    # Print Mode 1 positive and negative powers
-    # print("Mode 1 Positive Powers:")
-    # print("phi_m1_p:", phi_m1_p)
-    # print("tau1_m1_p:", tau1_m1_p)
-    # print("tau2_m1_p:", tau2_m1_p)
-
-    # print("\nMode 1 Negative Powers:")
-    # print("phi_m1_n:", phi_m1_n)
-    # print("tau1_m1_n:", tau1_m1_n)
-    # print("tau2_m1_n:", tau2_m1_n)
-
-    # Print Mode 2 positive and negative powers
-    # print("\nMode 2 Positive Powers:")
-    # print("phi_m2_p:", phi_m2_p)
-    # print("tau1_m2_p:", tau1_m2_p)
-    # print("tau2_m2_p:", tau2_m2_p)
-
-    # print("\nMode 2 Negative Powers:")
-    # print("phi_m2_n:", phi_m2_n)
-    # print("tau1_m2_n:", tau1_m2_n)
-    # print("tau2_m2_n:", tau2_m2_n)
-
-    # Irms_m1_mean = np.nanmean(np.nan_to_num(I_L_rms_m1, nan=0) +
-    #                           np.nan_to_num(I_Lc1_rms_m1, nan=0) +
-    #                           np.nan_to_num(I_Lc2_rms_m1, nan=0))
-
-    # Irms_m2_mean = np.nanmean(np.nan_to_num(I_L_rms_m2, nan=0) +
-    #                           np.nan_to_num(I_Lc1_rms_m2, nan=0) +
-    #                           np.nan_to_num(I_Lc2_rms_m2, nan=0))
-
-    # I_HF1 = np.nanmean(np.nan_to_num(I_L_rms_m1, nan=0) +
-    #                    np.nan_to_num(I_Lc1_rms_m1, nan=0) +
-    #                    np.nan_to_num(I_L_rms_m2, nan=0) +
-    #                    np.nan_to_num(I_Lc1_rms_m2, nan=0))
-
-    # I_HF2 = n * np.nanmean((np.nan_to_num(I_L_rms_m1, nan=0) +
-    #                         np.nan_to_num(I_L_rms_m2, nan=0)) -
-    #                        (np.nan_to_num(I_Lc2_rms_m1, nan=0) +
-    #                         np.nan_to_num(I_Lc2_rms_m1, nan=0)))
-
-    # Irms = np.nanmean(Irms_m1_mean + Irms_m2_mean)
-
-    # debug('phi', phi, 'tau1', tau1, 'tau2', tau2)
-
-    # I_cost = I_HF1 ** 2 + I_HF2 ** 2
-    # print(f'I_HF1:{I_HF1}A, I_HF2:{I_HF2}A')
-    # print(f'I_cost:{I_cost}')
-
-    # Irms_Calc.plot_Irms(x_L_m1, y_L_m1, x_Lc1_m1, y_Lc1_m1, x_Lc2_m1, y_Lc2_m1, V1[0][0][0], V2[0][0][0], P[0][0][0])
-
-    # Ilstart = np.nan_to_num(y_L_m1, 0) + np.nan_to_num(y_L_m2, 0)
-    #
-    # if (not np.isnan(V1[0][0][0]) and not np.isnan(V2[0][0][0]) and not np.isnan(phi[0][0][0]) and not
-    # np.isnan(tau1[0][0][0]) and not np.isnan(tau2[0][0][0]) and not np.isnan(Ilstart[0][0][0][0])):
-    #     Irms_Gecko = Irms_Calc.Irms_validation_Gecko(V1[0][0][0], V2[0][0][0], n, Ls, Lc1, Lc2,
-    #                                                  phi[0][0][0], tau1[0][0][0], tau2[0][0][0], Ilstart[0][0][0][0])
-    # else:
-    #     Irms_Gecko = 0
-    # # List of values
-    # values = [I_L_rms_m1, I_Lc1_rms_m1, I_Lc2_rms_m1, I_L_rms_m2, I_Lc1_rms_m2, I_Lc2_rms_m2]
-    #
-    # # Calculate the sum excluding NaN values
-    # Irms_Calculated = sum(value for value in values if not np.isnan(value))
-    # # Calculate the relative error
-    # relative_error = abs(Irms_Gecko - Irms_Calculated[0][0][0]) / Irms_Gecko
-    # # Convert the relative error to percentage
-    # error_percentage = relative_error * 100
-    #
-    # print('==========================================================')
-    # print(f'error: {error_percentage:.2f} %')
-
-    # if P < 0:
-    #     mode = -1
-    #     # print(f'mode:{mode}, P:{P}')
-    # # mode = 1
-    # # mode 1
-    # debug('Ls', Ls, 'Lc1', Lc1, 'Lc2', Lc2, V1, V2)
-
-    # # IL_rms calculation
-    # I_L_rms_m1n, x_L_m1n, y_L_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, -1, V1, V2,
-    #                                                 phi_m1_n, tau1_m1_n, tau2_m1_n)
-    #
-    # # ILc1_rms calculation
-    # I_Lc1_rms_m1n, x_Lc1_m1n, y_Lc1_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, -1, V1, V2,
-    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
-    #
-    # # ILc2_rms calculation
-    # I_Lc2_rms_m1n, x_Lc2_m1n, y_Lc2_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, -1, V1, V2,
-    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
-
-    # Ilstart = np.nan_to_num(y_L_m1p, 0) + np.nan_to_num(y_L_m2, 0) #+ np.nan_to_num(y_L_m1n, 0)
-    # Irms_Calc.Irms_validation_Gecko(V1[0][0][0], V2[0][0][0], n, Ls, Lc1, Lc2, phi[0][0][0], tau1[0][0][0], tau2[0][0][0], Ilstart[0][0][0][0])
-
-    # if mode == -1:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m1n, y_L_m1n, x_Lc1_m1n, y_Lc1_m1n, x_Lc2_m1n, y_Lc2_m1n, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    # if mode == 1:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    # if mode == 2:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    #===================================================
-    # if()
-    # I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
-    # print(f'I_cost:{I_cost}')
     if Gecko_validation:
         if tau2 >= phi >= (np.pi - tau1):
             mode = 1
             # debug('phi_m1:', phi_m1, 'tau1_m1:', tau1_m1, 'tau2_m1:', tau2_m1)
             # IL_rms calculation
-            I_L_rms_m1p, x_L_m1p, y_L_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m1, tau1_m1,
-                                                            tau2_m1)
+            I_L_rms_m1p, x_L_m1p, y_L_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi, tau1,
+                                                            tau2)
             # debug('y_L_m1p', y_L_m1p)
             # ILc1_rms calculation
-            I_Lc1_rms_m1p, x_Lc1_m1p, y_Lc1_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m1, tau1_m1,
-                                                                  tau2_m1)
+            I_Lc1_rms_m1p, x_Lc1_m1p, y_Lc1_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi, tau1,
+                                                                  tau2)
             # debug('y_Lc1_m1p', y_Lc1_m1p)
             # ILc2_rms calculation
-            I_Lc2_rms_m1p, x_Lc2_m1p, y_Lc2_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m1, tau1_m1,
-                                                                  tau2_m1)
+            I_Lc2_rms_m1p, x_Lc2_m1p, y_Lc2_m1p = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi, tau1,
+                                                                  tau2)
             # debug('y_Lc2_m1p', y_Lc2_m1p)
-            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m1.item(), tau1_m1.item(),
-                                            tau2_m1.item(), y_L_m1p.flatten()[0])
+            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi.item(), tau1.item(),
+                                            tau2.item(), y_L_m1p.flatten()[0])
             Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1.item(), V2.item(),
                                 P.item(), mode)
 
@@ -330,65 +193,40 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
             mode = 2
             # debug('phi_m2:', phi_m2, 'tau1_m2:', tau1_m2, 'tau2_m2:', tau2_m2)
             # IL_rms calculation
-            I_L_rms_m2, x_L_m2, y_L_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi_m2, tau1_m2, tau2_m2)
+            I_L_rms_m2, x_L_m2, y_L_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, mode, V1, V2, phi, tau1, tau2)
             # debug('y_L_m2', y_L_m2)
             # ILc1_rms calculation
-            I_Lc1_rms_m2, x_Lc1_m2, y_Lc1_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi_m2, tau1_m2,
-                                                               tau2_m2)
+            I_Lc1_rms_m2, x_Lc1_m2, y_Lc1_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, mode, V1, V2, phi, tau1,
+                                                               tau2)
             # debug('y_Lc1_m2', y_Lc1_m2)
             # ILc2_rms calculation
-            I_Lc2_rms_m2, x_Lc2_m2, y_Lc2_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi_m2, tau1_m2,
-                                                               tau2_m2)
+            I_Lc2_rms_m2, x_Lc2_m2, y_Lc2_m2 = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, mode, V1, V2, phi, tau1,
+                                                               tau2)
             # debug('y_Lc2_m2', y_Lc2_m2)
-            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi_m2.item(), tau1_m2.item(),
-                                            tau2_m2.item(), y_L_m2.flatten()[0])
+            Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi.item(), tau1.item(),
+                                            tau2.item(), y_L_m2.flatten()[0])
             Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1.item(), V2.item(), P.item(),
                                 mode)
 
-    # # IL_rms calculation
-    # I_L_rms_m1n, x_L_m1n, y_L_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 0, -1, V1, V2,
-    #                                                 phi_m1_n, tau1_m1_n, tau2_m1_n)
-    #
-    # # ILc1_rms calculation
-    # I_Lc1_rms_m1n, x_Lc1_m1n, y_Lc1_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 1, -1, V1, V2,
-    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
-    #
-    # # ILc2_rms calculation
-    # I_Lc2_rms_m1n, x_Lc2_m1n, y_Lc2_m1n = Irms_Calc.IrmsU(n, Ls, Lc1, Lc2, fs, 2, -1, V1, V2,
-    #                                                       phi_m1_n, tau1_m1_n, tau2_m1_n)
-
-    # Ilstart = np.nan_to_num(y_L_m1p, 0) + np.nan_to_num(y_L_m2, 0) #+ np.nan_to_num(y_L_m1n, 0)
-    # Irms_Calc.Irms_validation_Gecko(V1[0][0][0], V2[0][0][0], n, Ls, Lc1, Lc2, phi[0][0][0], tau1[0][0][0], tau2[0][0][0], Ilstart[0][0][0][0])
-
-    # if mode == -1:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m1n, y_L_m1n, x_Lc1_m1n, y_Lc1_m1n, x_Lc2_m1n, y_Lc2_m1n, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    # if mode == 1:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m1p, y_L_m1p, x_Lc1_m1p, y_Lc1_m1p, x_Lc2_m1p, y_Lc2_m1p, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    # if mode == 2:
-    #     print('mode:', mode)
-    #     Irms_Calc.plot_Irms(x_L_m2, y_L_m2, x_Lc1_m2, y_Lc1_m2, x_Lc2_m2, y_Lc2_m2, V1[0][0][0], V2[0][0][0],
-    #                         P[0][0][0], mode)
-    #===================================================
-
     # cost function I_HF1^2 + I_HF2^2
+    I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
+    # print(f'{I_cost=}')
 
-    # I_cost = Irms_Calc.I_cost(n, Ls, Lc1, Lc2, fs, V1, V2, phi_m1, tau1_m1, tau2_m1, phi_m2, tau1_m2, tau2_m2)
-    # # print(f'{I_cost=}')
+    # if Gecko_validation:
+    #     Irms_Calc.Irms_validation_Gecko(V1.item(), V2.item(), n, Ls, Lc1, Lc2, phi.item(), tau1.item(), tau2.item(), 0,
+    #                                     number)
 
-    # print(f'{phi*57.29}{tau1*57.29}{tau2*57.29}')
-
-    if tau2 >= phi >= (np.pi - tau1):
-        mode = 1
-    if 0 >= phi >= (tau2 - tau1):
-        mode = 2
-
-    if not (np.isnan(phi.flatten()[0]) or np.isnan(tau1.flatten()[0]) or np.isnan(tau2.flatten()[0])):
-        print(f'------------\nV1={V1.flatten()[0]} V, V2={V2.flatten()[0]} V, P={P.flatten()[0]} W, {mode=}')
-        print(f'{(phi.flatten()[0] * 57.29):.5f}    {(tau1.flatten()[0] * 57.29):.5f}    {(tau2.flatten()[0] * 57.29):.5f}')
+    # if tau2 >= phi >= (np.pi - tau1):
+    #     mode = 1
+    # if 0 >= phi >= (tau2 - tau1):
+    #     mode = 2
+    #
+    # if not (np.isnan(phi.flatten()[0]) or np.isnan(tau1.flatten()[0]) or np.isnan(tau2.flatten()[0])):
+    #     print(f'\nV1={V1.flatten()[0]} V, V2={V2.flatten()[0]} V, P={P.flatten()[0]} W, {mode=}')
+    #     print(
+    #         f'{(phi.flatten()[0] * 57.29):.5f}    {(tau1.flatten()[0] * 57.29):.5f}    {(tau2.flatten()[0] * 57.29):.5f}')
+    #     # print(f'{phi:}    {tau1:}    {tau2:}')
+    #     print('=================================================================================================')
 
     # Init return dict
     da_mod_results = dict()
@@ -402,13 +240,13 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     da_mod_results[MOD_KEYS[4]] = _Im2_mask
     da_mod_results[MOD_KEYS[5]] = _IIm2_mask
     da_mod_results[MOD_KEYS[6]] = _IIIm1_mask
-    # ## ZVS coverage based on calculation
-    # da_mod_results[MOD_KEYS[7]] = np.count_nonzero(zvs) / np.size(zvs)
-    # ## ZVS coverage based on calculation
-    # da_mod_results[MOD_KEYS[8]] = np.count_nonzero(zvs[~np.isnan(tau1)]) / np.size(zvs[~np.isnan(tau1)])
-    # ## Irms
-    # da_mod_results[MOD_KEYS[9]] = I_cost
-    # # da_mod_results[MOD_KEYS[10]]= error
+    ## ZVS coverage based on calculation
+    da_mod_results[MOD_KEYS[7]] = np.count_nonzero(zvs) / np.size(zvs)
+    ## ZVS coverage based on calculation
+    da_mod_results[MOD_KEYS[8]] = np.count_nonzero(zvs[~np.isnan(tau1)]) / np.size(zvs[~np.isnan(tau1)])
+    ## Irms
+    da_mod_results[MOD_KEYS[9]] = I_cost
+    # da_mod_results[MOD_KEYS[10]]= error
     return da_mod_results
 
 
@@ -416,20 +254,20 @@ def objective(trial):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
 
-    dab.V1_min = 70
-    dab.V1_nom = 70
-    dab.V1_max = 70
-    dab.V1_step = 1
+    dab.V1_min = 690
+    dab.V1_nom = 700
+    dab.V1_max = 710
+    dab.V1_step = 25
 
-    dab.V2_min = 15
-    dab.V2_nom = 20
-    dab.V2_max = 30
-    dab.V2_step = 3
+    dab.V2_min = 175
+    dab.V2_nom = 235
+    dab.V2_max = 295
+    dab.V2_step = 25
 
     dab.P_min = 0
-    dab.P_nom = 15
-    dab.P_max = 30
-    dab.P_step = 3
+    dab.P_nom = 2000
+    dab.P_max = 2200
+    dab.P_step = 50
 
     dab.fs = 200000
     # Generate meshes
@@ -446,20 +284,20 @@ def objective(trial):
     csv_file = os.path.join(csv_file, 'Coss_files', f'Coss_{mosfet2}.csv')
     dab.import_Coss(csv_file, mosfet2)
 
-    # dab.Ls = trial.suggest_float("dab.Ls", 120e-6, 125e-6)
-    # dab.n = trial.suggest_float("dab.n", 4.2, 4.2)
-    # dab.Lc1 = trial.suggest_float("dab.Lc1", 120e-7, 120e-4)
-    # dab.Lc2 = trial.suggest_float("dab.Lc2", 120e-7, 120e-4)
+    dab.Ls = trial.suggest_float("dab.Ls", 120e-6, 125e-6)
+    dab.n = trial.suggest_float("dab.n", 4.2, 4.2)
+    dab.Lc1 = trial.suggest_float("dab.Lc1", 120e-7, 120e-4)
+    dab.Lc2 = trial.suggest_float("dab.Lc2", 120e-7, 120e-4)
 
     # dab.n = 4.178
     # dab.Ls = 115.6e-6
     # dab.Lc1 = 619e-6
     # dab.Lc2 = 639.4e-6 / (dab.n ** 2)
 
-    dab.n = 4.2
-    dab.Ls = 120e-6
-    dab.Lc1 = 593e-6
-    dab.Lc2 = 680e-6 / (dab.n ** 2)
+    # dab.n = 4.2
+    # dab.Ls = 120e-6
+    # dab.Lc1 = 593e-6
+    # dab.Lc2 = 680e-6 / (dab.n ** 2)
 
     da_mod = calc_modulation(dab.n,
                              dab.Ls,
@@ -482,7 +320,7 @@ def objective(trial):
     factored_zvs_coverage = 100 * zvs_coverage
     factored_I_cost = 1 * I_cost
 
-    print(f'{factored_I_cost=}')
+    # print(f'{factored_I_cost=}')
 
     # # Store the original zvs_coverage as a user attribute
     # trial.set_user_attr("original_zvs_coverage", zvs_coverage)
@@ -492,7 +330,7 @@ def objective(trial):
     return factored_zvs_coverage, factored_I_cost
 
 
-def Single_point_validation(x, y, z, gecko: bool):
+def Single_point_validation(x, y, z, gecko: bool, number):
     # Set the basic DAB Specification
     dab = ds.DAB_Data()
     dab.V1_nom = x
@@ -510,10 +348,10 @@ def Single_point_validation(x, y, z, gecko: bool):
     dab.fs = 200000
     dab.Lm = 595e-6
 
-    dab.n = 4.238
-    dab.Ls = 132.8e-6
+    dab.n = 3.974
+    dab.Ls = 137.3e-6
     dab.Lc1 = 619e-6
-    dab.Lc2 = 660.1e-6 / (dab.n ** 2)
+    dab.Lc2 = 608.9e-6 / (dab.n ** 2)
 
     # dab.Ls = 125.40e-6
     # dab.n = 4.2
@@ -548,7 +386,7 @@ def Single_point_validation(x, y, z, gecko: bool):
                              dab.mesh_V1,
                              dab.mesh_V2,
                              dab.mesh_P,
-                             gecko)
+                             gecko, number)
     # Unpack the results
     dab.append_result_dict(da_mod, name_pre='mod_zvs_')
     # debug(dab.mod_zvs_phi)
@@ -670,20 +508,20 @@ def proceed_study(study_name: str, number_trials: int) -> None:
     save_dir = '../results/optuna'
     os.makedirs(save_dir, exist_ok=True)
 
-    # Combine directory and filename
-    file_path = os.path.join(save_dir, filename)
+    # # Combine directory and filename
+    # file_path = os.path.join(save_dir, filename)
+    #
+    # # Plot the Pareto front using the original values and save it to an HTML file
+    # fig = optuna.visualization.plot_pareto_front(
+    #     study_in_storage,
+    #     target_names=["zvs_coverage / %", "I_cost"])
+    #
+    # # Show and save the plot
+    # fig.show()
+    # fig.write_html(file_path)
 
-    # Plot the Pareto front using the original values and save it to an HTML file
-    fig = optuna.visualization.plot_pareto_front(
-        study_in_storage,
-        target_names=["zvs_coverage / %", "I_cost"])
-
-    # Show and save the plot
-    fig.show()
-    fig.write_html(file_path)
-
-    # Print the file path for reference
-    print('file_path:', file_path)
+    ## Print the file path for reference
+    # print('file_path:', file_path)
 
 
 #===================================
@@ -714,14 +552,90 @@ if __name__ == '__main__':
     print("Start.........")
 
     # # for v2 in range(20, 120, 10):
-    for p in range(50, 200, 10):
-        Single_point_validation(120, 100, p, False)
+    # for p in range(1000, 2200, 500):
+    #     Single_point_validation(700, 175, p, False)
 
-    Single_point_validation(120, 100, 130, True)
-    # objective(1)
+    # number = 1
+    # Single_point_validation(700, 175, 100, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 175, 500, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 175, 900, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 175, 1300, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 175, 1700, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 175, 2100, True, number)
+    # number = number + 1
+    #
+    # Single_point_validation(700, 205, 100, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 205, 500, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 205, 900, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 205, 1300, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 205, 1700, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 205, 2100, True, number)
+    # number = number + 1
+    #
+    # Single_point_validation(700, 235, 100, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 235, 500, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 235, 900, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 235, 1300, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 235, 1700, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 235, 2100, True, number)
+    # number = number + 1
+    #
+    # Single_point_validation(700, 265, 100, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 265, 500, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 265, 900, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 265, 1300, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 265, 1700, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 265, 2100, True, number)
+    # number = number + 1
+    #
+    # Single_point_validation(700, 295, 100, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 295, 500, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 295, 900, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 295, 1300, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 295, 1700, True, number)
+    # number = number + 1
+    # Single_point_validation(700, 295, 2100, True, number)
+    # number = number + 1
+
+    # working_directory = f"C:/Users/vijay/Desktop/UPB/Thesis/dab_optimizer/results"
+    # study_name = "13"
+    # #
+    # study = optuna.create_study(study_name=study_name,
+    #                             storage=f"sqlite:///{working_directory}/study_{study_name}.sqlite3",
+    #                             load_if_exists=True)
+    #
+    # fig = optuna.visualization.plot_pareto_front(study,
+    #                                              targets=lambda t: (t.values[0], t.values[1]),
+    #                                              target_names=["zvs_coverage / %", "I_cost"])
+    # fig.show()
 
     # studyname = datetime.now().strftime("%d%m")
-    # proceed_study(study_name=studyname, number_trials=500)
+    studyname = datetime.now().strftime("%d")
+    proceed_study(study_name=studyname, number_trials=5)
 
     # optimal_zvs_coverage()
 

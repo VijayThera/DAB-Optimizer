@@ -126,37 +126,79 @@ def IrmsU(n, Ls, Lc1, Lc2, fs, IL, mode, V1, V2, phi, tau1, tau2) -> [np.ndarray
     return I_rms, times, currents
 
 
-def Irms_validation_Gecko(v1, v2, n, Ls, Lc1, Lc2, phi, tau1, tau2, i_Ls_start):  # -> float
-    simfilepath = '../circuits/DAB_MOSFET_Modulation_v8.ipes'
-    timestep = 1e-9
+def Irms_validation_Gecko(v1, v2, n, Ls, Lc1, Lc2, phi, tau1, tau2, i_Ls_start, number):  # -> float
+
+    # Define the path to the Excel file
+    excel_file = "output_values.xlsx"
+
+    # Check if the file exists and load it if it does
+    if os.path.exists(excel_file):
+        # Load existing data
+        df = pd.read_excel(excel_file)
+    else:
+        # Initialize an empty DataFrame if the file does not exist
+        df = pd.DataFrame(
+            columns=['Iteration', 'p_cond1', 'p_cond2', 'p_sw1', 'p_sw2', 'p_dc1', 'p_dc2', 'p_cond', 'p_sw', 'p_fet'])
+
+    simfilepath = '../circuits/DAB_MOSFET_Modulation_v3.ipes'
+    timestep = 10e-9
     simtime = 10e-6
     timestep_pre = 10e-9
-    simtime_pre = 10e-3
+    simtime_pre = 2e-3
 
     # Radians to Degrees
     phi = np.around(phi * 180 / 3.14159, 5)
     tau1 = np.around(tau1 * 180 / 3.14159, 5)
     tau2 = np.around(tau2 * 180 / 3.14159, 5)
 
+    n = 3.974
+    Ls = 137.3e-6
+    Lc1 = 619e-6
+    Lc2 = 608.9e-6 / (n ** 2)
+
     # print("lpt.GeckoSimulation(simfilepath)")
     dab_converter = lpt.GeckoSimulation(simfilepath, simtime=simtime, timestep=timestep, simtime_pre=simtime_pre,
                                         timestep_pre=timestep_pre)
     dab_converter.get_global_parameters(
         ['phi', 'tau1', 'tau2', 'v_dc1', 'v_dc2', 'f_s', 'Lc1', 'Lc2', 'Ls', 'i_Ls_start'])
-    params = {'n': 4.238, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 150e-9, 't_dead2': 100e-9,
-              'Ls': 132.8e-6, 'i_Ls_start': i_Ls_start, 'Lc1': 619e-6, 'Lc2': 660.1e-6 / (4.238 ** 2),
+    params = {'n': n, 'v_dc1': v1, 'v_dc2': v2, 'f_s': 200000, 't_dead1': 200e-9, 't_dead2': 100e-9,
+              'Ls': Ls, 'i_Ls_start': i_Ls_start, 'Lc1': Lc1, 'Lc2': Lc2,
               'phi': phi, 'tau1': tau1, 'tau2': tau2}
     # print(params)
     dab_converter.set_global_parameters(params)
     # print("dab_converter.run_simulation"
     dab_converter.run_simulation(save_file=True)
-    dab_converter.get_scope_data(node_names=['i_Ls', 'i_Lc1', 'i_Lc2_'], file_name='scope_data')
-    values = dab_converter.get_values(nodes=['i_Ls', 'i_Lc1', 'i_Lc2_'],
-                                      operations=['rms'],
+    dab_converter.get_scope_data(node_names=['p_cond1', 'p_cond2', 'p_sw1', 'p_sw2', 'p_dc1', 'p_dc2'], file_name='scope_data')
+    values = dab_converter.get_values(nodes=['p_cond1', 'p_cond2', 'p_sw1', 'p_sw2', 'p_dc1', 'p_dc2'],
+                                      operations=['mean'],
                                       range_start_stop=[simtime_pre + 2e-8, simtime_pre + simtime + 2e-8])
 
-    # i_rms = values['rms']['i_Ls'] + values['rms']['i_Lc1'] + values['rms']['i_Lc2_']
-    # print(i_rms)
+    # p_cond = values['mean']['p_cond1'] + values['mean']['p_cond2']
+    # p_sw = values['mean']['p_sw1'] + values['mean']['p_sw2']
+    # p_dc1 = values['mean']['p_dc1']
+    # p_dc2 = values['mean']['p_dc2']
+    # p_fet = p_sw+p_cond
+    # print(f'{p_cond=}, {p_sw=}, {p_fet=}, {p_dc1=}, {p_dc2=}')
+    #
+    # # Append the data as a new row in the DataFrame
+    # df = df._append({
+    #     'Iteration': number,
+    #     'p_cond1': values['mean']['p_cond1'],
+    #     'p_cond2': values['mean']['p_cond2'],
+    #     'p_sw1': values['mean']['p_sw1'],
+    #     'p_sw2': values['mean']['p_sw2'],
+    #     'p_dc1': p_dc1,
+    #     'p_dc2': p_dc2,
+    #     'p_cond': p_cond,
+    #     'p_sw': p_sw,
+    #     'p_fet': p_fet
+    # }, ignore_index=True)
+    #
+    # # Write the DataFrame to an Excel file
+    # df.to_excel("output_values.xlsx", index=False)
+    #
+    # print("Data has been saved to 'output_values.xlsx'")
+
     # return i_rms
 
 
@@ -344,7 +386,7 @@ def plot_Irms(x0: np.ndarray, y0: np.ndarray, x1: np.ndarray, y1: np.ndarray, x2
     # Set font to Times New Roman
     plt.rcParams['font.family'] = 'STIXGeneral'
     # plt.rcParams['font.serif'] = ['Times New Roman']
-    plt.rcParams['font.size'] = 12
+    plt.rcParams['font.size'] = 20
 
     # Enable LaTeX rendering and set the default font to Times New Roman
     plt.rcParams['text.usetex'] = True
@@ -353,41 +395,41 @@ def plot_Irms(x0: np.ndarray, y0: np.ndarray, x1: np.ndarray, y1: np.ndarray, x2
     fig.subplots_adjust(top=0.85)
 
     # Plot data
-    axs[0].plot(x0, y0, 'o-r', ms=3, label='Calculated')
-    axs[0].plot(df['t_shifted'], df['i_Ls'], '-g', label='Numerical Simulations')
+    axs[0].plot(x0, y0, 'o-', color="#1f77b4", ms=3, label='Calculated', linewidth=5)
+    axs[0].plot(df['t_shifted'], df['i_Ls'], '--', color="#ff7f0e", label='Numerical Simulations', linewidth=3)
     axs[0].set_xlabel('Time / µSec')
-    axs[0].set_ylabel(f'$i$_{{L}} / A', fontsize=14, labelpad=-5)
+    axs[0].set_ylabel(r'$i_{\text{Ls}}$ / A', fontsize=20, labelpad=-10)
     axs[0].grid(color='gray', linestyle='--', linewidth=0.5)
 
-    axs[1].plot(x1, y1, 'o-r', ms=3, label='Calculated')
-    axs[1].plot(df['t_shifted'], df['i_Lc1'], '-g', label='Numerical Simulations')
+    axs[1].plot(x1, y1, 'o-', color="#1f77b4", ms=3, label='Calculated', linewidth=5)
+    axs[1].plot(df['t_shifted'], df['i_Lc1'], '--', color="#ff7f0e", label='Numerical Simulations', linewidth=3)
     axs[1].set_xlabel('Time / µSec')
-    axs[1].set_ylabel(f'$i$_{{Lc1}} / A', fontsize=14, labelpad=-5)
+    axs[1].set_ylabel(r'$i_{\text{Lc1}}$ / A', fontsize=20, labelpad=-10)
     axs[1].grid(color='gray', linestyle='--', linewidth=0.5)
 
-    axs[2].plot(x2, y2, 'o-r', ms=3, label='Calculated')
-    axs[2].plot(df['t_shifted'], df['i_Lc2_'], '-g', label='Numerical Simulations')
+    axs[2].plot(x2, y2, 'o-', color="#1f77b4", ms=3, label='Calculated', linewidth=5)
+    axs[2].plot(df['t_shifted'], df['i_Lc2_'], '--', color="#ff7f0e", label='Numerical Simulations', linewidth=3)
     axs[2].set_xlabel('Time / µSec')
-    axs[2].set_ylabel(f'$i$_{{Lc2}} / A', fontsize=14, labelpad=-5)
+    axs[2].set_ylabel(r'$i_{\text{Lc2}}$ / A', fontsize=20, labelpad=-10)
     axs[2].grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Add common legend
     handles, labels = axs[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.9, 0.99, 0, 0))
+    fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.92, 1.08, 0, 0))
 
     # Add text annotation with formatted text
     # textstr = f'V$_{{1}}$:{V1:.0f} V, V$_{{2}}$:{V2:.0f} V, P:{P:.0f} W, Mode:{mode}'
-    textstr = r'V$_{1}$: %d V, V$_{2}$: %d V, P: %d W, Mode: %s' % (V1, V2, P, mode)
-    fig.text(0.5, 0.95, textstr, fontsize=12, horizontalalignment='center', verticalalignment='top',
-             family='STIXGeneral')
+    # textstr = r'$U_{\text{DC1}}$: %d V, $U_{\text{DC1}}$: %d V, $P$: %d W' % (V1, V2, P)
+    # fig.text(0.5, 0.95, textstr, fontsize=24, horizontalalignment='right', verticalalignment='top',
+    #          family='STIXGeneral')
 
-    # # Maximize the window to fullscreen
-    # figManager = plt.get_current_fig_manager()
-    # figManager.window.showMaximized()
-    # plt.savefig(image_path_, bbox_inches='tight')
+    # Maximize the window to fullscreen
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
+    plt.savefig(image_path_, bbox_inches='tight')
     # plt.show()
-    # plt.close()
-    # print(f"Plot saved as {image_path_}")
+    plt.close()
+    print(f"Plot saved as {image_path_}")
     # # # print(f'times:{x0}\ni_Ls: {y0}\ni_HF2: {y0 * 4.2 + y2}')
 
 

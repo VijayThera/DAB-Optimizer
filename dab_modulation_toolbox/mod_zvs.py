@@ -96,7 +96,7 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     phi = np.full_like(V1, np.nan)
     tau1 = np.full_like(V1, np.nan)
     tau2 = np.full_like(V1, np.nan)
-    zvs = np.full_like(V1, False)
+    zvs = np.full_like(V1, np.nan)
     _Im2_mask = np.full_like(V1, False)
     _IIm2_mask = np.full_like(V1, False)
     _IIIm1_mask = np.full_like(V1, False)
@@ -111,21 +111,15 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     I1 = np.abs(P) / V1
     # Convert fs into omega_s
     ws = 2 * np.pi * fs
-
     # parasitic capacitance with copper blocks, TIM, and heatsink
     C_Par1 = 42e-12 # 6e-12
     C_Par2 = 42e-12 # 6e-12
     # 20% higher for safety margin
     C_total_1 = 1.2 * (Coss1 + C_Par1)
     C_total_2 = 1.2 * (Coss2 + C_Par2)
-
     # Calculate required Q for each voltage
-    # FIXME Check if factor 2 is right here!
     Q_AB_req1 = _integrate_Coss(C_total_1 * 2, V1)
     Q_AB_req2 = _integrate_Coss(C_total_2 * 2, V2)
-    # print("============")
-    # debug(Coss1)
-    # print("============")
 
     # FIXME HACK for testing V1, V2 interchangeability
     # _V1 = V1
@@ -138,8 +132,6 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # all the modulations are calculated first even for useless areas, and we decide later which part is useful.
     # This should be faster and easier.
 
-    print(f'{n=}\n{Ls=}\n{Lc1=}\n{Lc2_=}\n{ws=}\n{Q_AB_req1=}\n{Q_AB_req2=}\n{V1=}\n{V2_=}\n{I1=}')
-
     # Int. I (mode 2): calculate phi, tau1 and tau2
     phi_I, tau1_I, tau2_I = _calc_interval_I(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
 
@@ -147,7 +139,7 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     phi_II, tau1_II, tau2_II = _calc_interval_II(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
 
     # Int. III (mode 1): calculate phi, tau1 and tau2
-    phi_III, tau1_III, tau2_III = _calc_interval_III(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
+    phi_III, tau1_III, tau2_III, tau2_III_g_pi_mask = _calc_interval_III(n, Ls, Lc1, Lc2_, ws, Q_AB_req1, Q_AB_req2, V1, V2_, I1)
 
     ## Decision Logic
     # Int. I (mode 2):
@@ -160,16 +152,7 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # if phi > 0:
     _phi_I_g_zero_mask = np.greater(phi_I, 0)
     # debug('_phi_I_g_zero_mask', _phi_I_g_zero_mask)
-    # Int. I (mode 2): use results
-    phi[np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)] = phi_I[
-        np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)]
-    tau1[np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)] = tau1_I[
-        np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)]
-    tau2[np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)] = tau2_I[
-        np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)]
     _Im2_mask = np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)
-    # debug('_Im2_mask', _Im2_mask)
-    zvs[np.bitwise_and(_phi_I_leq_zero_mask, _tau1_I_leq_pi_mask)] = True
 
     # Int. II (mode 2):
     # if tau1 <= pi:
@@ -178,61 +161,63 @@ def calc_modulation(n, Ls, Lc1, Lc2, fs: np.ndarray | int | float, Coss1: np.nda
     # if tau1 > pi:
     _tau1_II_g_pi_mask = np.greater(tau1_II, np.pi)
     # debug('_tau1_II_g_pi_mask', _tau1_II_g_pi_mask)
-    # Int. II (mode 2): use results
-    phi[np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)] = phi_II[
-        np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)]
-    tau1[np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)] = tau1_II[
-        np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)]
-    tau2[np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)] = tau2_II[
-        np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)]
-    _IIm2_mask = np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)
-    # debug('_IIm2_mask', _IIm2_mask)
-    zvs[np.bitwise_and(_phi_I_g_zero_mask, _tau1_II_leq_pi_mask)] = True
 
     # Int. III (mode 1):
     # if tau2 <= pi:
     _tau2_III_leq_pi_mask = np.less_equal(tau2_III, np.pi)
     # debug('_tau2_III_leq_pi_mask', _tau2_III_leq_pi_mask)
-    # Int. III (mode 1): use results
-    phi[np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)] = phi_III[
-        np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)]
-    tau1[np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)] = tau1_III[
-        np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)]
-    tau2[np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)] = tau2_III[
-        np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)]
+
+    # Walking backwards to the algorithm so make sure that earlier modulation parameters have higher priority
+
+    # update modulation parameters for tau2 = pi, last step
+    phi[tau2_III_g_pi_mask] = phi_III[tau2_III_g_pi_mask]
+    tau1[tau2_III_g_pi_mask] = tau1_III[tau2_III_g_pi_mask]
+    tau2[tau2_III_g_pi_mask] = tau2_III[tau2_III_g_pi_mask]
+    zvs[tau2_III_g_pi_mask] = True
+
     _IIIm1_mask = np.bitwise_and(_tau2_III_leq_pi_mask, _tau1_II_g_pi_mask)
-    # debug('_IIIm1_mask', _IIIm1_mask)
-    zvs[np.bitwise_and(_tau1_II_g_pi_mask, _tau2_III_leq_pi_mask)] = True
+    phi[_IIIm1_mask] = phi_III[_IIIm1_mask]
+    tau1[_IIIm1_mask] = tau1_III[_IIIm1_mask]
+    tau2[_IIIm1_mask] = tau2_III[_IIIm1_mask]
+    zvs[_IIIm1_mask] = True
+
+    _IIm2_mask = np.bitwise_and(_tau1_II_leq_pi_mask, _phi_I_g_zero_mask)
+    phi[_IIm2_mask] = phi_II[_IIm2_mask]
+    tau1[_IIm2_mask] = tau1_II[_IIm2_mask]
+    tau2[_IIm2_mask] = tau2_II[_IIm2_mask]
+    zvs[_IIm2_mask] = True
 
     # Int. I (mode 2): ZVS is analytically IMPOSSIBLE!
     zvs[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))] = False
-    # debug('zvs', zvs)
-    # zvs = np.bitwise_not(np.bitwise_and(_phi_leq_zero_mask, np.bitwise_not(_tau1_leq_pi_mask)))
-    # debug('zvs bitwise not', zvs)
+    phi[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))] = phi_I[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))]
+    tau1[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))] = tau1_I[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))]
+    tau2[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))] = tau2_I[np.bitwise_and(_phi_I_leq_zero_mask, np.bitwise_not(_tau1_I_leq_pi_mask))]
+
+    phi[_Im2_mask] = phi_I[_Im2_mask]
+    tau1[_Im2_mask] = tau1_I[_Im2_mask]
+    tau2[_Im2_mask] = tau2_I[_Im2_mask]
+    zvs[_Im2_mask] = True
 
     ## Recalculate phi for negative power
     phi_nP = - (tau1 + phi - tau2)
     phi[_negative_power_mask] = phi_nP[_negative_power_mask]
 
-    print(f'{phi_I=}\n{tau1_I=}\n{tau2_I=}\n{phi_II=}\n{tau1_II=}\n{tau2_II=}\n{phi_III=}\n{tau1_III=}\n{tau2_III=}')
-    print(f'{phi=}\n{tau1=}\n{tau2=}')
-
     # Init return dict
     da_mod_results = dict()
     # Save the results in the dict
     # da_mod_results[MOD_KEYS[0]] = phi
-    # Convert phi because the math from the paper uses Middle-Pulse alignment but we use First-Falling-Edge alignment!
+    # Convert phi because the math from the paper uses Middle-Pulse alignment, but we use First-Falling-Edge alignment!
     da_mod_results[MOD_KEYS[0]] = phi
     da_mod_results[MOD_KEYS[1]] = tau1
     da_mod_results[MOD_KEYS[2]] = tau2
     da_mod_results[MOD_KEYS[3]] = zvs
     da_mod_results[MOD_KEYS[4]] = _Im2_mask
     da_mod_results[MOD_KEYS[5]] = _IIm2_mask
-    da_mod_results[MOD_KEYS[6]] = _IIIm1_mask
+    da_mod_results[MOD_KEYS[6]] = np.bitwise_or(_IIIm1_mask, tau2_III_g_pi_mask)
 
-    ## ZVS coverage based on calculation
+    # ZVS coverage based on calculation: Percentage ZVS based on all points (full operating range)
     da_mod_results[MOD_KEYS[7]] = np.count_nonzero(zvs) / np.size(zvs)
-    ## ZVS coverage based on calculation
+    # ZVS coverage based on calculation: Percentage ZVS based on all points where the converter can be operated (not full operating range)
     da_mod_results[MOD_KEYS[8]] = np.count_nonzero(zvs[~np.isnan(tau1)]) / np.size(zvs[~np.isnan(tau1)])
 
     # debug(da_mod_results)
@@ -390,10 +375,10 @@ if __name__ == '__main__':
     dab.P_max = 2200
     dab.P_nom = 2000
     dab.P_step = 19 * 3
-    dab.n = 4.238
-    dab.Ls = 132.8e-6
+    dab.n = 3.974
+    dab.Ls = 137.3e-6
     dab.Lc1 = 619e-6
-    dab.Lc2 = 660.1e-6 / (dab.n ** 2)
+    dab.Lc2 = 608.9e-6 / (dab.n ** 2)
     dab.Lm = 595e-6
     dab.fs = 200000
     # Generate meshes
